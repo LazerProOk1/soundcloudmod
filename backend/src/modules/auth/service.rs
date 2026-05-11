@@ -22,6 +22,9 @@ pub const REFRESH_BUFFER: Duration = Duration::from_secs(60);
 const LOGIN_REQUEST_TTL_SECS: i64 = 15 * 60;
 const REFRESH_LOCK_CAPACITY: u64 = 8192;
 const REFRESH_LOCK_TTL: Duration = Duration::from_secs(10 * 60);
+/// Кэш сессий в памяти — TTL короче REFRESH_BUFFER, чтобы успеть обновить токен.
+const SESSION_CACHE_CAPACITY: u64 = 4096;
+const SESSION_CACHE_TTL: Duration = Duration::from_secs(45);
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct LoginInitResult {
@@ -57,6 +60,8 @@ pub struct AuthService {
     oauth_apps: Arc<OAuthAppsService>,
     config: Arc<AppConfig>,
     refresh_locks: Cache<Uuid, Arc<AsyncMutex<()>>>,
+    /// In-memory session cache — избегаем DB round-trip на каждый запрос.
+    session_cache: Cache<Uuid, Session>,
 }
 
 impl AuthService {
@@ -75,6 +80,10 @@ impl AuthService {
                 .max_capacity(REFRESH_LOCK_CAPACITY)
                 .time_to_idle(REFRESH_LOCK_TTL)
                 .build(),
+            session_cache: Cache::builder()
+                .max_capacity(SESSION_CACHE_CAPACITY)
+                .time_to_live(SESSION_CACHE_TTL)
+                .build(),
         })
     }
 
@@ -86,30 +95,50 @@ impl AuthService {
         Ok(row)
     }
 
-    /// Возвращает сессию со свежим access token. Объединяет lookup + auto-refresh
-    /// в один SQL round-trip на happy path (без refresh).
+    /// Возвращает сессию со свежим access token.
+    /// Сначала проверяет in-memory cache (TTL=45s), затем DB.
     pub async fn get_valid_session(&self, session_id: Uuid) -> AppResult<Session> {
+        // Fast path: кэш в памяти — нет DB round-trip
+        if let Some(cached) = self.session_cache.get(&session_id) {
+            if !needs_refresh(&cached.expires_at) {
+                return Ok(cached);
+            }
+            // Токен скоро истечёт — сбрасываем и идём в DB
+            self.session_cache.invalidate(&session_id);
+        }
+
         let session = self
             .get_session(session_id)
             .await?
             .ok_or_else(|| AppError::unauthorized("Session not found"))?;
 
         if !needs_refresh(&session.expires_at) {
+            self.session_cache.insert(session_id, session.clone());
             return Ok(session);
         }
 
         let lock = self.get_or_create_lock(session_id);
         let _g = lock.lock().await;
 
+        // Re-check под локом
+        if let Some(cached) = self.session_cache.get(&session_id) {
+            if !needs_refresh(&cached.expires_at) {
+                return Ok(cached);
+            }
+        }
+
         let session = self
             .get_session(session_id)
             .await?
             .ok_or_else(|| AppError::unauthorized("Session not found"))?;
         if !needs_refresh(&session.expires_at) {
+            self.session_cache.insert(session_id, session.clone());
             return Ok(session);
         }
 
-        self.do_refresh(session).await
+        let refreshed = self.do_refresh(session).await?;
+        self.session_cache.insert(session_id, refreshed.clone());
+        Ok(refreshed)
     }
 
     pub async fn get_valid_access_token(&self, session_id: Uuid) -> AppResult<String> {
@@ -565,6 +594,7 @@ impl AuthService {
             .execute(&self.pool)
             .await?;
         self.refresh_locks.invalidate(&session_id);
+        self.session_cache.invalidate(&session_id);
         Ok(())
     }
 

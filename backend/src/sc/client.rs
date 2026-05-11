@@ -56,7 +56,7 @@ impl ScClient {
             .pool_max_idle_per_host(20)
             .pool_idle_timeout(Duration::from_secs(90))
             .connect_timeout(Duration::from_secs(5))
-            .timeout(Duration::from_secs(30))
+            .timeout(Duration::from_secs(10))
             .user_agent("scd-backend/0.1")
             .build()?;
 

@@ -332,6 +332,8 @@ fn extract_sc_release(track: &Value) -> (Option<i16>, Option<String>) {
 }
 
 pub async fn apply_to_tracks(pg: &PgPool, tracks: &mut [Value]) -> AppResult<()> {
+    use crate::modules::tracks::counters;
+
     if tracks.is_empty() {
         return Ok(());
     }
@@ -342,11 +344,18 @@ pub async fn apply_to_tracks(pg: &PgPool, tracks: &mut [Value]) -> AppResult<()>
     if urns.is_empty() {
         return Ok(());
     }
-    crate::modules::tracks::counters::sync(pg, tracks).await?;
-    let map = lookup(pg, &urns).await?;
-    if map.is_empty() {
-        return Ok(());
-    }
+    let sc_ids: Vec<String> = urns.iter().filter_map(|u| normalize_sc_track_id(u)).collect();
+
+    // 1. UPSERT счётчиков — fire-and-forget, не блокируем ответ
+    counters::spawn_upsert(pg, tracks);
+
+    // 2. Параллельно: enrichment JOIN + counters SELECT
+    let (enrichment_map, counters_map) = tokio::try_join!(
+        lookup(pg, &urns),
+        counters::select_stored(pg, &sc_ids),
+    )?;
+
+    // 3. Один проход по трекам — применяем оба результата
     for t in tracks.iter_mut() {
         let Some(urn) = t.get("urn").and_then(|v| v.as_str()) else {
             continue;
@@ -354,7 +363,12 @@ pub async fn apply_to_tracks(pg: &PgPool, tracks: &mut [Value]) -> AppResult<()>
         let Some(sc_id) = normalize_sc_track_id(urn) else {
             continue;
         };
-        let Some(enrichment) = map.get(&sc_id) else {
+
+        // Применяем счётчики из DB (заполняем пустые поля)
+        counters::apply_to_track(t, &sc_id, &counters_map);
+
+        // Применяем enrichment (artist/album metadata)
+        let Some(enrichment) = enrichment_map.get(&sc_id) else {
             continue;
         };
         let mut filled = enrichment.clone();
