@@ -13,8 +13,7 @@ const LANGUAGES: Array<{ code: string; name: string }> = [
   { code: 'pt', name: 'Português' },
   { code: 'ja', name: '日本語' },
   { code: 'ko', name: '한국어' },
-  { code: 'tr', name: 'Türkçe' },
-  { code: 'pl', name: 'Polski' },
+{ code: 'pl', name: 'Polski' },
   { code: 'uk', name: 'Українська' },
 ];
 
