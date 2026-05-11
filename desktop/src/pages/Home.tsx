@@ -803,7 +803,7 @@ const FeedStream = React.memo(function FeedStream({
   const sentinelRef = useInfiniteScroll(hasNextPage, isFetchingNextPage, fetchNextPage);
 
   const streamItems = useMemo(
-    () => feedItems.filter((i) => i !== featuredItem),
+    () => feedItems.filter((i) => i !== featuredItem && !i.type.includes('repost')),
     [feedItems, featuredItem],
   );
 
@@ -862,13 +862,13 @@ export function Home() {
   const followingQuery = useFollowingTracks(20);
 
   const featuredItem = useMemo(
-    () => feedQuery.items.find((item) => item.type.includes('track')),
+    () => feedQuery.items.find((item) => item.type.includes('track') && !item.type.includes('repost')),
     [feedQuery.items],
   );
   const feedTrackQueue = useMemo(
     () =>
       feedQuery.items
-        .filter((item) => item.type.includes('track'))
+        .filter((item) => item.type.includes('track') && !item.type.includes('repost'))
         .map((item) => item.origin as Track),
     [feedQuery.items],
   );
