@@ -808,15 +808,6 @@ export function useSearchUsers(q: string) {
 
 /* ── Fallback / Seed Tracks ────────────────────────────────────── */
 
-const FALLBACK_TRACK_IDS = '2028682452,2065341288,2028677636,2209249766,2060818444,2064016848';
-
-export function useFallbackTracks() {
-  return useQuery({
-    queryKey: ['fallback', 'tracks'],
-    queryFn: () => api<TrackPage>(`/tracks?ids=${FALLBACK_TRACK_IDS}&page=0&limit=30`),
-    staleTime: 1000 * 60 * 30,
-  });
-}
 
 /* ── Discover ──────────────────────────────────────────────────── */
 
