@@ -67,6 +67,12 @@ const TrackPage = lazy(() =>
 const UserPage = lazy(() =>
   import('./pages/UserPage').then((module) => ({ default: module.UserPage })),
 );
+const ArtistPage = lazy(() =>
+  import('./pages/ArtistPage').then((module) => ({ default: module.ArtistPage })),
+);
+const AlbumPage = lazy(() =>
+  import('./pages/AlbumPage').then((module) => ({ default: module.AlbumPage })),
+);
 const UpdateChecker = lazy(() =>
   import('./components/UpdateChecker').then((module) => ({ default: module.UpdateChecker })),
 );
@@ -348,6 +354,22 @@ export default function App() {
                   element={
                     <RouteLoader>
                       <UserPage />
+                    </RouteLoader>
+                  }
+                />
+                <Route
+                  path="artist/:id"
+                  element={
+                    <RouteLoader>
+                      <ArtistPage />
+                    </RouteLoader>
+                  }
+                />
+                <Route
+                  path="album/:id"
+                  element={
+                    <RouteLoader>
+                      <AlbumPage />
                     </RouteLoader>
                   }
                 />
