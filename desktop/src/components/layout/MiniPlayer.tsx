@@ -51,67 +51,71 @@ export const MiniPlayer = React.memo(() => {
   const exit = useMiniPlayerStore((s) => s.exit);
   const artwork = art(currentTrack?.artwork_url, 't200x200');
 
+  // stopPropagation on mousedown prevents Tauri's drag-region from firing for buttons
+  const nodrg = (e: React.MouseEvent) => e.stopPropagation();
+
   return (
+    // data-tauri-drag-region on the whole window — any area without a button is draggable
     <div
-      className="h-screen w-screen flex flex-col overflow-hidden select-none bg-[#0c0c0e]"
-      style={{ isolation: 'isolate' }}
+      data-tauri-drag-region
+      className="h-screen w-screen flex flex-col overflow-hidden select-none"
+      style={{ background: '#141416', isolation: 'isolate' }}
     >
-      {/* Thin drag strip at top — only the label area is the drag target, NOT the exit button */}
-      <div className="h-6 flex items-center justify-between px-2 shrink-0 border-b border-white/[0.04]">
-        <div data-tauri-drag-region className="flex-1 h-full flex items-center cursor-move">
-          <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/20 pointer-events-none">
-            Mini Player
-          </span>
-        </div>
-        {/* Exit button is OUTSIDE the drag region so clicks register correctly */}
+      {/* Top strip */}
+      <div className="h-7 flex items-center justify-between px-2.5 shrink-0"
+           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40 pointer-events-none">
+          Mini Player
+        </span>
+        {/* Exit button — stopPropagation so click works, not drag */}
         <button
           type="button"
-          title="Expand to full player"
+          title="Развернуть"
+          onMouseDown={nodrg}
           onClick={() => void exit()}
-          className="w-5 h-5 rounded flex items-center justify-center text-white/25 hover:text-white/70 hover:bg-white/[0.08] transition-all cursor-pointer"
+          className="w-6 h-6 rounded-md flex items-center justify-center text-white/35 hover:text-white/80 hover:bg-white/[0.08] transition-all cursor-pointer"
         >
-          <PictureInPicture2 size={10} />
+          <PictureInPicture2 size={11} />
         </button>
       </div>
 
-      {/* Player row — drag only on artwork + text, NOT on controls */}
-      <div className="flex-1 flex items-center gap-2.5 px-3 min-w-0">
-        {/* Artwork — draggable dead zone */}
-        <div
-          data-tauri-drag-region
-          className="w-10 h-10 rounded-[8px] shrink-0 overflow-hidden bg-white/[0.04] shadow-lg ring-1 ring-white/[0.06] cursor-move"
-        >
-          {artwork ? (
-            <img src={artwork} alt="" className="w-full h-full object-cover pointer-events-none" />
-          ) : (
-            <div className="w-full h-full bg-white/[0.04]" />
+      {/* Player row */}
+      <div className="flex-1 flex items-center gap-2.5 px-2.5 min-w-0">
+        {/* Artwork */}
+        <div className="w-10 h-10 rounded-[8px] shrink-0 overflow-hidden shadow-lg pointer-events-none"
+             style={{ background: 'rgba(255,255,255,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+          {artwork && (
+            <img src={artwork} alt="" className="w-full h-full object-cover" />
           )}
         </div>
 
-        {/* Track info — draggable dead zone */}
-        <div data-tauri-drag-region className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 cursor-move">
+        {/* Track info */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 pointer-events-none">
           {currentTrack ? (
             <>
               <ScrollingText
                 text={currentTrack.title}
-                className="text-[11px] font-semibold text-white/88 leading-tight pointer-events-none"
+                className="text-[11px] font-semibold leading-tight text-white/90"
               />
               <ScrollingText
                 text={currentTrack.user.username}
-                className="text-[10px] text-white/35 leading-tight pointer-events-none"
+                className="text-[10px] leading-tight text-white/45"
               />
             </>
           ) : (
-            <span className="text-[11px] text-white/20 pointer-events-none">Not playing</span>
+            <span className="text-[11px] text-white/35">Не играет</span>
           )}
         </div>
 
-        {/* Controls — NO drag region, clicks must work */}
-        <div className="flex items-center gap-0 shrink-0">
+        {/* Controls — stopPropagation so clicks work, not drag */}
+        <div className="flex items-center gap-0 shrink-0" onMouseDown={nodrg}>
           <button
             type="button"
             onClick={handlePrev}
-            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white/80 transition-colors cursor-pointer rounded-full hover:bg-white/[0.04]"
+            className="w-8 h-8 flex items-center justify-center transition-colors cursor-pointer rounded-full"
+            style={{ color: 'rgba(255,255,255,0.45)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.90)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
           >
             {skipBack20}
           </button>
@@ -119,7 +123,8 @@ export const MiniPlayer = React.memo(() => {
           <button
             type="button"
             onClick={togglePlay}
-            className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center text-black hover:bg-white hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer mx-0.5"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-black transition-all duration-150 cursor-pointer mx-0.5 hover:scale-105 active:scale-95"
+            style={{ background: 'rgba(255,255,255,0.92)' }}
           >
             {isPlaying ? pauseBlack20 : playBlack20}
           </button>
@@ -127,7 +132,10 @@ export const MiniPlayer = React.memo(() => {
           <button
             type="button"
             onClick={next}
-            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white/80 transition-colors cursor-pointer rounded-full hover:bg-white/[0.04]"
+            className="w-8 h-8 flex items-center justify-center transition-colors cursor-pointer rounded-full"
+            style={{ color: 'rgba(255,255,255,0.45)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.90)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
           >
             {skipForward20}
           </button>

@@ -33,6 +33,7 @@ export async function enterMiniPlayer(): Promise<void> {
   await win.setSize(new LogicalSize(MINI_W, MINI_H));
   await win.setAlwaysOnTop(true);
   await win.setResizable(false);
+  await win.center();
 }
 
 export async function exitMiniPlayer(): Promise<void> {
