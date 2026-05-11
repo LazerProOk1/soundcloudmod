@@ -1,146 +1,171 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { handlePrev } from '../../lib/audio';
 import { art } from '../../lib/formatters';
-import {
-  pauseBlack20,
-  playBlack20,
-  skipBack20,
-  skipForward20,
-} from '../../lib/icons';
-import { PictureInPicture2 } from '../../lib/icons';
 import { usePlayerStore } from '../../stores/player';
 import { useMiniPlayerStore } from '../../stores/mini-player';
 
-/* ── Scrolling text when title overflows ─────────────────────── */
+/* ── Error boundary so a crash here doesn't black-screen ─────── */
+class MiniPlayerBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(e: unknown) {
+    return { error: String(e) };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          data-tauri-drag-region
+          style={{
+            width: '100vw', height: '100vh',
+            background: '#1a1a1c',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,0.5)', fontSize: 11,
+            fontFamily: 'system-ui', userSelect: 'none',
+          }}
+        >
+          ошибка — перезапусти
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
-const ScrollingText = React.memo(({ text, className = '' }: { text: string; className?: string }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLSpanElement>(null);
-  const [shouldScroll, setShouldScroll] = useState(false);
+/* ── Main component ──────────────────────────────────────────── */
+function MiniPlayerInner() {
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const isPlaying    = usePlayerStore((s) => s.isPlaying);
+  const togglePlay   = usePlayerStore((s) => s.togglePlay);
+  const next         = usePlayerStore((s) => s.next);
+  const exit         = useMiniPlayerStore((s) => s.exit);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    const inner = innerRef.current;
-    if (!container || !inner) return;
-    setShouldScroll(inner.scrollWidth > container.clientWidth + 2);
-  }, [text]);
+  const cover = currentTrack ? art(currentTrack.artwork_url, 't200x200') : null;
+
+  // Stops mousedown from bubbling to the drag region → buttons work
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
-    <div ref={containerRef} className={`overflow-hidden ${className}`}>
-      <span
-        ref={innerRef}
-        className={`whitespace-nowrap inline-block ${shouldScroll ? 'animate-marquee' : ''}`}
-        style={shouldScroll ? { paddingRight: '3rem' } : undefined}
-      >
-        {text}
-        {shouldScroll && <span aria-hidden="true" style={{ paddingLeft: '3rem' }}>{text}</span>}
-      </span>
-    </div>
-  );
-});
-
-/* ── MiniPlayer ──────────────────────────────────────────────── */
-
-export const MiniPlayer = React.memo(() => {
-  const { currentTrack, isPlaying, togglePlay, next } = usePlayerStore((s) => ({
-    currentTrack: s.currentTrack,
-    isPlaying: s.isPlaying,
-    togglePlay: s.togglePlay,
-    next: s.next,
-  }));
-  const exit = useMiniPlayerStore((s) => s.exit);
-  const artwork = art(currentTrack?.artwork_url, 't200x200');
-
-  // stopPropagation on mousedown prevents Tauri's drag-region from firing for buttons
-  const nodrg = (e: React.MouseEvent) => e.stopPropagation();
-
-  return (
-    // data-tauri-drag-region on the whole window — any area without a button is draggable
     <div
       data-tauri-drag-region
-      className="h-screen w-screen flex flex-col overflow-hidden select-none"
-      style={{ background: '#141416', isolation: 'isolate' }}
+      style={{
+        width: '100vw',
+        height: '100vh',
+        background: '#18181b',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        userSelect: 'none',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}
     >
-      {/* Top strip */}
-      <div className="h-7 flex items-center justify-between px-2.5 shrink-0"
-           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40 pointer-events-none">
+      {/* ── Top strip ── */}
+      <div style={{
+        height: 28,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 10px',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', pointerEvents: 'none' }}>
           Mini Player
         </span>
-        {/* Exit button — stopPropagation so click works, not drag */}
+        {/* Exit button */}
         <button
-          type="button"
-          title="Развернуть"
-          onMouseDown={nodrg}
+          onMouseDown={stop}
           onClick={() => void exit()}
-          className="w-6 h-6 rounded-md flex items-center justify-center text-white/35 hover:text-white/80 hover:bg-white/[0.08] transition-all cursor-pointer"
+          style={{
+            width: 22, height: 22, border: 'none', borderRadius: 5,
+            background: 'transparent', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,0.4)',
+          }}
+          title="Развернуть"
         >
-          <PictureInPicture2 size={11} />
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
         </button>
       </div>
 
-      {/* Player row */}
-      <div className="flex-1 flex items-center gap-2.5 px-2.5 min-w-0">
-        {/* Artwork */}
-        <div className="w-10 h-10 rounded-[8px] shrink-0 overflow-hidden shadow-lg pointer-events-none"
-             style={{ background: 'rgba(255,255,255,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
-          {artwork && (
-            <img src={artwork} alt="" className="w-full h-full object-cover" />
-          )}
+      {/* ── Player row ── */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '0 10px',
+        minWidth: 0,
+      }}>
+        {/* Cover */}
+        <div style={{
+          width: 42, height: 42, borderRadius: 8,
+          background: 'rgba(255,255,255,0.07)',
+          flexShrink: 0, overflow: 'hidden',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
+          pointerEvents: 'none',
+        }}>
+          {cover && <img src={cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
         </div>
 
         {/* Track info */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 pointer-events-none">
-          {currentTrack ? (
-            <>
-              <ScrollingText
-                text={currentTrack.title}
-                className="text-[11px] font-semibold leading-tight text-white/90"
-              />
-              <ScrollingText
-                text={currentTrack.user.username}
-                className="text-[10px] leading-tight text-white/45"
-              />
-            </>
-          ) : (
-            <span className="text-[11px] text-white/35">Не играет</span>
+        <div style={{ flex: 1, minWidth: 0, pointerEvents: 'none' }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.92)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3 }}>
+            {currentTrack?.title ?? 'Не играет'}
+          </div>
+          {currentTrack && (
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2, lineHeight: 1.3 }}>
+              {currentTrack.user.username}
+            </div>
           )}
         </div>
 
-        {/* Controls — stopPropagation so clicks work, not drag */}
-        <div className="flex items-center gap-0 shrink-0" onMouseDown={nodrg}>
-          <button
-            type="button"
-            onClick={handlePrev}
-            className="w-8 h-8 flex items-center justify-center transition-colors cursor-pointer rounded-full"
-            style={{ color: 'rgba(255,255,255,0.45)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.90)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
-          >
-            {skipBack20}
+        {/* Controls */}
+        <div onMouseDown={stop} style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+          {/* Prev */}
+          <button onClick={handlePrev} style={btnStyle}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
           </button>
-
-          <button
-            type="button"
-            onClick={togglePlay}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-black transition-all duration-150 cursor-pointer mx-0.5 hover:scale-105 active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.92)' }}
-          >
-            {isPlaying ? pauseBlack20 : playBlack20}
+          {/* Play/Pause */}
+          <button onClick={togglePlay} style={playBtnStyle}>
+            {isPlaying
+              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            }
           </button>
-
-          <button
-            type="button"
-            onClick={next}
-            className="w-8 h-8 flex items-center justify-center transition-colors cursor-pointer rounded-full"
-            style={{ color: 'rgba(255,255,255,0.45)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.90)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
-          >
-            {skipForward20}
+          {/* Next */}
+          <button onClick={next} style={btnStyle}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg>
           </button>
         </div>
       </div>
     </div>
   );
-});
+}
+
+const btnStyle: React.CSSProperties = {
+  width: 30, height: 30, border: 'none', borderRadius: '50%',
+  background: 'transparent', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  color: 'rgba(255,255,255,0.5)',
+};
+
+const playBtnStyle: React.CSSProperties = {
+  width: 36, height: 36, border: 'none', borderRadius: '50%',
+  background: 'rgba(255,255,255,0.92)', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  color: '#000', margin: '0 2px',
+};
+
+export const MiniPlayer = () => (
+  <MiniPlayerBoundary>
+    <MiniPlayerInner />
+  </MiniPlayerBoundary>
+);

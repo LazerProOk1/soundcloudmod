@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { fetchWithAuthFallback, setSessionId } from '../lib/api';
-import { tauriStorage } from '../lib/tauri-storage';
 
 interface User {
   id: number;
@@ -52,7 +51,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'sc-auth',
-      storage: createJSONStorage(() => tauriStorage),
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ sessionId: state.sessionId }),
       onRehydrateStorage: () => (state) => {
         if (state?.sessionId) {
