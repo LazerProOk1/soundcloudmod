@@ -1,0 +1,34 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.flatpak-builder
+# Claude / AI assistant files
+.claude/
+CLAUDE.md
+AGENTS.md
+docs/agent-*.md
+
+# Tauri build output
+src-tauri/target/
+streaming/target
+storage/target
+tls-common/target
+backend/target
+
+storage/data
+streaming/data
+
+# CI checkout slot for sibling repos.
+/_internal
+
+# IDE
+.idea/
+
+# FireBase
+.firebase

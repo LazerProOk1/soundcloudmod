@@ -1,0 +1,114 @@
+import { useSettingsStore } from '../stores/settings';
+import { BYPASS_IMAGES_BASE, getProxyPort, IMAGES_BASE } from './constants';
+import { isMac } from './platform';
+import { getIsPremium } from './premium-cache';
+
+const WHITELIST = [
+  'localhost',
+  '127.0.0.1',
+  'tauri.localhost',
+  'scproxy.localhost',
+  'images.soundcloud.su',
+  'api.soundcloud.su',
+  'images.scdinternal.site',
+  'api.scdinternal.site',
+  'white.api.scdinternal.site',
+  'white.images.scdinternal.site',
+  'white.storage.scdinternal.site',
+  'white.stream.scdinternal.site',
+  'white.stream-premium.scdinternal.site',
+  'unpkg.com',
+  // SoundCloud CDN — load artwork directly, bypassing the image proxy
+  'i1.sndcdn.com',
+  'i.sndcdn.com',
+  'i2.sndcdn.com',
+  'i3.sndcdn.com',
+  'i4.sndcdn.com',
+];
+const RETRY_BYPASS_CACHE_PARAM = '__scproxy_bust';
+const LOCAL_PROXY_SHARDS = 20;
+
+function withCacheBust(url: string): string {
+  try {
+    const next = new URL(url);
+    next.searchParams.set(RETRY_BYPASS_CACHE_PARAM, `${Date.now()}`);
+    return next.toString();
+  } catch {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}${RETRY_BYPASS_CACHE_PARAM}=${Date.now()}`;
+  }
+}
+
+function hashShard(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 33 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash % LOCAL_PROXY_SHARDS;
+}
+
+export function isWhitelistedAssetUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return WHITELIST.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+  } catch {
+    return true;
+  }
+}
+
+function buildEncodedPayload(
+  url: string,
+  bypassCache: boolean,
+): { encoded: string; target: string } {
+  const target = bypassCache ? withCacheBust(url) : url;
+  const bypass = useSettingsStore.getState().bypassWhitelist;
+  const upstreams = bypass && getIsPremium() ? [BYPASS_IMAGES_BASE, IMAGES_BASE] : [IMAGES_BASE];
+  return {
+    encoded: encodeURIComponent(btoa(JSON.stringify([target, ...upstreams]))),
+    target,
+  };
+}
+
+export function toScproxyUrl(url: string, { bypassCache = false } = {}): string {
+  const { encoded, target } = buildEncodedPayload(url, bypassCache);
+
+  const proxyPort = getProxyPort();
+  if (proxyPort && !isMac()) {
+    const shard = hashShard(target);
+    return `http://scproxy-${shard}.localhost:${proxyPort}/p/${encoded}`;
+  }
+
+  return `scproxy://localhost/${encoded}`;
+}
+
+/**
+ * Permanent on-disk image cache endpoint.
+ * Stored in app_data_dir/images/, never cleared by idle/maintenance —
+ * only by an explicit user action.
+ */
+export function toImageCacheUrl(url: string, { bypassCache = false } = {}): string {
+  const { encoded, target } = buildEncodedPayload(url, bypassCache);
+
+  const proxyPort = getProxyPort();
+  if (proxyPort && !isMac()) {
+    const shard = hashShard(target);
+    return `http://scproxy-${shard}.localhost:${proxyPort}/img/${encoded}`;
+  }
+
+  return `scproxy://localhost/img/${encoded}`;
+}
+
+export function proxiedAssetUrl(
+  url: string | null | undefined,
+  { bypassCache = false } = {},
+): string | null {
+  if (!url) return null;
+  if (!url.startsWith('http') || isWhitelistedAssetUrl(url)) return url;
+
+  const proxyPort = getProxyPort();
+  if (!proxyPort) {
+    return url;
+  }
+
+  return toImageCacheUrl(url, { bypassCache });
+}
