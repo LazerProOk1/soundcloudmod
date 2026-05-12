@@ -26,9 +26,12 @@ fn read_i64_from(obj: &Map<String, Value>, key: &str) -> Option<i64> {
     n.as_i64().or_else(|| n.as_u64().map(|u| u as i64))
 }
 
-fn read_fresh_counters(obj: &Map<String, Value>) -> (Option<i64>, Option<i64>, Option<i64>, Option<i64>) {
+fn read_fresh_counters(
+    obj: &Map<String, Value>,
+) -> (Option<i64>, Option<i64>, Option<i64>, Option<i64>) {
     let play = read_i64_from(obj, "playback_count").or_else(|| read_i64_from(obj, "play_count"));
-    let likes = read_i64_from(obj, "likes_count").or_else(|| read_i64_from(obj, "favoritings_count"));
+    let likes =
+        read_i64_from(obj, "likes_count").or_else(|| read_i64_from(obj, "favoritings_count"));
     let reposts = read_i64_from(obj, "reposts_count");
     let comments = read_i64_from(obj, "comment_count");
     (play, likes, reposts, comments)
@@ -45,8 +48,12 @@ pub fn spawn_upsert(pg: &PgPool, tracks: &[Value]) {
     let mut comments: Vec<Option<i64>> = Vec::new();
 
     for t in tracks.iter() {
-        let Some(urn) = t.get("urn").and_then(|v| v.as_str()) else { continue };
-        let Some(sc_id) = normalize_sc_track_id(urn) else { continue };
+        let Some(urn) = t.get("urn").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Some(sc_id) = normalize_sc_track_id(urn) else {
+            continue;
+        };
         let Some(obj) = t.as_object() else { continue };
         let (p, l, r, c) = read_fresh_counters(obj);
         if p.is_none() && l.is_none() && r.is_none() && c.is_none() {
@@ -106,21 +113,36 @@ pub async fn select_stored(pg: &PgPool, sc_ids: &[String]) -> AppResult<HashMap<
     if sc_ids.is_empty() {
         return Ok(HashMap::new());
     }
-    let rows: Vec<(String, Option<i64>, Option<i64>, Option<i64>, Option<i64>, chrono::DateTime<chrono::Utc>)> =
-        sqlx::query_as(
-            "SELECT sc_track_id, play_count, likes_count, reposts_count, comment_count, fetched_at
+    let rows: Vec<(
+        String,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        Option<i64>,
+        chrono::DateTime<chrono::Utc>,
+    )> = sqlx::query_as(
+        "SELECT sc_track_id, play_count, likes_count, reposts_count, comment_count, fetched_at
              FROM sc_track_counters WHERE sc_track_id = ANY($1)",
-        )
-        .bind(sc_ids)
-        .fetch_all(pg)
-        .await?;
+    )
+    .bind(sc_ids)
+    .fetch_all(pg)
+    .await?;
 
     let now = chrono::Utc::now();
     let map = rows
         .into_iter()
         .map(|(id, p, l, r, c, fetched)| {
             let age_secs = (now - fetched).num_seconds();
-            (id, Counters { play_count: p, likes_count: l, reposts_count: r, comment_count: c, age_secs })
+            (
+                id,
+                Counters {
+                    play_count: p,
+                    likes_count: l,
+                    reposts_count: r,
+                    comment_count: c,
+                    age_secs,
+                },
+            )
         })
         .collect();
     Ok(map)
@@ -131,7 +153,9 @@ pub async fn select_stored(pg: &PgPool, sc_ids: &[String]) -> AppResult<HashMap<
 /// Заполняем только отсутствующие или устаревшие.
 pub fn apply_to_track(track: &mut Value, sc_id: &str, stored: &HashMap<String, Counters>) {
     let Some(c) = stored.get(sc_id) else { return };
-    let Some(obj) = track.as_object_mut() else { return };
+    let Some(obj) = track.as_object_mut() else {
+        return;
+    };
 
     let stale = c.age_secs > STALE_SECS;
     let (cur_play, cur_likes, cur_reposts, cur_comments) = read_fresh_counters(obj);
@@ -168,7 +192,9 @@ pub async fn sync(pg: &PgPool, tracks: &mut [Value]) -> AppResult<()> {
     let sc_ids: Vec<String> = tracks
         .iter()
         .filter_map(|t| {
-            t.get("urn").and_then(|v| v.as_str()).and_then(normalize_sc_track_id)
+            t.get("urn")
+                .and_then(|v| v.as_str())
+                .and_then(normalize_sc_track_id)
         })
         .collect();
     if sc_ids.is_empty() {
@@ -179,8 +205,12 @@ pub async fn sync(pg: &PgPool, tracks: &mut [Value]) -> AppResult<()> {
     // SELECT и применение
     let stored = select_stored(pg, &sc_ids).await?;
     for t in tracks.iter_mut() {
-        let Some(urn) = t.get("urn").and_then(|v| v.as_str()) else { continue };
-        let Some(sc_id) = normalize_sc_track_id(urn) else { continue };
+        let Some(urn) = t.get("urn").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Some(sc_id) = normalize_sc_track_id(urn) else {
+            continue;
+        };
         apply_to_track(t, &sc_id, &stored);
     }
     Ok(())
