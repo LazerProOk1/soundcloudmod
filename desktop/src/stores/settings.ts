@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { tauriStorage } from '../lib/tauri-storage';
 
 export type ThemePreset = 'soundcloud' | 'dark' | 'neon' | 'forest' | 'crimson' | 'custom';
 export type StartupPage = 'home' | 'search' | 'library' | 'settings';
@@ -219,7 +220,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'sc-settings',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => tauriStorage),
       version: 15,
       migrate: (persistedState) => {
         const prev = (persistedState ?? {}) as Partial<SettingsState> & {
