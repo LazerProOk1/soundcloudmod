@@ -90,6 +90,7 @@ async fn do_upsert(
         "INSERT INTO sc_track_counters (sc_track_id, play_count, likes_count, reposts_count, comment_count, fetched_at)
          SELECT u.id, u.p, u.l, u.r, u.c, now()
          FROM UNNEST($1::text[], $2::bigint[], $3::bigint[], $4::bigint[], $5::bigint[]) AS u(id, p, l, r, c)
+         ORDER BY u.id
          ON CONFLICT (sc_track_id) DO UPDATE SET
             play_count    = COALESCE(EXCLUDED.play_count, sc_track_counters.play_count),
             likes_count   = COALESCE(EXCLUDED.likes_count, sc_track_counters.likes_count),

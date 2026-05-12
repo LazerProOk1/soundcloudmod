@@ -81,6 +81,7 @@ export interface SettingsState {
   cacheListenedTracks: boolean;
   /** Crossfade duration in seconds. 0 = disabled. */
   crossfadeDuration: number;
+  artistWaveCollapsed: boolean;
   setAccentColor: (color: string) => void;
   setBgPrimary: (bg: string) => void;
   setThemePreset: (id: ThemePreset) => void;
@@ -111,6 +112,7 @@ export interface SettingsState {
   setLyricsVisualizer: (v: boolean) => void;
   setCacheListenedTracks: (v: boolean) => void;
   setCrossfadeDuration: (secs: number) => void;
+  setArtistWaveCollapsed: (v: boolean) => void;
   resetTheme: () => void;
 }
 
@@ -145,6 +147,7 @@ const DEFAULTS = {
   lyricsVisualizer: false,
   cacheListenedTracks: true,
   crossfadeDuration: 0,
+  artistWaveCollapsed: false,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -202,6 +205,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLyricsVisualizer: (lyricsVisualizer) => set({ lyricsVisualizer }),
       setCacheListenedTracks: (cacheListenedTracks) => set({ cacheListenedTracks }),
       setCrossfadeDuration: (crossfadeDuration) => set({ crossfadeDuration }),
+      setArtistWaveCollapsed: (artistWaveCollapsed) => set({ artistWaveCollapsed }),
       resetTheme: () =>
         set({
           accentColor: DEFAULTS.accentColor,
@@ -262,6 +266,7 @@ export const useSettingsStore = create<SettingsState>()(
         lyricsVisualizer: s.lyricsVisualizer,
         cacheListenedTracks: s.cacheListenedTracks,
         crossfadeDuration: s.crossfadeDuration,
+        artistWaveCollapsed: s.artistWaveCollapsed,
       }),
     },
   ),
