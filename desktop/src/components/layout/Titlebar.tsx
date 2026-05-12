@@ -2,7 +2,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Disc3, Fullscreen, Minus, PictureInPicture2, Square, X } from '../../lib/icons';
+import { ChevronLeft, ChevronRight, Fullscreen, Minus, PictureInPicture2, Square, X } from '../../lib/icons';
 import { useMiniPlayerStore } from '../../stores/mini-player';
 import { toggleWindowFullscreen } from '../../lib/window';
 
@@ -44,12 +44,20 @@ export const Titlebar = React.memo(() => {
 
   return (
     <div
-      className="h-10 flex items-center justify-between px-4 select-none shrink-0 border-b border-white/[0.04]"
+      className="h-10 flex items-center justify-between px-2 select-none shrink-0 relative"
+      style={{
+        borderBottom: '1px solid rgba(255,255,255,0.04)',
+      }}
       data-tauri-drag-region
     >
-      <div className="flex items-center gap-1.5" data-tauri-drag-region>
-        <Disc3 size={14} className="text-accent" strokeWidth={2} />
-        <span className="text-[11px] font-semibold tracking-tight text-white/30">SoundCloud</span>
+      {/* Subtle top glow line */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent 100%)',
+        }}
+      />
+      <div className="flex items-center" data-tauri-drag-region>
         <NavButtons />
       </div>
 

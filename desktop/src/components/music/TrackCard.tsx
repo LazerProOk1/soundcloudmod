@@ -60,7 +60,11 @@ export const TrackCard = React.memo(
       >
         {/* Artwork */}
         <div
-          className="relative aspect-square rounded-2xl overflow-hidden bg-white/[0.03] cursor-pointer ring-1 ring-white/[0.06] group-hover:ring-white/[0.12] transition-all duration-300 ease-[var(--ease-apple)]"
+          className={`relative aspect-square rounded-2xl overflow-hidden bg-white/[0.03] cursor-pointer transition-all duration-300 ease-[var(--ease-apple)] ${
+            isThisPlaying
+              ? 'ring-2 ring-accent/60 shadow-[0_0_24px_var(--color-accent-glow)]'
+              : 'ring-1 ring-white/[0.06] group-hover:ring-white/[0.12] group-hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+          }`}
           onClick={togglePlay}
         >
           {artwork ? (

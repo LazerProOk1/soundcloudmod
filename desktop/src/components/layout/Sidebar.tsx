@@ -7,6 +7,7 @@ import { art } from '../../lib/formatters';
 import {
   Clock,
   Compass,
+  Disc3,
   Download,
   Globe,
   Home,
@@ -26,7 +27,6 @@ import { Avatar } from '../ui/Avatar';
 const languages = [
   { code: 'en', label: 'English' },
   { code: 'ru', label: 'Русский' },
-  { code: 'tr', label: 'Turkce' },
 ] as const;
 
 const navItems = [
@@ -60,8 +60,20 @@ export const Sidebar = React.memo(() => {
   return (
     <aside
       className="shrink-0 flex flex-col h-full border-r border-white/[0.04] transition-[width] duration-200 ease-[var(--ease-apple)]"
-      style={{ width: collapsed ? 56 : 200 }}
+      style={{ width: collapsed ? 56 : 210 }}
     >
+      {/* Logo / branding */}
+      <div
+        className={`flex items-center gap-2 px-3 shrink-0 border-b border-white/[0.04] ${collapsed ? 'justify-center h-10' : 'h-10'}`}
+      >
+        <Disc3 size={14} className="text-accent shrink-0" strokeWidth={2} />
+        {!collapsed && (
+          <span className="text-[11px] font-semibold tracking-tight text-white/30 truncate">
+            SoundCloud
+          </span>
+        )}
+      </div>
+
       <nav className="flex flex-col gap-0.5 px-2 pt-2">
         {navItems.map((item) => (
           <NavLink
@@ -69,19 +81,37 @@ export const Sidebar = React.memo(() => {
             to={item.to}
             title={collapsed ? t(item.label) : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 ease-[var(--ease-apple)] ${
+              `relative flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 ease-[var(--ease-apple)] ${
                 collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
               } ${
                 isActive
-                  ? 'text-white bg-white/[0.07] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
+                  ? 'text-white bg-white/[0.08] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
                   : item.to === '/offline' && appMode !== 'online'
                     ? 'text-white/82 bg-accent/[0.08] ring-1 ring-accent/15'
                     : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
               }`
             }
           >
-            <item.icon size={18} strokeWidth={1.8} />
-            {!collapsed && t(item.label)}
+            {({ isActive }) => (
+              <>
+                {/* Left accent indicator on active items (expanded only) */}
+                {isActive && !collapsed && (
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                    style={{
+                      background: 'var(--color-accent)',
+                      boxShadow: '0 0 8px var(--color-accent-glow)',
+                    }}
+                  />
+                )}
+                <item.icon
+                  size={18}
+                  strokeWidth={1.8}
+                  style={isActive ? { color: 'var(--color-accent)' } : undefined}
+                />
+                {!collapsed && t(item.label)}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -192,24 +222,28 @@ export const Sidebar = React.memo(() => {
 
       {user && (
         <div className="px-2 pb-3">
+          <div className="h-px bg-white/[0.04] mb-2 mx-1" />
           <NavLink
             to={`/user/${encodeURIComponent(user.urn)}`}
             title={collapsed ? user.username : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 px-2 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+              `flex items-center gap-2.5 px-2 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
                 collapsed ? 'justify-center' : ''
               } ${
                 isActive
-                  ? 'bg-white/[0.07] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
+                  ? 'bg-white/[0.07] ring-1 ring-white/[0.06]'
                   : 'hover:bg-white/[0.04]'
               }`
             }
           >
             <Avatar src={user.avatar_url} alt={user.username} size={26} />
             {!collapsed && (
-              <span className="text-[12px] text-white/40 truncate font-medium">
-                {user.username}
-              </span>
+              <div className="min-w-0 flex-1">
+                <span className="text-[12px] text-white/60 truncate font-medium block">
+                  {user.username}
+                </span>
+                <span className="text-[10px] text-white/25 truncate block">Profile</span>
+              </div>
             )}
           </NavLink>
         </div>

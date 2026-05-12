@@ -907,7 +907,8 @@ const TrackInfo = React.memo(() => {
   if (!currentTrack) {
     return (
       <div className="flex items-center gap-3.5 w-[340px] min-w-0">
-        <p className="text-[13px] text-white/15">Not playing</p>
+        <div className="w-14 h-14 rounded-[10px] bg-white/[0.03] ring-1 ring-white/[0.04] shrink-0" />
+        <p className="text-[12px] text-white/18 font-medium select-none">Nothing playing</p>
       </div>
     );
   }
@@ -989,7 +990,7 @@ const BackgroundGlow = React.memo(() => {
   if (!artwork) return null;
   return (
     <div
-      className="absolute inset-0 opacity-[0.05] blur-3xl pointer-events-none"
+      className="absolute inset-0 opacity-[0.09] blur-3xl pointer-events-none transition-[background-image] duration-[2s]"
       style={{
         backgroundImage: `url(${artwork})`,
         backgroundSize: 'cover',
@@ -1007,6 +1008,13 @@ export const NowPlayingBar = React.memo(
   ({ onQueueToggle, queueOpen }: { onQueueToggle: () => void; queueOpen: boolean }) => {
     return (
       <div className="shrink-0 relative z-[50]">
+        {/* Gradient top separator */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px pointer-events-none z-10"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.07) 80%, transparent 100%)',
+          }}
+        />
         <BackgroundGlow />
         {/* Isolated layer — repaints here won't cascade to blur background */}
         <div className="relative" style={{ isolation: 'isolate' }}>

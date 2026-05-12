@@ -78,20 +78,27 @@ function SectionHeader({
   const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between mb-5">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+      <div className="flex items-center gap-3">
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          style={{
+            background: 'rgba(255,255,255,0.045)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
+          }}
+        >
           {icon}
         </div>
-        <h2 className="text-[15px] font-semibold tracking-tight text-white/90">{title}</h2>
+        <h2 className="text-[15px] font-semibold tracking-tight text-white/88">{title}</h2>
       </div>
       {onSeeAll && (
         <button
           type="button"
           onClick={onSeeAll}
-          className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors duration-200 cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-white/30 hover:text-white/65 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] hover:border-white/[0.09] transition-all duration-200 cursor-pointer"
         >
           {t('common.seeAll')}
-          <ChevronRight size={12} />
+          <ChevronRight size={11} />
         </button>
       )}
     </div>
@@ -884,16 +891,18 @@ export function Home() {
   return (
     <div className="p-6 pb-4 space-y-8">
       {/* Hero Greeting — no data hooks, won't re-render */}
-      <section className="pt-1">
+      <section className="pt-1 animate-fade-in-scale">
         <h1 className="hero-greeting text-3xl font-bold tracking-tight leading-tight pb-1">
           {t(greetingKey())}
           {user?.username ? `, ${user.username}` : ''}
         </h1>
-        <div className="mt-3 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
+        <div className="mt-3 h-px bg-gradient-to-r from-white/[0.07] via-white/[0.03] to-transparent" />
       </section>
 
       {/* SoundWave — AI-powered recommendations */}
-      <SoundWaveBlock />
+      <div className="animate-fade-in-scale" style={{ animationDelay: '60ms' }}>
+        <SoundWaveBlock />
+      </div>
 
       {/* Each section is isolated — own hooks, own re-render boundary */}
       <FeaturedHero
