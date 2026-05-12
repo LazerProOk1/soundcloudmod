@@ -1,4 +1,4 @@
-app-id: io.github.zxcloli666.SoundcloudDesktop
+app-id: io.github.LazerProOk1.SoundcloudDesktop
 runtime: org.gnome.Platform
 runtime-version: "49"
 sdk: org.gnome.Sdk
@@ -54,11 +54,11 @@ modules:
       # Install binary
       - install -Dm755 desktop/src-tauri/target/release/soundcloud-desktop /app/bin/soundcloud-desktop
       # Install icons
-      - install -Dm644 desktop/src-tauri/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.zxcloli666.SoundcloudDesktop.png
-      - install -Dm644 desktop/src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.zxcloli666.SoundcloudDesktop.png
-      - install -Dm644 desktop/src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/io.github.zxcloli666.SoundcloudDesktop.png
+      - install -Dm644 desktop/src-tauri/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.LazerProOk1.SoundcloudDesktop.png
+      - install -Dm644 desktop/src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.LazerProOk1.SoundcloudDesktop.png
+      - install -Dm644 desktop/src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/io.github.LazerProOk1.SoundcloudDesktop.png
       # Install .desktop file
-      - install -Dm644 .github/flatpak/io.github.zxcloli666.SoundcloudDesktop.desktop /app/share/applications/io.github.zxcloli666.SoundcloudDesktop.desktop
+      - install -Dm644 .github/flatpak/io.github.LazerProOk1.SoundcloudDesktop.desktop /app/share/applications/io.github.LazerProOk1.SoundcloudDesktop.desktop
     sources:
       - type: dir
         path: ../../
