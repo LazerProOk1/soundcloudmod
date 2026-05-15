@@ -129,22 +129,33 @@ export const TrackCard = React.memo(
               backdropFilter: 'blur(4px) saturate(1.6)',
             }}
           >
-            {/* Play/pause button — liquid glass pill */}
+            {/* Play/pause button — frosted pearl glass (NOT a flat white circle) */}
             <div
               className={`flex items-center justify-center transition-all duration-400 ease-[var(--ease-spring)] ${
                 isThisPlaying ? 'scale-100' : 'scale-[0.7] group-hover:scale-100'
               }`}
               style={{
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.92)',
+                /* Warm white pearl gradient — same physics as NowPlayingBar PlayPause */
+                background:
+                  'linear-gradient(165deg, rgba(255,255,255,0.97) 0%, rgba(218,218,235,0.92) 100%)',
                 boxShadow: `
-                  0 1px 0 0 rgba(255,255,255,0.9) inset,
-                  0 -1px 0 0 rgba(0,0,0,0.15) inset,
-                  0 4px 20px rgba(0,0,0,0.42),
-                  0 0 0 8px rgba(255,255,255,0.06)
+                  /* Differential frosted border */
+                  0 1px 0 0 rgba(255,255,255,1.0) inset,
+                  0 -1px 0 0 rgba(0,0,0,0.22) inset,
+                  1px 0 0 0 rgba(255,255,255,0.82) inset,
+                  -1px 0 0 0 rgba(0,0,0,0.10) inset,
+                  /* Frosted halo ring */
+                  0 0 0 1.5px rgba(255,255,255,0.28),
+                  /* Ambient glow ring */
+                  0 0 0 7px rgba(255,255,255,0.07),
+                  /* Depth shadows */
+                  0 6px 22px rgba(0,0,0,0.48),
+                  0 2px 8px rgba(0,0,0,0.28)
                 `,
+                backdropFilter: 'blur(8px)',
               }}
             >
               {isThisPlaying ? pauseBlack20 : playBlack20}
@@ -184,19 +195,19 @@ export const TrackCard = React.memo(
           {/* Like — top left (existing component) */}
           <LikeButton track={track} variant="overlay" />
 
-          {/* Playlist + queue — top right */}
-          <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {/* Playlist + queue — top right (liquid glass pills, not dark blobs) */}
+          <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
             <AddToPlaylistDialog trackUrns={[track.urn]}>
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
-                className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white/85 hover:text-white transition-colors duration-200"
+                className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 active:scale-95"
                 title={t('playlist.addToPlaylist')}
                 style={{
-                  background: 'rgba(0,0,0,0.45)',
-                  backdropFilter: 'blur(12px)',
+                  background: 'rgba(255,255,255,0.16)',
+                  backdropFilter: 'blur(16px) saturate(1.8)',
                   boxShadow:
-                    '0 1px 0 0 rgba(255,255,255,0.13) inset, 0 2px 8px rgba(0,0,0,0.3)',
+                    '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)',
                 }}
               >
                 <ListPlus size={14} />
@@ -205,13 +216,13 @@ export const TrackCard = React.memo(
             <button
               type="button"
               onClick={handleAddToQueue}
-              className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white/85 hover:text-white transition-colors duration-200"
+              className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 active:scale-95"
               title={t('player.addToQueue')}
               style={{
-                background: 'rgba(0,0,0,0.45)',
-                backdropFilter: 'blur(12px)',
+                background: 'rgba(255,255,255,0.16)',
+                backdropFilter: 'blur(16px) saturate(1.8)',
                 boxShadow:
-                  '0 1px 0 0 rgba(255,255,255,0.13) inset, 0 2px 8px rgba(0,0,0,0.3)',
+                  '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)',
               }}
             >
               <ListMusic size={14} />

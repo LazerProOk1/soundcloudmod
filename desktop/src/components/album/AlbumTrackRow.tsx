@@ -32,19 +32,29 @@ function AlbumTrackRowImpl({ track, position, queue, aura }: AlbumTrackRowProps)
 
   return (
     <div
-      className="group flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] select-none"
+      className="group flex items-center gap-4 px-4 py-2.5 rounded-2xl select-none"
       style={{
         background: isThis
           ? `linear-gradient(90deg, ${auraRgba(aura, 0.16)}, ${auraRgba(aura, 0.04)} 70%, transparent)`
           : undefined,
         boxShadow: isThis ? `inset 0 0 0 1px ${auraRgba(aura, 0.35)}` : undefined,
+        transition: 'background 0.22s var(--ease-apple), transform 0.22s var(--ease-apple), box-shadow 0.22s var(--ease-apple)',
       }}
       onMouseEnter={(e) => {
         preloadTrack(track.urn);
-        if (!isThis) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+        if (!isThis) {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.045)';
+          e.currentTarget.style.transform = 'translateX(4px)';
+          e.currentTarget.style.boxShadow =
+            '0 1px 0 0 rgba(255,255,255,0.10) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 16px rgba(0,0,0,0.14)';
+        }
       }}
       onMouseLeave={(e) => {
-        if (!isThis) e.currentTarget.style.background = '';
+        if (!isThis) {
+          e.currentTarget.style.background = '';
+          e.currentTarget.style.transform = '';
+          e.currentTarget.style.boxShadow = '';
+        }
       }}
     >
       <div
@@ -117,6 +127,18 @@ function AlbumTrackRowImpl({ track, position, queue, aura }: AlbumTrackRowProps)
   );
 }
 
+/* Wrap with staggered reveal — position used as cascade delay (max 600ms cap) */
+function AlbumTrackRowWrapper(props: AlbumTrackRowProps) {
+  return (
+    <div
+      className="animate-liquid-reveal"
+      style={{ animationDelay: `${Math.min((props.position - 1) * 30, 600)}ms` }}
+    >
+      <AlbumTrackRowImpl {...props} />
+    </div>
+  );
+}
+
 const areEqual = (prev: AlbumTrackRowProps, next: AlbumTrackRowProps) =>
   prev.track.urn === next.track.urn &&
   prev.position === next.position &&
@@ -126,4 +148,4 @@ const areEqual = (prev: AlbumTrackRowProps, next: AlbumTrackRowProps) =>
   prev.aura.accent[2] === next.aura.accent[2] &&
   prev.track.user_favorite === next.track.user_favorite;
 
-export const AlbumTrackRow = memo(AlbumTrackRowImpl, areEqual);
+export const AlbumTrackRow = memo(AlbumTrackRowWrapper, areEqual);

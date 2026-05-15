@@ -1005,6 +1005,56 @@ body,
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45), 0 0.5px 2px rgba(0, 0, 0, 0.28);
 }
 
+/* ── Liquid Reveal — global card/list entry animation ────────
+   VisionOS-style: items bloom up from slightly below and in scale.
+   Apply .animate-liquid-reveal to any card/row wrapper.
+   For staggered lists: add style={{ animationDelay: `${i * 45}ms` }}.
+   transform-origin: center top gives a natural "unfolding" feel.
+   @prefers-reduced-motion: collapse to a simple fade.               */
+
+@keyframes liquid-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-liquid-reveal {
+  animation: liquid-reveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Ensure sub-pixel rendering stays crisp on retina */
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-liquid-reveal {
+    animation: none;
+  }
+}
+
+/* ── Liquid Row Hover — track list items ─────────────────────
+   Apply to any track row `<div>` for a subtle slide+glass on hover. */
+.liquid-row-hover {
+  transition:
+    background 0.22s var(--ease-apple),
+    transform 0.22s var(--ease-apple),
+    box-shadow 0.22s var(--ease-apple);
+  border-radius: 16px;
+}
+
+.liquid-row-hover:hover {
+  background: rgba(255, 255, 255, 0.045);
+  transform: translateX(4px);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.20) inset,
+    0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
 /* ── AmbientMeshBackground blob animations ───────────────────
    ONLY transform (translate + scale) — compositor thread, no pixel cost.
    Each blob has a unique trajectory so they never perfectly align.        */

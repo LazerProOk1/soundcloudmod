@@ -69,9 +69,29 @@ export const Sidebar = React.memo(() => {
       <div
         className={`flex items-center gap-2 px-3 shrink-0 border-b border-white/[0.04] ${collapsed ? 'justify-center h-10' : 'h-10'}`}
       >
-        <Disc3 size={14} className="text-accent shrink-0" strokeWidth={2} />
+        <Disc3
+          size={14}
+          strokeWidth={2}
+          className="shrink-0"
+          style={{
+            color: 'var(--color-accent)',
+            /* Spinning disc deserves a warm glow */
+            filter: 'drop-shadow(0 0 5px rgba(255,85,0,0.55)) drop-shadow(0 0 2px rgba(255,120,0,0.35))',
+          }}
+        />
         {!collapsed && (
-          <span className="text-[11px] font-semibold tracking-tight text-white/30 truncate">
+          <span
+            className="text-[11px] font-semibold tracking-tight truncate"
+            style={{
+              /* Orange → bright white gradient: premium, on-brand */
+              background:
+                'linear-gradient(90deg, rgba(255,120,40,0.95) 0%, rgba(255,255,255,0.72) 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             SoundCloud
           </span>
         )}

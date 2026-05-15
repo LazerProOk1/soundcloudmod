@@ -739,8 +739,12 @@ const DiscoverSection = React.memo(function DiscoverSection({
             {isLoading ? (
               <ShelfSkeleton />
             ) : (
-              recommendedTracks.map((track) => (
-                <div key={track.urn} className="w-[180px] shrink-0">
+              recommendedTracks.map((track, i) => (
+                <div
+                  key={track.urn}
+                  className="w-[180px] shrink-0 animate-liquid-reveal"
+                  style={{ animationDelay: `${Math.min(i * 45, 540)}ms` }}
+                >
                   <TrackCard track={track} queue={recommendedTracks} />
                 </div>
               ))
@@ -776,8 +780,12 @@ const DiscoverSection = React.memo(function DiscoverSection({
             {isLoading ? (
               <ShelfSkeleton />
             ) : (
-              genreTracks.map((track) => (
-                <div key={track.urn} className="w-[180px] shrink-0">
+              genreTracks.map((track, i) => (
+                <div
+                  key={track.urn}
+                  className="w-[180px] shrink-0 animate-liquid-reveal"
+                  style={{ animationDelay: `${Math.min(i * 45, 540)}ms` }}
+                >
                   <TrackCard track={track} queue={genreTracks} />
                 </div>
               ))

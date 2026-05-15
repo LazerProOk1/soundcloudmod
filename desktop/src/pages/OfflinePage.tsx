@@ -413,7 +413,23 @@ function OfflineSection({
 
   return (
     <section
-      className={`relative overflow-hidden rounded-[34px] border ${styles.border} bg-black/24 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-[32px] md:p-6`}
+      className={`relative overflow-hidden rounded-[34px] border ${styles.border} p-5 md:p-6 animate-liquid-reveal`}
+      style={{
+        /* Full liquid glass — background, blur, differential inset lighting */
+        background: 'rgba(10, 10, 14, 0.38)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        boxShadow: `
+          /* Differential border — top/left bright, bottom/right dark */
+          0 1px 0 0 rgba(255,255,255,0.22) inset,
+          1px 0 0 0 rgba(255,255,255,0.10) inset,
+          0 -1px 0 0 rgba(0,0,0,0.42) inset,
+          -1px 0 0 0 rgba(0,0,0,0.18) inset,
+          /* Depth */
+          0 24px 80px rgba(0,0,0,0.32),
+          0 6px 24px rgba(0,0,0,0.20)
+        `,
+      }}
     >
       <div className={`pointer-events-none absolute inset-0 ${styles.glow}`} />
 
@@ -446,15 +462,20 @@ function OfflineSection({
               rowHeight={82}
               overscan={8}
               getItemKey={(track) => track.urn}
-              renderItem={(track) => {
+              renderItem={(track, index) => {
                 const isCached = cachedUrns.has(track.urn);
                 return (
-                  <OfflineTrackRow
-                    track={track}
-                    queue={likesMode ? playableQueue : items}
-                    canPlay={likesMode ? isCached : true}
-                    showCachedBadge={isCached}
-                  />
+                  <div
+                    className="animate-liquid-reveal"
+                    style={{ animationDelay: `${Math.min(index * 35, 400)}ms` }}
+                  >
+                    <OfflineTrackRow
+                      track={track}
+                      queue={likesMode ? playableQueue : items}
+                      canPlay={likesMode ? isCached : true}
+                      showCachedBadge={isCached}
+                    />
+                  </div>
                 );
               }}
             />

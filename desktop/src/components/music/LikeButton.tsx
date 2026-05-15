@@ -41,11 +41,16 @@ export const LikeButton = React.memo(function LikeButton({
       <button
         type="button"
         onClick={toggle}
-        className={`cursor-pointer absolute top-2 left-2 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 ${
-          liked
-            ? 'bg-accent/80 text-accent-contrast'
-            : 'bg-black/50 text-white/80 hover:text-white hover:bg-black/70'
-        }`}
+        className="cursor-pointer absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 translate-y-1 group-hover:translate-y-0"
+        style={{
+          /* Glass pill — matches top-right buttons in TrackCard */
+          background: liked ? 'rgba(255,85,0,0.72)' : 'rgba(255,255,255,0.16)',
+          backdropFilter: 'blur(16px) saturate(1.8)',
+          boxShadow: liked
+            ? '0 1px 0 0 rgba(255,255,255,0.30) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(255,85,0,0.35)'
+            : '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)',
+          color: 'white',
+        }}
       >
         <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
       </button>
