@@ -143,6 +143,20 @@ export function LiquidGlassDefs() {
           <feBlend in="SourceGraphic" in2="gooey" mode="normal" />
         </filter>
 
+        {/* ── Waveform gooey: bars blending ────────────────────────────
+            stdDeviation 4 → bars at 3px gap merge into organic blob
+            threshold 18 -7 → crisp organic edge between bars           */}
+        <filter id="waveform-gooey" x="-20%" y="-40%" width="140%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+          <feColorMatrix
+            in="blur"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+            result="gooey"
+          />
+          <feBlend in="SourceGraphic" in2="gooey" mode="normal" />
+        </filter>
+
         {/* ── Tight gooey merge: switch thumb ──────────────────────────
             stdDeviation 3 → narrow blur so only thumb+track rim merge
             feColorMatrix high threshold (28 -10) → crisp organic edge

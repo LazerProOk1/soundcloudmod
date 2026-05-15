@@ -296,9 +296,8 @@ body,
     0 0 0 0.5px rgba(255, 255, 255, 0.08),
     0 24px 70px rgba(0, 0, 0, 0.50),
     0 6px 24px rgba(0, 0, 0, 0.30);
-  transition:
-    background 0.38s var(--ease-spring),
-    box-shadow 0.38s var(--ease-spring);
+  /* 120fps: only background transitions */
+  transition: background 0.38s var(--ease-spring);
 }
 
 .glass-featured::before {
@@ -360,9 +359,8 @@ body,
     0 -1px 0 0 rgba(0, 0, 0, 0.38) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.06),
     0 8px 32px rgba(0, 0, 0, 0.38);
-  transition:
-    background 0.28s var(--ease-spring),
-    box-shadow 0.28s var(--ease-spring);
+  /* 120fps: only background transitions, box-shadow snaps */
+  transition: background 0.28s var(--ease-spring);
 }
 
 .glass-card:hover {
@@ -373,6 +371,42 @@ body,
     0 -1px 0 0 rgba(0, 0, 0, 0.42) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.09),
     0 12px 44px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Glass pill button — frosted, inset white glint top-left ──── */
+.glass-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    /* White inset glint: top-left light source */
+    0 1px 0 0 rgba(255, 255, 255, 0.30) inset,
+    1px 0 0 0 rgba(255, 255, 255, 0.16) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.30) inset,
+    /* Frosted halo */
+    0 0 0 0.5px rgba(255, 255, 255, 0.10),
+    /* Depth */
+    0 4px 16px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  /* Only transform animates — 120fps safe */
+  transition: transform 0.18s var(--ease-spring), background 0.18s var(--ease-spring);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.glass-pill:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+  transform: translateY(-1px);
+}
+
+.glass-pill:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* ── Liquid Glass v2 — Глубокая физика стекла ─────────────── */
@@ -479,12 +513,12 @@ body,
  * .liquid-interactive
  *
  * Добавляй к .liquid-panel для плавных hover/active transition.
- * Spring-переходы фона и теней.
+ * 120fps rule: only background + transform in transition.
+ * box-shadow снаппится мгновенно на hover (нет анимационного бюджета).
  */
 .liquid-interactive {
   transition:
     background 0.38s var(--ease-spring),
-    box-shadow 0.38s var(--ease-spring),
     transform 0.38s var(--ease-spring);
   cursor: pointer;
 }
@@ -1037,18 +1071,19 @@ body,
 }
 
 /* ── Liquid Row Hover — track list items ─────────────────────
-   Apply to any track row `<div>` for a subtle slide+glass on hover. */
+   Apply to any track row `<div>` for a subtle slide+glass on hover.
+   120fps rule: only transform + opacity in transition. box-shadow is
+   STATIC on hover (snaps instantly — no animation budget cost).     */
 .liquid-row-hover {
   transition:
     background 0.22s var(--ease-apple),
-    transform 0.22s var(--ease-apple),
-    box-shadow 0.22s var(--ease-apple);
+    transform 0.22s var(--ease-apple);
   border-radius: 16px;
 }
 
 .liquid-row-hover:hover {
   background: rgba(255, 255, 255, 0.045);
-  transform: translateX(4px);
+  transform: translate3d(4px, 0, 0);
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.20) inset,
@@ -1102,3 +1137,53 @@ body,
   display: inline-block;
   /* pause on hover so the user can read the title */
 }
+
+/* ── Global typography system ────────────────────────────────────
+   Unified font-weight scale so nothing looks randomly bold/thin.
+   h1-h2: semibold. h3-h4: medium. body/p: regular (400).          */
+h1, h2 { font-weight: 600; letter-spacing: -0.02em; }
+h3, h4 { font-weight: 500; letter-spacing: -0.01em; }
+p, span, li { font-weight: 400; }
+
+/* Section titles: semibold (15px) */
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Track title: medium (13px) */
+.track-title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.90);
+}
+
+/* Artist name / secondary text: regular (11px) */
+.track-artist {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.40);
+}
+
+/* ── Liquid MiniPlayer — floating pill ───────────────────────────
+   Used by the redesigned Tauri mini-window (MiniPlayer.tsx).      */
+.miniplayer-root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background: rgba(8, 8, 12, 0.92);
+  backdrop-filter: blur(50px) saturate(220%);
+  -webkit-backdrop-filter: blur(50px) saturate(220%);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Waveform seek cursor ─────────────────────────────────────── */
+.cursor-col-resize { cursor: col-resize; }

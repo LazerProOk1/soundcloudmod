@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { getCurrentTime, getDuration, seek, subscribe } from '../../../lib/audio';
 import { useTrackWaveform } from '../../../lib/waveform';
 import type { Track } from '../../../stores/player';
 
-const BAR_COUNT = 160;
+/** Fewer bars = wider, more organic (not a barcode). */
+const BAR_COUNT = 80;
 
 /** Downsample SC waveform samples into BAR_COUNT averaged bars (0..1). */
 function downsample(samples: number[], height: number, count: number): number[] {
@@ -25,29 +26,31 @@ function downsample(samples: number[], height: number, count: number): number[] 
   return out;
 }
 
-/** Decorative fallback pattern used during load / when SC has no waveform. */
+/** Decorative fallback — organic sine pattern while loading. */
 const FALLBACK_BARS = (() => {
   const arr = new Array<number>(BAR_COUNT);
   for (let i = 0; i < BAR_COUNT; i++) {
     const x = i / BAR_COUNT;
     const base = 0.35 + 0.28 * Math.sin(x * Math.PI * 2);
-    const detail = 0.18 * Math.sin(x * Math.PI * 14 + 1.3);
+    const detail = 0.18 * Math.sin(x * Math.PI * 7 + 1.3);
     arr[i] = Math.max(0.22, Math.min(0.95, base + detail));
   }
   return arr;
 })();
 
 interface Props {
-  /** Track whose waveform to render; null → idle/fallback pattern. */
   track: Track | null;
-  /** Whether `track` is the one currently loaded in the audio engine. */
   isCurrent: boolean;
 }
 
 /**
- * Progress-bearing waveform. Bars are drawn twice (muted + accent); the accent
- * layer is clipped by `--sw-progress` which we update via DOM refs on each
- * audio tick — no React re-renders while the track plays.
+ * Progress-bearing waveform with drag-to-seek.
+ *
+ * Two stacked bar layers (muted + accent), accent clipped by `--sw-progress`.
+ * Audio position is updated via DOM refs — zero React re-renders during playback.
+ * Drag state is tracked via `useRef` — no React state during mousemove.
+ *
+ * 120fps rule: only `clip-path` and `left` change at runtime (GPU compositor).
  */
 export const LiveWaveform = React.memo(
   function LiveWaveform({ track, isCurrent }: Props) {
@@ -60,48 +63,97 @@ export const LiveWaveform = React.memo(
 
     const rootRef = useRef<HTMLDivElement>(null);
     const hintRef = useRef<HTMLDivElement>(null);
+    /** true while the user is dragging — suppresses the rAF progress updates */
+    const isDraggingRef = useRef(false);
 
+    /* ── Progress sync (rAF-free, event-driven) ──────────────────── */
     useEffect(() => {
       if (!isCurrent) {
-        if (rootRef.current) rootRef.current.style.setProperty('--sw-progress', '0%');
+        rootRef.current?.style.setProperty('--sw-progress', '0%');
         if (hintRef.current) hintRef.current.style.left = '0%';
         return;
       }
       const paint = () => {
+        if (isDraggingRef.current) return; // don't fight the drag
         const t = getCurrentTime();
         const d = getDuration();
         const pct = d > 0 ? Math.min(100, Math.max(0, (t / d) * 100)) : 0;
-        if (rootRef.current) rootRef.current.style.setProperty('--sw-progress', `${pct}%`);
+        rootRef.current?.style.setProperty('--sw-progress', `${pct}%`);
         if (hintRef.current) hintRef.current.style.left = `${pct}%`;
       };
       paint();
       return subscribe(paint);
     }, [isCurrent]);
 
-    const handleBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isCurrent) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-      const d = getDuration();
-      if (d > 0) seek(pct * d);
-    };
+    /* ── Shared seek helper ──────────────────────────────────────── */
+    const seekFromClientX = useCallback(
+      (clientX: number) => {
+        if (!isCurrent || !rootRef.current) return;
+        const rect = rootRef.current.getBoundingClientRect();
+        const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        const d = getDuration();
+        if (d <= 0) return;
+        // Optimistic visual update while dragging
+        const pctStr = `${pct * 100}%`;
+        rootRef.current.style.setProperty('--sw-progress', pctStr);
+        if (hintRef.current) hintRef.current.style.left = pctStr;
+        seek(pct * d);
+      },
+      [isCurrent],
+    );
+
+    /* ── Drag-to-seek ────────────────────────────────────────────── */
+    const handleMouseDown = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isCurrent) return;
+        e.preventDefault();
+        isDraggingRef.current = true;
+        seekFromClientX(e.clientX);
+
+        const onMove = (ev: MouseEvent) => {
+          if (!isDraggingRef.current) return;
+          seekFromClientX(ev.clientX);
+        };
+        const onUp = () => {
+          isDraggingRef.current = false;
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      },
+      [isCurrent, seekFromClientX],
+    );
 
     return (
       <div
         ref={rootRef}
-        className={`sw-bars relative w-full h-[96px] ${isCurrent ? 'cursor-pointer' : 'cursor-default'}`}
-        onClick={handleBarClick}
+        className={`sw-bars relative w-full h-[96px] ${
+          isCurrent ? 'cursor-col-resize' : 'cursor-default'
+        }`}
+        onMouseDown={handleMouseDown}
       >
-        <div className="sw-layer-muted absolute inset-0 flex items-center gap-[2px]">
+        {/* Muted layer — gooey blobs */}
+        <div
+          className="sw-layer-muted absolute inset-0 flex items-center gap-[3px]"
+          style={{ filter: 'url(#waveform-gooey)' }}
+        >
           {bars.map((v, i) => (
             <div key={i} className="sw-bar flex-1" style={{ height: `${v * 100}%` }} />
           ))}
         </div>
-        <div className="sw-layer-accent absolute inset-0 flex items-center gap-[2px]">
+
+        {/* Accent (progress) layer — gooey blobs, clipped by --sw-progress */}
+        <div
+          className="sw-layer-accent absolute inset-0 flex items-center gap-[3px]"
+          style={{ filter: 'url(#waveform-gooey)' }}
+        >
           {bars.map((v, i) => (
             <div key={i} className="sw-bar flex-1" style={{ height: `${v * 100}%` }} />
           ))}
         </div>
+
+        {/* Loading shimmer */}
         {isLoading && (
           <div
             className="absolute inset-0 pointer-events-none"
@@ -110,17 +162,18 @@ export const LiveWaveform = React.memo(
               background:
                 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%)',
               backgroundSize: '200% 100%',
-              animation: 'shimmer 1.8s ease-in-out infinite',
+              animation: 'skeleton-sweep 1.8s ease-in-out infinite',
             }}
           />
         )}
+
+        {/* Playhead cursor */}
         {isCurrent && (
           <div
             ref={hintRef}
             className="absolute top-0 bottom-0 w-[2px] pointer-events-none rounded-full"
             style={{
               left: '0%',
-              /* Indigo → cyan gradient — matches the accent bars */
               background:
                 'linear-gradient(180deg, rgba(129,140,248,0.95) 0%, rgba(34,211,238,0.80) 100%)',
               boxShadow:

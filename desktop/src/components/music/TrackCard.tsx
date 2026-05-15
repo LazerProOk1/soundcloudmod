@@ -97,7 +97,9 @@ export const TrackCard = React.memo(
               0 2px 8px rgba(0,0,0,0.25)
             `,
             background: 'rgba(255,255,255,0.035)',
-            backdropFilter: 'blur(2px)',
+            /* Force GPU layer — ensures border-radius clips correctly under 3D parent transform */
+            transform: 'translateZ(0)',
+            willChange: 'transform',
           }}
           onClick={togglePlay}
         >
@@ -106,6 +108,7 @@ export const TrackCard = React.memo(
               src={artwork}
               alt={track.title}
               className="w-full h-full object-cover transition-transform duration-500 ease-[var(--ease-spring)] group-hover:scale-[1.06]"
+              style={{ willChange: 'transform' }}
               decoding="async"
               loading="lazy"
             />
@@ -115,18 +118,13 @@ export const TrackCard = React.memo(
             </div>
           )}
 
-          {/* Liquid overlay — liquid glass gradient on hover/playing */}
+          {/* Liquid overlay — opacity-only transition (120fps safe) */}
           <div
-            className={`absolute inset-0 flex items-center justify-center transition-all duration-350 ease-[var(--ease-spring)] ${
-              isThisPlaying
-                ? 'opacity-100'
-                : 'opacity-0 group-hover:opacity-100'
+            className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-[var(--ease-spring)] ${
+              isThisPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
             }`}
             style={{
-              background: isThisPlaying
-                ? 'linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.48) 100%)'
-                : 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.38) 100%)',
-              backdropFilter: 'blur(4px) saturate(1.6)',
+              background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.44) 100%)',
             }}
           >
             {/* Play/pause button — frosted pearl glass (NOT a flat white circle) */}
