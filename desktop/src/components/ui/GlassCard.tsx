@@ -16,7 +16,7 @@ export function GlassCard({
 }: GlassCardProps) {
   return (
     <div
-      className={`liquid-panel rounded-2xl ${
+      className={`liquid-panel rounded-[40px] ${
         hover ? 'liquid-interactive' : ''
       } ${padding ? 'p-4' : ''} ${className}`}
       {...props}

@@ -53,7 +53,7 @@ export const QrLinkSheet = React.memo(
             }}
           />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 z-[101] w-[420px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-2xl overflow-hidden outline-none animate-in fade-in zoom-in-95 duration-200"
+            className="fixed left-1/2 top-1/2 z-[101] w-[420px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-[32px] overflow-hidden outline-none animate-in fade-in zoom-in-95 duration-200"
             style={{
               background:
                 'linear-gradient(165deg, rgba(22,14,38,0.97), rgba(14,10,28,0.98), rgba(10,8,22,0.99))',

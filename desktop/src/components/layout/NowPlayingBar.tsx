@@ -790,7 +790,7 @@ const SleepTimerBtn = React.memo(() => {
           align="end"
           sideOffset={10}
           collisionPadding={12}
-          className="z-[200] w-[220px] origin-bottom-right rounded-[18px] border border-white/[0.10] bg-[#101012]/96 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl outline-none data-[state=open]:animate-fade-in-up"
+          className="z-[200] w-[220px] origin-bottom-right rounded-[28px] border border-white/[0.10] bg-[#101012]/96 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl outline-none data-[state=open]:animate-fade-in-up"
         >
           {/* top gradient sheen */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-12 rounded-t-[18px] bg-gradient-to-b from-white/[0.05] to-transparent" />
@@ -891,7 +891,7 @@ const TuningBtn = React.memo(() => {
           align="end"
           sideOffset={10}
           collisionPadding={12}
-          className="z-[200] w-[300px] origin-bottom-right rounded-[18px] border border-white/[0.10] bg-[#101012]/96 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl outline-none data-[state=open]:animate-fade-in-up"
+          className="z-[200] w-[300px] origin-bottom-right rounded-[28px] border border-white/[0.10] bg-[#101012]/96 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl outline-none data-[state=open]:animate-fade-in-up"
         >
           <div className="absolute inset-x-0 top-0 h-12 rounded-t-[18px] bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
           <div className="relative flex items-center gap-2 px-1 pb-2.5">
@@ -1066,15 +1066,19 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
         <EditTrackInfoDialog track={track} onClose={() => setEditOpen(false)} />
       )}
       <div
-        className="glass-artwork relative w-14 h-14 rounded-[12px] shrink-0 cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
+        className="glass-artwork relative w-14 h-14 rounded-[18px] shrink-0 cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
         style={{
-          ['--artwork-radius' as string]: '12px',
+          ['--artwork-radius' as string]: '18px',
           boxShadow: `
-            0 1px 0 0 rgba(255,255,255,0.20) inset,
-            1px 0 0 0 rgba(255,255,255,0.10) inset,
-            0 -1px 0 0 rgba(0,0,0,0.45) inset,
-            0 0 0 0.5px rgba(255,255,255,0.08),
-            0 8px 28px rgba(0,0,0,0.45)
+            0 1px 0 0 rgba(255,255,255,0.24) inset,
+            0 3px 6px -1px rgba(255,255,255,0.07) inset,
+            1px 0 0 0 rgba(255,255,255,0.13) inset,
+            0 -1px 0 0 rgba(0,0,0,0.50) inset,
+            -1px 0 0 0 rgba(0,0,0,0.18) inset,
+            0 0 0 0.5px rgba(255,255,255,0.09),
+            0 3px 10px rgba(0,0,0,0.28),
+            0 10px 28px rgba(0,0,0,0.30),
+            0 0 40px rgba(255,255,255,0.010)
           `,
         }}
         onClick={() => openLyricsPanel({ rightPanelOpen: false })}

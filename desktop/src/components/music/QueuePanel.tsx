@@ -29,7 +29,7 @@ const NowPlayingItem = React.memo(() => {
 
   return (
     <div
-      className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.08] ring-1 ring-white/[0.08] cursor-pointer"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-white/[0.08] ring-1 ring-white/[0.08] cursor-pointer"
       onClick={handleClick}
     >
       <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative bg-white/[0.04]">
@@ -235,14 +235,27 @@ export const QueuePanel = React.memo(
 
         {/* Panel */}
         <div
-          className="fixed top-0 right-0 bottom-0 w-[360px] z-50 flex flex-col"
+          className="fixed top-3 right-3 bottom-3 w-[360px] z-50 flex flex-col overflow-hidden"
           style={{
-            background: 'rgba(18, 18, 20, 0.88)',
-            backdropFilter: 'blur(60px) saturate(1.8)',
-            borderLeft: '1px solid rgba(255,255,255,0.06)',
-            transform: open ? 'translateX(0)' : 'translateX(100%)',
+            background: 'rgba(14, 14, 18, 0.86)',
+            backdropFilter: 'blur(44px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(44px) saturate(190%)',
+            borderRadius: 40,
+            boxShadow: `
+              0 1px 0 0 rgba(255,255,255,0.22) inset,
+              0 3px 8px -2px rgba(255,255,255,0.06) inset,
+              1px 0 0 0 rgba(255,255,255,0.12) inset,
+              0 -1px 0 0 rgba(0,0,0,0.55) inset,
+              -1px 0 0 0 rgba(0,0,0,0.24) inset,
+              0 0 0 0.5px rgba(255,255,255,0.08),
+              0 4px 10px rgba(0,0,0,0.10),
+              0 16px 40px rgba(0,0,0,0.22),
+              0 40px 80px rgba(0,0,0,0.28),
+              0 0 80px rgba(255,255,255,0.012)
+            `,
+            transform: open ? 'translateX(0)' : 'translateX(calc(100% + 16px))',
             visibility: open ? 'visible' : 'hidden',
-            transition: 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1), visibility 300ms',
+            transition: 'transform 340ms cubic-bezier(0.16, 1, 0.3, 1), visibility 340ms',
           }}
         >
           {/* Header */}

@@ -56,7 +56,7 @@ export const VibeSearchBar = React.memo(
 
     return (
       <div
-        className="vibe-search relative rounded-2xl overflow-hidden transition-all duration-300 ease-[var(--ease-apple)]"
+        className="vibe-search relative rounded-[28px] overflow-hidden transition-all duration-300 ease-[var(--ease-apple)]"
         data-active={active ? '' : undefined}
         style={{
           background: active
