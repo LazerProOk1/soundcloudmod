@@ -43,10 +43,19 @@ function ThemedTrackRowImpl({ track, index, queue, aura }: ThemedTrackRowProps) 
       }}
       onMouseEnter={(e) => {
         preloadTrack(track.urn);
-        if (!isThis) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+        if (!isThis) {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.045)';
+          e.currentTarget.style.transform = 'translateX(4px)';
+          e.currentTarget.style.boxShadow =
+            '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 -1px 0 0 rgba(0,0,0,0.18) inset, 0 4px 16px rgba(0,0,0,0.12)';
+        }
       }}
       onMouseLeave={(e) => {
-        if (!isThis) e.currentTarget.style.background = '';
+        if (!isThis) {
+          e.currentTarget.style.background = '';
+          e.currentTarget.style.transform = '';
+          e.currentTarget.style.boxShadow = '';
+        }
       }}
     >
       <div

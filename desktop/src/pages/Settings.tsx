@@ -1283,18 +1283,54 @@ const AccountSection = React.memo(function AccountSection() {
       <h3 className="text-[15px] font-bold text-white/80 tracking-tight mb-5">
         {t('settings.account')}
       </h3>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         <button
           type="button"
           onClick={() => setTransferOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold bg-white/[0.04] text-white/75 hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 cursor-pointer w-fit"
+          className="flex items-center gap-2 px-5 py-3 rounded-[20px] text-[13px] font-semibold text-white/80 hover:text-white transition-all duration-300 cursor-pointer w-fit"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            boxShadow: `
+              0 1px 0 0 rgba(255,255,255,0.18) inset,
+              1px 0 0 0 rgba(255,255,255,0.10) inset,
+              0 -1px 0 0 rgba(0,0,0,0.30) inset,
+              0 0 0 0.5px rgba(255,255,255,0.08),
+              0 4px 16px rgba(0,0,0,0.18)
+            `,
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)';
+          }}
         >
           {t('qrLink.transferSession')}
         </button>
         <button
           type="button"
           onClick={logout}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/10 hover:border-red-500/20 transition-all duration-300 cursor-pointer w-fit"
+          className="flex items-center gap-2 px-5 py-3 rounded-[20px] text-[13px] font-semibold text-red-400 hover:text-red-300 transition-all duration-300 cursor-pointer w-fit"
+          style={{
+            background: 'rgba(239,68,68,0.08)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            boxShadow: `
+              0 1px 0 0 rgba(255,150,150,0.20) inset,
+              1px 0 0 0 rgba(255,150,150,0.12) inset,
+              0 -1px 0 0 rgba(0,0,0,0.25) inset,
+              0 0 0 0.5px rgba(239,68,68,0.18),
+              0 4px 16px rgba(0,0,0,0.16)
+            `,
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.14)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)';
+          }}
         >
           {t('auth.signOut')}
         </button>
