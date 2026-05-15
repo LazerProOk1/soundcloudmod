@@ -120,8 +120,11 @@ export const LiveWaveform = React.memo(
             className="absolute top-0 bottom-0 w-[2px] pointer-events-none rounded-full"
             style={{
               left: '0%',
-              background: 'var(--color-accent)',
-              boxShadow: '0 0 8px var(--color-accent-glow), 0 0 16px var(--color-accent-glow)',
+              /* Indigo → cyan gradient — matches the accent bars */
+              background:
+                'linear-gradient(180deg, rgba(129,140,248,0.95) 0%, rgba(34,211,238,0.80) 100%)',
+              boxShadow:
+                '0 0 8px rgba(99,102,241,0.55), 0 0 16px rgba(99,102,241,0.30), 0 0 4px rgba(34,211,238,0.30)',
               willChange: 'left',
             }}
           />

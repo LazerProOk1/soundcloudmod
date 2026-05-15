@@ -142,6 +142,22 @@ export function LiquidGlassDefs() {
           />
           <feBlend in="SourceGraphic" in2="gooey" mode="normal" />
         </filter>
+
+        {/* ── Tight gooey merge: switch thumb ──────────────────────────
+            stdDeviation 3 → narrow blur so only thumb+track rim merge
+            feColorMatrix high threshold (28 -10) → crisp organic edge
+            Used by LiquidSwitch to make the mercury thumb "absorb" into
+            the track groove as it slides past the rim.                  */}
+        <filter id="liquid-gooey-switch" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+          <feColorMatrix
+            in="blur"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -10"
+            result="gooey"
+          />
+          <feBlend in="SourceGraphic" in2="gooey" mode="normal" />
+        </filter>
       </defs>
     </svg>
   );

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { CallProxySection } from '../components/settings/CallProxySection.tsx';
+import { LiquidSwitch } from '../components/ui/LiquidSwitch.tsx';
 import { Skeleton } from '../components/ui/Skeleton.tsx';
 import { changeAppLanguage } from '../i18n';
 import { switchAudioDevice } from '../lib/audio';
@@ -164,15 +165,10 @@ function CacheListenedToggle() {
           )}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => setCacheListenedTracks(!cacheListenedTracks)}
-        className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer shrink-0 ${cacheListenedTracks ? 'bg-accent' : 'bg-white/10'}`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${cacheListenedTracks ? 'translate-x-5' : 'translate-x-0'}`}
-        />
-      </button>
+      <LiquidSwitch
+        checked={cacheListenedTracks}
+        onChange={setCacheListenedTracks}
+      />
     </div>
   );
 }
@@ -1063,18 +1059,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.floatingComments')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.floatingCommentsDesc')}</p>
         </div>
-        <button
-          onClick={() => setFloatingComments(!floatingComments)}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-            floatingComments ? 'bg-accent' : 'bg-white/10'
-          }`}
-        >
-          <div
-            className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-              floatingComments ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-            }`}
-          />
-        </button>
+        <LiquidSwitch
+          checked={floatingComments}
+          onChange={setFloatingComments}
+        />
       </div>
 
       {/* Lyrics visualizer */}
@@ -1083,19 +1071,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.lyricsVisualizer')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.lyricsVisualizerDesc')}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setLyricsVisualizer(!lyricsVisualizer)}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-            lyricsVisualizer ? 'bg-accent' : 'bg-white/10'
-          }`}
-        >
-          <div
-            className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-              lyricsVisualizer ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-            }`}
-          />
-        </button>
+        <LiquidSwitch
+          checked={lyricsVisualizer}
+          onChange={setLyricsVisualizer}
+        />
       </div>
 
       <div className="flex items-center justify-between">
@@ -1103,18 +1082,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.normalizeVolume')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.normalizeVolumeDesc')}</p>
         </div>
-        <button
-          onClick={() => setNormalizeVolume(!normalizeVolume)}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-            normalizeVolume ? 'bg-accent' : 'bg-white/10'
-          }`}
-        >
-          <div
-            className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-              normalizeVolume ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-            }`}
-          />
-        </button>
+        <LiquidSwitch
+          checked={normalizeVolume}
+          onChange={setNormalizeVolume}
+        />
       </div>
 
       <div className="flex items-center justify-between">
@@ -1126,19 +1097,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
             {t('settings.highQualityStreamingDesc')}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setHighQualityStreaming(!highQualityStreaming)}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-            highQualityStreaming ? 'bg-accent' : 'bg-white/10'
-          }`}
-        >
-          <div
-            className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-              highQualityStreaming ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-            }`}
-          />
-        </button>
+        <LiquidSwitch
+          checked={highQualityStreaming}
+          onChange={setHighQualityStreaming}
+        />
       </div>
 
       {/* Bypass Whitelists */}
@@ -1147,19 +1109,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.bypassWhitelist')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.bypassWhitelistDesc')}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setBypassWhitelist(!bypassWhitelist)}
-          className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-            bypassWhitelist ? 'bg-accent' : 'bg-white/10'
-          }`}
-        >
-          <div
-            className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-              bypassWhitelist ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-            }`}
-          />
-        </button>
+        <LiquidSwitch
+          checked={bypassWhitelist}
+          onChange={setBypassWhitelist}
+        />
       </div>
 
       {/* Crossfade */}
@@ -1186,7 +1139,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           step={1}
           value={crossfadeDuration}
           onChange={(e) => setCrossfadeDuration(Number(e.target.value))}
-          className="w-full accent-[var(--color-accent)] h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg"
+          className="liquid-slider"
         />
         <div className="flex justify-between text-[10px] text-white/20 select-none">
           {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((v) => (
@@ -1203,18 +1156,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
             <p className="text-[13px] text-white/70 font-medium">{t('settings.discordRpc')}</p>
             <p className="text-[11px] text-white/30 mt-0.5">{t('settings.discordRpcDesc')}</p>
           </div>
-          <button
-            onClick={() => setDiscordRpcEnabled(!discordRpcEnabled)}
-            className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-              discordRpcEnabled ? 'bg-accent' : 'bg-white/10'
-            }`}
-          >
-            <div
-              className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-                discordRpcEnabled ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-              }`}
-            />
-          </button>
+          <LiquidSwitch
+            checked={discordRpcEnabled}
+            onChange={setDiscordRpcEnabled}
+          />
         </div>
 
         {discordRpcEnabled && (
@@ -1252,18 +1197,10 @@ const PlaybackSection = React.memo(function PlaybackSection() {
                   {t('settings.discordRpcButtonDesc')}
                 </p>
               </div>
-              <button
-                onClick={() => setDiscordRpcShowButton(!discordRpcShowButton)}
-                className={`w-11 h-6 rounded-full transition-all duration-200 cursor-pointer relative ${
-                  discordRpcShowButton ? 'bg-accent' : 'bg-white/10'
-                }`}
-              >
-                <div
-                  className={`absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-all duration-200 ${
-                    discordRpcShowButton ? 'left-[22px] bg-accent-contrast' : 'left-0.5 bg-white'
-                  }`}
-                />
-              </button>
+              <LiquidSwitch
+                checked={discordRpcShowButton}
+                onChange={setDiscordRpcShowButton}
+              />
             </div>
           </>
         )}

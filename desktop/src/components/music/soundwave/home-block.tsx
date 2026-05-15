@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useLiquidLight } from '../../../lib/useLiquidLight';
 import { useTranslation } from 'react-i18next';
 import {
   AudioLines,
@@ -69,6 +70,8 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeQuery, setActiveQuery] = useState('');
   const searchRef = useRef<VibeSearchBarHandle>(null);
+  /* Dynamic cursor spotlight — tracks mouse position on the glass panel */
+  const panelRef = useLiquidLight<HTMLElement>();
 
   const stableLanguages = useMemo(() => [...selectedLanguages].sort(), [selectedLanguages]);
   const langKey = stableLanguages.join(',') || 'all';
@@ -168,6 +171,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
 
   return (
     <section
+      ref={panelRef}
       className="relative rounded-3xl overflow-hidden glass-featured select-none"
       style={{
         boxShadow:
