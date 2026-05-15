@@ -330,7 +330,7 @@ function MiniPlayerInner() {
             letterSpacing: '0.20em',
             textTransform: 'uppercase',
             pointerEvents: 'none',
-            background: 'linear-gradient(90deg, rgba(255,120,40,0.90) 0%, rgba(255,255,255,0.55) 100%)',
+            background: 'linear-gradient(90deg, var(--color-accent) 0%, rgba(255,255,255,0.60) 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',

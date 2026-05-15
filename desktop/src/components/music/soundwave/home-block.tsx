@@ -109,13 +109,12 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
 
   const backendWorking = rawClusters.length > 0 || rawAllTracks.length > 0;
 
-  // Fast fallback chain: backend → localRecs (related pool) → likedTracks (instant, cached)
-  // likedTracks appear immediately while relatedPool loads in background.
+  // Fallback chain: backend → localRecs (SC-native related pool)
+  // We do NOT fall back to liked tracks — user doesn't want to see them here
   const immediateBase = useMemo(() => {
     if (backendWorking) return rawAllTracks;
-    if (localRecs.length > 0) return localRecs;
-    return likedTracks.slice(0, 40);
-  }, [backendWorking, rawAllTracks, localRecs, likedTracks]);
+    return localRecs;
+  }, [backendWorking, rawAllTracks, localRecs]);
 
   const filteredAllTracks = useMemo(() => {
     if (!hideLiked) return immediateBase;
