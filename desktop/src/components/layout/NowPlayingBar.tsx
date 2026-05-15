@@ -469,15 +469,23 @@ const PlayPauseBtn = React.memo(() => {
     <button
       type="button"
       onClick={togglePlay}
-      className="w-12 h-12 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all duration-300 ease-[var(--ease-spring)] cursor-pointer mx-1.5"
+      className="relative w-12 h-12 rounded-full flex items-center justify-center text-black hover:scale-[1.07] active:scale-[0.94] transition-all duration-300 ease-[var(--ease-spring)] cursor-pointer mx-1.5"
       style={{
-        background: 'rgba(255,255,255,0.92)',
+        /* Frosted metal: warm white with subtle gradient sheen */
+        background: 'linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(230,230,236,0.93) 100%)',
         boxShadow: `
-          0 1px 0 0 rgba(255,255,255,0.95) inset,
-          0 -1px 0 0 rgba(0,0,0,0.18) inset,
-          0 4px 20px rgba(0,0,0,0.38),
-          0 0 0 1px rgba(255,255,255,0.15),
-          0 0 0 8px rgba(255,255,255,0.05)
+          /* Differential glass border */
+          0 1px 0 0 rgba(255,255,255,1.0) inset,
+          0 -1px 0 0 rgba(0,0,0,0.22) inset,
+          1px 0 0 0 rgba(255,255,255,0.85) inset,
+          -1px 0 0 0 rgba(0,0,0,0.10) inset,
+          /* Outer ring — frosted halo */
+          0 0 0 1px rgba(255,255,255,0.18),
+          /* Ambient glow ring */
+          0 0 0 5px rgba(255,255,255,0.06),
+          /* Depth shadows */
+          0 6px 24px rgba(0,0,0,0.42),
+          0 2px 8px rgba(0,0,0,0.28)
         `,
       }}
     >
@@ -947,7 +955,16 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
   return (
     <div className="flex items-center gap-3.5 w-[340px] min-w-0">
       <div
-        className="relative w-14 h-14 rounded-[10px] shrink-0 overflow-hidden cursor-pointer shadow-xl shadow-black/40 ring-1 ring-white/[0.06] hover:ring-white/[0.12] transition-all duration-200 group/art"
+        className="relative w-14 h-14 rounded-[12px] shrink-0 overflow-hidden cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
+        style={{
+          boxShadow: `
+            0 1px 0 0 rgba(255,255,255,0.20) inset,
+            1px 0 0 0 rgba(255,255,255,0.10) inset,
+            0 -1px 0 0 rgba(0,0,0,0.45) inset,
+            0 0 0 0.5px rgba(255,255,255,0.08),
+            0 8px 28px rgba(0,0,0,0.45)
+          `,
+        }}
         onClick={() => openLyricsPanel({ rightPanelOpen: false })}
       >
         {artworkSmall ? (

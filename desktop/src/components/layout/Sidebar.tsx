@@ -83,34 +83,45 @@ export const Sidebar = React.memo(() => {
             key={item.to}
             to={item.to}
             title={collapsed ? t(item.label) : undefined}
+            style={({ isActive }) =>
+              isActive
+                ? { background: 'rgba(99,102,241,0.12)' }
+                : undefined
+            }
             className={({ isActive }) =>
               `relative flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 ease-[var(--ease-apple)] ${
                 collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
               } ${
                 isActive
-                  ? 'text-white bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_1px_0_0_rgba(255,255,255,0.08),inset_0_-1px_0_rgba(0,0,0,0.35)]'
+                  ? 'text-white/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_1px_0_0_rgba(255,255,255,0.09),inset_0_-1px_0_rgba(0,0,0,0.40)]'
                   : item.to === '/offline' && appMode !== 'online'
-                    ? 'text-white/82 bg-accent/[0.08] ring-1 ring-accent/15'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.05] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                    ? 'text-white/82 bg-accent/[0.07] ring-1 ring-accent/12'
+                    : 'text-white/38 hover:text-white/72 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                {/* Left accent indicator on active items (expanded only) */}
+                {/* Left indicator — indigo UI accent (noble, not orange) */}
                 {isActive && !collapsed && (
                   <span
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-r-full"
                     style={{
-                      background: 'var(--color-accent)',
-                      boxShadow: '0 0 8px var(--color-accent-glow)',
+                      background:
+                        'linear-gradient(180deg, rgba(129,140,248,0.95) 0%, var(--color-ui-accent) 100%)',
+                      boxShadow:
+                        '0 0 10px var(--color-ui-accent-glow), 0 0 3px rgba(129,140,248,0.6)',
                     }}
                   />
                 )}
                 <item.icon
                   size={18}
                   strokeWidth={1.8}
-                  style={isActive ? { color: 'var(--color-accent)' } : undefined}
+                  style={
+                    isActive
+                      ? { color: 'rgba(165,170,255,0.95)' }
+                      : undefined
+                  }
                 />
                 {!collapsed && t(item.label)}
               </>

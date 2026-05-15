@@ -193,30 +193,65 @@ const CustomBackground = React.memo(() => {
 
 const AmbientGlow = React.memo(() => {
   const artwork = usePlayerStore((s) => art(s.currentTrack?.artwork_url, 't500x500'));
-  if (!artwork) return null;
   return (
     <>
-      {/* Bottom album-art bleed */}
+      {/* ── Static mesh-gradient base — creates depth even without artwork */}
       <div
         aria-hidden="true"
-        className="absolute bottom-0 left-0 right-0 h-[480px] pointer-events-none transition-all duration-[2s] ease-out"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: `url(${artwork})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.09,
-          filter: 'blur(100px)',
+          background: `
+            radial-gradient(ellipse 70% 55% at 15% 0%, rgba(99,102,241,0.07) 0%, transparent 65%),
+            radial-gradient(ellipse 55% 40% at 85% 0%, rgba(255,255,255,0.03) 0%, transparent 60%),
+            radial-gradient(ellipse 90% 45% at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 80%)
+          `,
           contain: 'strict',
-          transform: 'translateZ(0)',
         }}
       />
-      {/* Subtle radial mesh gradient overlay for extra depth */}
+
+      {/* ── Dynamic album-art bleed (two layers: wide fog + sharp core) */}
+      {artwork && (
+        <>
+          {/* Wide fog */}
+          <div
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 right-0 h-[600px] pointer-events-none"
+            style={{
+              backgroundImage: `url(${artwork})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              opacity: 0.10,
+              filter: 'blur(120px) saturate(1.6)',
+              contain: 'strict',
+              transform: 'translateZ(0)',
+              transition: 'background-image 1.8s ease-out',
+            }}
+          />
+          {/* Sharp center glow */}
+          <div
+            aria-hidden="true"
+            className="absolute bottom-0 left-1/4 right-1/4 h-[200px] pointer-events-none"
+            style={{
+              backgroundImage: `url(${artwork})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              opacity: 0.06,
+              filter: 'blur(48px) saturate(2.2)',
+              contain: 'strict',
+              transform: 'translateZ(0)',
+              transition: 'background-image 1.8s ease-out',
+            }}
+          />
+        </>
+      )}
+
+      {/* ── Vignette — darkens edges for depth/focus */}
       <div
         aria-hidden="true"
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,85,0,0.04) 0%, transparent 70%)',
+            'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)',
           contain: 'strict',
         }}
       />
