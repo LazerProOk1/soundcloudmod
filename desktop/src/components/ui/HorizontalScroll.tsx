@@ -81,10 +81,19 @@ export function HorizontalScroll({ children, className = '' }: HorizontalScrollP
           e.stopPropagation();
         }
       }}
-      className={`flex gap-4 overflow-x-hidden pb-2 scrollbar-hide cursor-grab active:cursor-grabbing ${className}`}
+      className={`flex gap-4 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing ${className}`}
       style={{
+        /* Vertical padding gives breathing room for scale(1.02) + drop-shadow
+           without clipping. Negative margin compensates so siblings aren't pushed.
+           'contain: style' keeps CSS isolation without the paint-clip side-effect
+           that 'paint' and 'layout' containment would impose on scaled children. */
+        paddingTop: 12,
+        paddingBottom: 18,
+        marginTop: -12,
+        marginBottom: -18,
+        paddingLeft: 6,
+        paddingRight: 6,
         contentVisibility: 'auto',
-        contain: 'layout paint style',
         containIntrinsicSize: '240px',
         touchAction: 'pan-y',
       }}

@@ -75,9 +75,12 @@ export const TrackCard = React.memo(
         style={{
           transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
           contentVisibility: 'auto',
-          contain: 'layout paint style',
+          /* contain:'style' only — 'layout' and 'paint' clip scaled children and ambient shadows */
           containIntrinsicSize: '180px 260px',
           willChange: 'transform',
+          /* Extra padding so scale(1.02) + glow can breathe without clipping by parent */
+          padding: 4,
+          margin: -4,
         }}
         onMouseEnter={() => preloadTrack(track.urn)}
         onMouseMove={handleMouseMove}
@@ -139,39 +142,45 @@ export const TrackCard = React.memo(
               isThisPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
             }`}
             style={{
-              background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.44) 100%)',
+              background: 'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.50) 100%)',
             }}
           >
-            {/* Play/pause button — frosted pearl glass (NOT a flat white circle) */}
+            {/* Play/pause — true Liquid Glass: semi-transparent frosted sphere */}
             <div
               className={`flex items-center justify-center transition-all duration-400 ease-[var(--ease-spring)] ${
                 isThisPlaying ? 'scale-100' : 'scale-[0.7] group-hover:scale-100'
               }`}
               style={{
-                width: 52,
-                height: 52,
+                width: 54,
+                height: 54,
                 borderRadius: '50%',
-                /* Warm white pearl gradient — same physics as NowPlayingBar PlayPause */
-                background:
-                  'linear-gradient(165deg, rgba(255,255,255,0.97) 0%, rgba(218,218,235,0.92) 100%)',
+                /* Semi-transparent glass — backdrop bleeds through, giving depth */
+                background: 'rgba(255,255,255,0.18)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                 boxShadow: `
-                  /* Differential frosted border */
-                  0 1px 0 0 rgba(255,255,255,1.0) inset,
-                  0 -1px 0 0 rgba(0,0,0,0.22) inset,
-                  1px 0 0 0 rgba(255,255,255,0.82) inset,
-                  -1px 0 0 0 rgba(0,0,0,0.10) inset,
-                  /* Frosted halo ring */
-                  0 0 0 1.5px rgba(255,255,255,0.28),
-                  /* Ambient glow ring */
-                  0 0 0 7px rgba(255,255,255,0.07),
-                  /* Depth shadows */
-                  0 6px 22px rgba(0,0,0,0.48),
-                  0 2px 8px rgba(0,0,0,0.28)
+                  /* Differential frosted border — top/left bright, bottom dark */
+                  0 1px 0 0 rgba(255,255,255,0.70) inset,
+                  0 3px 8px -1px rgba(255,255,255,0.22) inset,
+                  0 -1px 0 0 rgba(0,0,0,0.30) inset,
+                  1px 0 0 0 rgba(255,255,255,0.45) inset,
+                  -1px 0 0 0 rgba(0,0,0,0.12) inset,
+                  /* Outer frosted halo */
+                  0 0 0 1px rgba(255,255,255,0.22),
+                  /* Soft ambient ring */
+                  0 0 0 6px rgba(255,255,255,0.06),
+                  /* Depth drop shadows */
+                  0 8px 28px rgba(0,0,0,0.50),
+                  0 2px 8px rgba(0,0,0,0.30)
                 `,
-                backdropFilter: 'blur(8px)',
+                color: 'white',
               }}
             >
-              {isThisPlaying ? pauseBlack20 : playBlack20}
+              {/* White SVG icons — visible on dark AND light album art */}
+              {isThisPlaying
+                ? <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style={{pointerEvents:'none'}}><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                : <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style={{pointerEvents:'none', marginLeft: 2}}><path d="M8 5v14l11-7z"/></svg>
+              }
             </div>
           </div>
 
