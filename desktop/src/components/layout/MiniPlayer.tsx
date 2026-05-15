@@ -138,9 +138,22 @@ const rootStyle: React.CSSProperties = {
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
-  background: 'rgba(8, 8, 12, 0.85)',
-  backdropFilter: 'blur(50px) saturate(220%)',
-  WebkitBackdropFilter: 'blur(50px) saturate(220%)',
+  background: 'rgba(8, 8, 12, 0.82)',
+  backdropFilter: 'blur(60px) saturate(220%)',
+  WebkitBackdropFilter: 'blur(60px) saturate(220%)',
+  /* Pill-shaped window — top-level border-radius for the whole mini player */
+  borderRadius: 28,
+  boxShadow: `
+    0 1px 0 0 rgba(255,255,255,0.22) inset,
+    0 4px 10px -2px rgba(255,255,255,0.07) inset,
+    1px 0 0 0 rgba(255,255,255,0.13) inset,
+    0 -1px 0 0 rgba(0,0,0,0.65) inset,
+    -1px 0 0 0 rgba(0,0,0,0.28) inset,
+    0 0 0 0.5px rgba(255,255,255,0.10),
+    0 8px 24px rgba(0,0,0,0.35),
+    0 24px 60px rgba(0,0,0,0.40),
+    0 0 80px rgba(255,255,255,0.014)
+  `,
   fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
   WebkitFontSmoothing: 'antialiased',
   ...noSelect,
@@ -183,20 +196,24 @@ const MercuryBtn = ({
         height: size,
         borderRadius: '50%',
         background: accent
-          ? 'linear-gradient(165deg, rgba(255,255,255,0.96) 0%, rgba(220,220,238,0.91) 100%)'
-          : 'rgba(255,255,255,0.08)',
+          ? 'linear-gradient(160deg, rgba(255,255,255,0.99) 0%, rgba(215,215,240,0.94) 100%)'
+          : 'rgba(255,255,255,0.09)',
         boxShadow: accent
           ? `0 1px 0 0 rgba(255,255,255,1.0) inset,
-             0 -1px 0 0 rgba(0,0,0,0.22) inset,
-             1px 0 0 0 rgba(255,255,255,0.80) inset,
-             -1px 0 0 0 rgba(0,0,0,0.10) inset,
-             0 0 0 1px rgba(255,255,255,0.16),
-             0 4px 16px rgba(0,0,0,0.45),
-             0 2px 6px rgba(0,0,0,0.28)`
-          : `0 1px 0 0 rgba(255,255,255,0.18) inset,
-             0 -1px 0 0 rgba(0,0,0,0.30) inset,
-             0 0 0 0.5px rgba(255,255,255,0.07),
-             0 2px 8px rgba(0,0,0,0.30)`,
+             0 3px 6px -1px rgba(255,255,255,0.55) inset,
+             0 -1px 0 0 rgba(0,0,0,0.26) inset,
+             1px 0 0 0 rgba(255,255,255,0.85) inset,
+             -1px 0 0 0 rgba(0,0,0,0.12) inset,
+             0 0 0 0.5px rgba(255,255,255,0.55),
+             0 2px 8px rgba(0,0,0,0.28),
+             0 6px 20px rgba(0,0,0,0.40),
+             0 0 28px rgba(255,255,255,0.08)`
+          : `0 1px 0 0 rgba(255,255,255,0.20) inset,
+             0 -1px 0 0 rgba(0,0,0,0.32) inset,
+             1px 0 0 0 rgba(255,255,255,0.12) inset,
+             0 0 0 0.5px rgba(255,255,255,0.08),
+             0 2px 8px rgba(0,0,0,0.28),
+             0 4px 16px rgba(0,0,0,0.20)`,
         color: accent ? '#111' : 'rgba(255,255,255,0.65)',
         transform: pressed ? 'scale(0.93)' : 'scale(1)',
         transition: 'transform 0.12s cubic-bezier(0.16,1,0.3,1)',
@@ -355,21 +372,24 @@ function MiniPlayerInner() {
           minWidth: 0,
         }}
       >
-        {/* Circular artwork */}
+        {/* Rounded-square artwork — pill-glass, premium feel */}
         <div
           data-tauri-drag-region
           style={{
             width: 44,
             height: 44,
-            borderRadius: '50%',
+            borderRadius: 18,
             overflow: 'hidden',
             flexShrink: 0,
             background: 'rgba(255,255,255,0.06)',
             boxShadow: `
-              0 1px 0 0 rgba(255,255,255,0.20) inset,
-              0 -1px 0 0 rgba(0,0,0,0.48) inset,
-              0 4px 16px rgba(0,0,0,0.55),
-              0 0 0 1.5px rgba(255,255,255,0.08)
+              0 1px 0 0 rgba(255,255,255,0.24) inset,
+              0 -1px 0 0 rgba(0,0,0,0.55) inset,
+              1px 0 0 0 rgba(255,255,255,0.14) inset,
+              -1px 0 0 0 rgba(0,0,0,0.18) inset,
+              0 0 0 0.5px rgba(255,255,255,0.09),
+              0 3px 10px rgba(0,0,0,0.38),
+              0 8px 24px rgba(0,0,0,0.30)
             `,
             pointerEvents: 'none',
             flexBasis: 44,

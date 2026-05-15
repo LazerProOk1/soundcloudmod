@@ -249,7 +249,7 @@ export const StarModal = React.memo(
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 z-50 w-[420px] max-w-[90vw] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl overflow-hidden outline-none animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+            className="fixed left-1/2 top-1/2 z-50 w-[420px] max-w-[90vw] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-[32px] overflow-hidden outline-none animate-in fade-in zoom-in-95 duration-200 flex flex-col"
             style={{
               background:
                 'linear-gradient(165deg, rgba(30,15,50,0.95), rgba(20,10,40,0.97), rgba(15,8,30,0.98))',

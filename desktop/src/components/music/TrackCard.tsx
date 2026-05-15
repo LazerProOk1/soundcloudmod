@@ -85,20 +85,24 @@ export const TrackCard = React.memo(
       >
         {/* ── Artwork ──────────────────────────────────────────── */}
         <div
-          className="glass-artwork relative aspect-square rounded-[22px] cursor-pointer"
+          className="glass-artwork relative aspect-square rounded-[32px] cursor-pointer"
           style={{
-            /* Liquid Glass border: top/left bright → bottom/right dark */
+            /* Differential border: bright top-left, dark bottom-right — glass thickness */
             boxShadow: `
-              0 1px 0 0 rgba(255,255,255,0.18) inset,
-              1px 0 0 0 rgba(255,255,255,0.10) inset,
-              0 -1px 0 0 rgba(0,0,0,0.58) inset,
-              -1px 0 0 0 rgba(0,0,0,0.20) inset,
-              0 8px 32px rgba(0,0,0,0.45),
-              0 2px 8px rgba(0,0,0,0.25)
+              0 1px 0 0 rgba(255,255,255,0.22) inset,
+              0 3px 8px -2px rgba(255,255,255,0.06) inset,
+              1px 0 0 0 rgba(255,255,255,0.12) inset,
+              0 -1px 0 0 rgba(0,0,0,0.60) inset,
+              -1px 0 0 0 rgba(0,0,0,0.22) inset,
+              0 0 0 0.5px rgba(255,255,255,0.07),
+              0 2px 6px rgba(0,0,0,0.10),
+              0 10px 24px rgba(0,0,0,0.20),
+              0 24px 52px rgba(0,0,0,0.28),
+              0 0 80px rgba(255,255,255,0.012)
             `,
             background: 'rgba(255,255,255,0.035)',
             /* --artwork-radius drives clip-path in .glass-artwork CSS class */
-            ['--artwork-radius' as string]: '22px',
+            ['--artwork-radius' as string]: '32px',
             transform: 'translateZ(0)',
             willChange: 'transform',
           }}
@@ -243,7 +247,7 @@ export const TrackCard = React.memo(
         {artwork && (
           <div
             aria-hidden="true"
-            className="absolute inset-0 -z-10 rounded-[22px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+            className="absolute inset-0 -z-10 rounded-[32px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
             style={{
               background: `url(${artwork}) center/cover`,
               filter: 'blur(28px) saturate(1.4)',

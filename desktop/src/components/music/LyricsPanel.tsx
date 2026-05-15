@@ -401,7 +401,7 @@ const ArtworkViewModal = React.memo(
           </div>
         </div>
         <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 w-[min(560px,calc(100vw-3rem))] -translate-x-1/2 px-3">
-          <div className="mx-auto flex w-fit max-w-full flex-col items-center gap-0.5 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-center shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl">
+          <div className="mx-auto flex w-fit max-w-full flex-col items-center gap-0.5 rounded-[28px] border border-white/10 bg-black/40 px-4 py-3 text-center shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl">
             <p className="max-w-[min(480px,calc(100vw-6rem))] truncate text-lg font-bold text-white/95">
               {title}
             </p>
@@ -459,7 +459,7 @@ const TrackColumn = React.memo(({ track, maxArt }: { track: Track; maxArt?: stri
   return (
     <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-[clamp(8px,1.4vh,22px)] overflow-y-auto scrollbar-hide px-12 py-6">
       <div
-        className={`${widthClass} aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60 ring-1 ring-white/[0.08] relative group/art`}
+        className={`${widthClass} aspect-square rounded-[32px] overflow-hidden shadow-2xl shadow-black/60 ring-1 ring-white/[0.08] relative group/art`}
       >
         {artwork500 ? (
           <>
@@ -927,7 +927,7 @@ const TimedCommentCard = React.memo(
       <button
         type="button"
         onClick={() => onSeek(commentTime)}
-        className={`w-full text-left rounded-2xl border px-4 py-3 transition-all duration-300 cursor-pointer ${
+        className={`w-full text-left rounded-[28px] border px-4 py-3 transition-all duration-300 cursor-pointer ${
           state === 'active'
             ? 'bg-gradient-to-br from-white/[0.14] to-white/[0.08] border-white/14 ring-1 ring-accent/25 shadow-[0_16px_36px_rgba(0,0,0,0.26)]'
             : state === 'past'
@@ -1705,7 +1705,7 @@ export const LyricsPanel = React.memo(() => {
         className={`relative z-10 px-6 pt-5 pb-2 ${rightPanelOpen ? 'flex items-center justify-between gap-4' : 'flex items-center justify-center gap-4'}`}
         data-tauri-drag-region
       >
-        <div className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.05] bg-white/[0.03] p-1">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-white/[0.03] p-1">
           <PanelTabButton
             active={rightPanelOpen && tab === 'lyrics'}
             onClick={() => {
