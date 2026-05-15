@@ -75,8 +75,7 @@ export const Sidebar = React.memo(() => {
           className="shrink-0"
           style={{
             color: 'var(--color-accent)',
-            /* Spinning disc deserves a warm glow */
-            filter: 'drop-shadow(0 0 5px rgba(255,85,0,0.55)) drop-shadow(0 0 2px rgba(255,120,0,0.35))',
+            filter: 'drop-shadow(0 0 5px var(--color-accent-glow)) drop-shadow(0 0 2px var(--color-accent-glow))',
           }}
         />
         {!collapsed && (
@@ -105,7 +104,7 @@ export const Sidebar = React.memo(() => {
             title={collapsed ? t(item.label) : undefined}
             style={({ isActive }) =>
               isActive
-                ? { background: 'rgba(99,102,241,0.12)' }
+                ? { background: 'color-mix(in srgb, var(--color-accent) 14%, transparent)' }
                 : undefined
             }
             className={({ isActive }) =>

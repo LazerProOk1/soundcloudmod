@@ -876,18 +876,19 @@ const ThemeSection = React.memo(function ThemeSection() {
             })}
             <button
               onClick={() => colorInputRef.current?.click()}
+              title="Custom color"
               className="flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 active:scale-90"
               style={{
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1.5px dashed rgba(255,255,255,0.22)',
-                color: 'rgba(255,255,255,0.45)',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 100%)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: 'rgba(255,255,255,0.65)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 8px rgba(0,0,0,0.22)',
               }}
             >
-              <span className="text-[13px] font-bold leading-none">+</span>
+              <Pipette size={13} />
             </button>
           </div>
         </div>

@@ -221,17 +221,6 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
                 <h2 className="soundwave-title text-[20px] font-bold tracking-tight leading-none">
                   SoundWave
                 </h2>
-                <span
-                  className="relative overflow-hidden inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.12em] px-2 py-[3px] rounded-full text-white/90"
-                  style={{
-                    background:
-                      'linear-gradient(135deg, var(--color-accent-glow), rgba(255,255,255,0.06))',
-                    border: '1px solid var(--color-accent-glow)',
-                  }}
-                >
-                  <Sparkles size={9} style={{ color: 'var(--color-accent)' }} />
-                  AI
-                </span>
               </div>
               <p className="text-[11.5px] text-white/50 mt-1 truncate">{t('soundwave.tagline')}</p>
             </div>

@@ -119,6 +119,17 @@ export const TrackCard = React.memo(
             </div>
           )}
 
+          {/* Side vignette — soft gradient blur on left/right edges */}
+          <div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(90deg, rgba(0,0,0,0.22) 0%, transparent 22%, transparent 78%, rgba(0,0,0,0.22) 100%)',
+              zIndex: 1,
+            }}
+          />
+
           {/* Liquid overlay — opacity-only transition (120fps safe) */}
           <div
             className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-[var(--ease-spring)] ${

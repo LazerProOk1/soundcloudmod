@@ -23,7 +23,7 @@ export const GITHUB_REPO = 'SoundCloud-Desktop';
 export const GITHUB_REPO_EN = 'SoundCloud-Desktop-EN';
 export const APP_VERSION = __APP_VERSION__;
 
-export const CHECK_UPDATES = true;
+export const CHECK_UPDATES = false;
 
 let _staticPort: number | null = null;
 let _proxyPort: number | null = null;

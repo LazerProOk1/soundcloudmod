@@ -229,8 +229,8 @@ const GhostBtn = ({
         width: 28,
         height: 28,
         borderRadius: '50%',
-        background: active ? 'rgba(255,85,0,0.15)' : 'transparent',
-        color: active ? 'rgb(255,85,0)' : 'rgba(255,255,255,0.45)',
+        background: active ? 'color-mix(in srgb, var(--color-accent) 18%, transparent)' : 'transparent',
+        color: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.45)',
         transform: pressed ? 'scale(0.88)' : 'scale(1)',
         transition: 'transform 0.12s ease',
       }}

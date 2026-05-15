@@ -43,6 +43,10 @@ let loadGen = 0;
 let lastEndedUrn: string | null = null;
 /** Ignore audio:ended events until this timestamp (set on seek to prevent spurious next()). */
 let seekGuardUntilMs = 0;
+/** Wall-clock time of the last seek operation. */
+let lastSeekWallMs = 0;
+/** Track position at the last seek (seconds). */
+let lastSeekPosition = 0;
 const listeners = new Set<() => void>();
 const API_PREVIEW_DURATION_MS = 30_000;
 
@@ -129,8 +133,12 @@ export function seek(seconds: number) {
     applyVolume(usePlayerStore.getState().volume);
   }
 
-  // Guard: ignore audio:ended for 600ms after seek — Rodio can emit ended mid-seek
-  seekGuardUntilMs = performance.now() + 600;
+  // Guard: ignore audio:ended for 800ms after seek — Rodio can emit ended mid-seek.
+  // Extended guard: store seek position so audio:ended listener can reject events
+  // that fire too early relative to the expected remaining playtime.
+  seekGuardUntilMs = performance.now() + 800;
+  lastSeekWallMs = performance.now();
+  lastSeekPosition = clamped;
 
   invoke('audio_seek', { position: clamped }).catch(console.error);
   cachedTime = clamped;
@@ -330,6 +338,11 @@ async function loadTrack(track: Track) {
   currentUrn = track.urn;
   const urn = track.urn;
 
+  // Reset seek guards on new track load
+  seekGuardUntilMs = 0;
+  lastSeekWallMs = 0;
+  lastSeekPosition = 0;
+
   void hydrateTrackMetadata(track, gen);
 
   fallbackDuration = track.duration / 1000;
@@ -526,6 +539,16 @@ listen<{ urn: string; progress: number }>('track:download-progress', (event) => 
 listen('audio:ended', () => {
   // Suppress spurious ended events fired by Rodio during/immediately after a seek
   if (performance.now() < seekGuardUntilMs) return;
+
+  // Extended seek guard: block audio:ended if it fires significantly earlier than
+  // the expected remaining playtime. E.g. seeking to 5s before end → guard 4s.
+  // This catches Rodio emitting ended 1-2s after seek instead of waiting.
+  if (lastSeekWallMs > 0 && cachedDuration > 0) {
+    const expectedRemainingMs = (cachedDuration - lastSeekPosition) * 1000;
+    const elapsedSinceSeekMs = performance.now() - lastSeekWallMs;
+    // If ended fires >1.5s before the expected end, it's a spurious Rodio event
+    if (elapsedSinceSeekMs < expectedRemainingMs - 1500) return;
+  }
 
   if (currentUrn) {
     // Засчитываем full_play только если трек реально игрался: либо ≥30s,
