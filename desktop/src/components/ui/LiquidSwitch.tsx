@@ -30,12 +30,11 @@ export const LiquidSwitch = React.memo(function LiquidSwitch({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className="relative shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ui-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      className="relative shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       style={{
         width: 44,
         height: 24,
-        /* Gooey filter makes the thumb "merge" organically with the track rim */
-        filter: 'url(#liquid-gooey-switch)',
+        /* No SVG filter — gooey filter causes aliased "ladder" edges at pixel level */
       }}
     >
       {/* ── Track ── */}
@@ -47,13 +46,11 @@ export const LiquidSwitch = React.memo(function LiquidSwitch({
           borderRadius: 9999,
           transition: 'background 0.28s var(--ease-apple), box-shadow 0.28s var(--ease-apple)',
           background: checked
-            ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)'
+            ? 'var(--color-accent)'
             : 'rgba(255,255,255,0.07)',
           boxShadow: checked
-            ? /* active: inset groove + indigo glow halo */
-              '0 1px 0 0 rgba(255,255,255,0.22) inset, 0 -1px 0 0 rgba(0,0,0,0.35) inset, 0 0 0 0.5px rgba(99,102,241,0.50), 0 2px 10px rgba(99,102,241,0.28)'
-            : /* idle: deep recessed groove — looks carved into glass */
-              '0 1px 3px rgba(0,0,0,0.55) inset, 0 0.5px 0 rgba(255,255,255,0.10) inset, 0 0 0 0.5px rgba(255,255,255,0.05)',
+            ? '0 1px 0 0 rgba(255,255,255,0.22) inset, 0 -1px 0 0 rgba(0,0,0,0.35) inset, 0 0 0 0.5px var(--color-accent-glow), 0 2px 10px var(--color-accent-glow)'
+            : '0 1px 3px rgba(0,0,0,0.55) inset, 0 0.5px 0 rgba(255,255,255,0.10) inset, 0 0 0 0.5px rgba(255,255,255,0.05)',
         }}
       />
 

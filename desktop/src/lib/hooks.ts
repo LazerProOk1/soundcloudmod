@@ -834,11 +834,11 @@ function sampleTrackUrns(tracks: Track[], limit: number): string[] {
  * counts frequency of each related track. Used by both Recommended and Discover.
  */
 export function useRelatedPool(likedTracks: Track[]) {
-  // Stable seed — compute once when liked tracks first arrive, don't recompute on likes
-  // Reduced from 30 → 12 seeds: fewer requests, faster load, less rate-limiting risk.
+  // Stable seed — compute once when liked tracks first arrive, don't recompute on likes.
+  // 5 seeds: enough diversity, fast enough (all run in parallel = ~1 round-trip).
   const seedRef = useRef<string[]>([]);
   if (seedRef.current.length === 0 && likedTracks.length > 0) {
-    seedRef.current = sampleTrackUrns(likedTracks, 12);
+    seedRef.current = sampleTrackUrns(likedTracks, 5);
   }
   const seedUrns = seedRef.current;
 
@@ -847,23 +847,17 @@ export function useRelatedPool(likedTracks: Track[]) {
   return useQuery({
     queryKey: ['discover', 'related-pool', seedUrns],
     queryFn: async () => {
-      // Run in batches of 4 to avoid hammering the API with 12 simultaneous requests.
-      const results: TrackPage[] = [];
-      for (let i = 0; i < seedUrns.length; i += 4) {
-        const batch = seedUrns.slice(i, i + 4);
-        const batchResults = await Promise.all(
-          batch.map((urn) =>
-            api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`).catch(
-              () =>
-                ({ collection: [] as Track[], page: 0, page_size: 20, has_more: false }) as TrackPage,
-            ),
+      // All requests fire in parallel — latency = 1 round-trip instead of 3 sequential batches.
+      const results = await Promise.all(
+        seedUrns.map((urn) =>
+          api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`).catch(
+            () => ({ collection: [] as Track[], page: 0, page_size: 20, has_more: false }) as TrackPage,
           ),
-        );
-        results.push(...batchResults);
-      }
+        ),
+      );
 
       const freq: RelatedPool = new Map();
-      for (const res of results as TrackPage[]) {
+      for (const res of results) {
         for (const track of res.collection) {
           if (likedUrns.has(track.urn)) continue;
           const entry = freq.get(track.urn);
@@ -874,7 +868,7 @@ export function useRelatedPool(likedTracks: Track[]) {
       return freq;
     },
     enabled: seedUrns.length > 0,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 15,
     gcTime: INFINITE_GC_MS,
   });
 }
