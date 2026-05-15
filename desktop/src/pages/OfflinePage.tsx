@@ -647,7 +647,7 @@ export const OfflinePage = React.memo(() => {
   }, [appMode, t]);
 
   return (
-    <div className="relative min-h-full overflow-hidden px-6 py-6 md:px-8 md:py-8">
+    <div className="relative min-h-full overflow-hidden px-6 py-6 md:px-8 md:py-8 page-enter">
       <div
         className="pointer-events-none absolute inset-0"
         style={{ contain: 'strict', transform: 'translateZ(0)' }}

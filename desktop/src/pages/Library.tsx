@@ -797,7 +797,7 @@ export const Library = React.memo(() => {
   if (!user) return null;
 
   return (
-    <div className="p-6 pb-4 space-y-8">
+    <div className="p-6 pb-4 space-y-8 page-enter">
       <LibraryHero onTabLikes={onTabLikes} onTabFollowing={onTabFollowing} />
 
       {/* Tabs + Search */}

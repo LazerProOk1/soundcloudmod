@@ -25,7 +25,7 @@ import {
   saveWallpaperFromBuffer,
 } from '../lib/cache';
 import { trackedInvoke } from '../lib/diagnostics';
-import { Download, Globe, Link, Loader2, Trash2, X } from '../lib/icons';
+import { Download, Globe, Link, Loader2, Pipette, Trash2, X } from '../lib/icons';
 import { useAuthStore } from '../stores/auth';
 import {
   type DiscordRpcMode,
@@ -58,7 +58,6 @@ const PRESET_COLORS = [
 const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'ru', label: 'Русский' },
-  { code: 'tr', label: 'Turkce' },
 ] as const;
 
 const STARTUP_PAGES: Array<{ id: StartupPage; labelKey: string }> = [
@@ -723,12 +722,18 @@ function AccentFromWallpaperBtn({
       type="button"
       onClick={extract}
       disabled={loading}
-      className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold bg-white/[0.04] text-white/60 hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-fit"
+      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-fit"
+      style={{
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        color: 'rgba(255,255,255,0.65)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 2px 8px rgba(0,0,0,0.20)',
+      }}
     >
       {loading ? (
-        <Loader2 size={12} className="animate-spin" />
+        <Loader2 size={13} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
       ) : (
-        <span className="text-[14px]">🎨</span>
+        <Pipette size={13} style={{ color: 'var(--color-accent)' }} />
       )}
       {t('settings.accentFromWallpaper', 'Цвет акцента из обоев')}
     </button>
@@ -841,24 +846,48 @@ const ThemeSection = React.memo(function ThemeSection() {
           <label className="text-[13px] text-white/50 font-medium">
             {t('settings.accentColor')}
           </label>
-          <div className="flex items-center gap-2 flex-wrap">
-            {PRESET_COLORS.map((color) => (
-              <button
-                key={color}
-                onClick={() => setAccentColor(color)}
-                className="w-8 h-8 rounded-full border-2 transition-all duration-200 cursor-pointer hover:scale-110 active:scale-95 shadow-md"
-                style={{
-                  backgroundColor: color,
-                  borderColor: accentColor === color ? 'white' : 'transparent',
-                  boxShadow: accentColor === color ? `0 0 16px ${color}60` : undefined,
-                }}
-              />
-            ))}
+          <div
+            className="flex items-center gap-2 flex-wrap p-3 rounded-2xl"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
+            }}
+          >
+            {PRESET_COLORS.map((color) => {
+              const isActive = accentColor === color;
+              return (
+                <button
+                  key={color}
+                  onClick={() => setAccentColor(color)}
+                  className="relative transition-all duration-200 cursor-pointer active:scale-90"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: color,
+                    transform: isActive ? 'scale(1.15)' : undefined,
+                    boxShadow: isActive
+                      ? `0 0 0 2px rgba(255,255,255,0.9), 0 0 16px ${color}80, inset 0 1px 0 rgba(255,255,255,0.35)`
+                      : `0 2px 8px ${color}50, inset 0 1px 0 rgba(255,255,255,0.25), 0 0 0 1px rgba(0,0,0,0.15)`,
+                  }}
+                />
+              );
+            })}
             <button
               onClick={() => colorInputRef.current?.click()}
-              className="w-8 h-8 rounded-full border-2 border-dashed border-white/20 hover:border-white/40 transition-all cursor-pointer flex items-center justify-center text-white/30 hover:text-white/60 hover:scale-110"
+              className="flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 active:scale-90"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1.5px dashed rgba(255,255,255,0.22)',
+                color: 'rgba(255,255,255,0.45)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10)',
+              }}
             >
-              <span className="text-[11px] font-bold">+</span>
+              <span className="text-[13px] font-bold leading-none">+</span>
             </button>
           </div>
         </div>

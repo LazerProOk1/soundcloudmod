@@ -14,6 +14,7 @@ import {
 } from '../../../lib/icons';
 import { isUrnLiked } from '../../../lib/likes';
 import { fetchWaveTailFromSeed, hydrateByIds, useSoundWaveSearch } from '../../../lib/soundwave';
+import { useLikedTracks, useRecommendedTracks, useRelatedPool } from '../../../lib/hooks';
 import { useAuthStore } from '../../../stores/auth';
 import type { Track } from '../../../stores/player';
 import { usePlayerStore } from '../../../stores/player';
@@ -99,10 +100,20 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
   const rawAllTracks = useMemo(() => data?.allTracks ?? [], [data]);
 
+  // ── Fallback: SC native recommendations via liked tracks ──────
+  // Used when the custom backend is unreachable (clusters stay empty).
+  const likedQuery = useLikedTracks(60);
+  const likedTracks = useMemo(() => likedQuery.tracks, [likedQuery.tracks]);
+  const { data: relatedPool } = useRelatedPool(likedTracks);
+  const localRecs = useRecommendedTracks(relatedPool, 40);
+
+  const backendWorking = rawClusters.length > 0 || rawAllTracks.length > 0;
+
   const filteredAllTracks = useMemo(() => {
-    if (!hideLiked) return rawAllTracks;
-    return rawAllTracks.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn));
-  }, [rawAllTracks, hideLiked]);
+    const base = backendWorking ? rawAllTracks : localRecs;
+    if (!hideLiked) return base;
+    return base.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn));
+  }, [backendWorking, rawAllTracks, localRecs, hideLiked]);
 
   const filteredClusters = useMemo(() => {
     if (!hideLiked) return rawClusters;
@@ -165,7 +176,8 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   };
 
   const spinning = isRefreshing || isFetching;
-  const showCold = !isSearchMode && !isLoading && orderedClusters.length === 0;
+  // Show cold state only if backend is down AND no local recs available yet
+  const showCold = !isSearchMode && !isLoading && orderedClusters.length === 0 && localRecs.length === 0;
   const showSearchEmpty = isSearchMode && !searchBusy && searchTracks.length === 0;
   const playableTracks = isSearchMode ? searchTracks : filteredAllTracks;
 
@@ -241,22 +253,15 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
               type="button"
               onClick={handlePlayAll}
               disabled={playableTracks.length === 0}
-              className="flex items-center gap-2 pl-2.5 pr-4 h-10 rounded-full font-semibold text-[13px] transition-all duration-200 ease-[var(--ease-apple)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] hover:scale-[1.03]"
+              className="flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 ease-[var(--ease-apple)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.93] hover:scale-[1.06]"
               style={{
                 background: 'var(--color-accent)',
-                color: 'var(--color-accent-contrast)',
                 boxShadow:
-                  '0 6px 22px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.25)',
+                  '0 6px 22px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.30)',
               }}
               title={t('soundwave.playAll')}
             >
-              <span
-                className="w-6 h-6 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,0.9)' }}
-              >
-                {playBlack14}
-              </span>
-              {t('soundwave.playAll')}
+              {playBlack14}
             </button>
           </div>
         </div>
@@ -306,19 +311,34 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
           ) : isLoading ? (
             <ClusterSkeletonState rows={3} itemsPerRow={6} />
           ) : showCold ? (
-            <ClusterEmptyState
-              icon={<Sparkles size={20} style={{ color: 'var(--color-accent)' }} />}
-              title={t('soundwave.coldTitle')}
-              description={t('soundwave.coldDesc')}
-            />
+            <div className="flex flex-col items-center justify-center py-10 gap-5">
+              <button
+                type="button"
+                onClick={handlePlayAll}
+                disabled={playableTracks.length === 0}
+                className="flex items-center justify-center w-20 h-20 rounded-full transition-all duration-300 ease-[var(--ease-apple)] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.93] hover:scale-[1.08]"
+                style={{
+                  background: 'var(--color-accent)',
+                  boxShadow: '0 8px 32px var(--color-accent-glow), 0 0 60px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.30)',
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
+              <div className="text-center">
+                <p className="text-[14px] font-semibold text-white/70">{t('soundwave.coldTitle', 'Начать слушать')}</p>
+                <p className="text-[12px] text-white/35 mt-1">{t('soundwave.coldDesc', 'Лайкни пару треков — настроим волну')}</p>
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col gap-6">
               {filteredAllTracks.length > 0 && (
                 <ClusterRow
                   clusterId="wave"
-                  title={t('soundwave.home.waveTitle')}
-                  description={t('soundwave.home.waveDesc')}
-                  icon={WAVE_ICON}
+                  title={backendWorking ? t('soundwave.home.waveTitle') : t('home.recommended', 'Рекомендуем')}
+                  description={backendWorking ? t('soundwave.home.waveDesc') : t('discover.subtitle', 'Подобрано по твоим лайкам')}
+                  icon={backendWorking ? WAVE_ICON : <Sparkles size={14} />}
                   index={0}
                   tracks={filteredAllTracks}
                   queue={filteredAllTracks}

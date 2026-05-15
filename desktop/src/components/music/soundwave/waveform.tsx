@@ -10,7 +10,7 @@ const BAR_COUNT = 80;
 function downsample(samples: number[], height: number, count: number): number[] {
   if (!samples.length) return new Array(count).fill(0.35);
   const bucketSize = samples.length / count;
-  const out = new Array<number>(count);
+  const raw = new Array<number>(count);
   for (let i = 0; i < count; i++) {
     const start = Math.floor(i * bucketSize);
     const end = Math.max(start + 1, Math.floor((i + 1) * bucketSize));
@@ -20,10 +20,18 @@ function downsample(samples: number[], height: number, count: number): number[] 
       sum += samples[j];
       n++;
     }
-    const avg = n > 0 ? sum / n / height : 0.35;
-    out[i] = 0.18 + Math.min(0.82, avg * 0.95);
+    raw[i] = n > 0 ? sum / n / height : 0.35;
   }
-  return out;
+  // Stretch dynamic range so even uniform tracks show contrast between bars
+  const lo = Math.min(...raw);
+  const hi = Math.max(...raw);
+  const span = hi - lo;
+  return raw.map((v) => {
+    const norm = span > 0.02 ? (v - lo) / span : v;
+    // Power curve: lifts quiet bars, keeps loud bars tall
+    const curved = Math.pow(norm, 0.65);
+    return 0.10 + curved * 0.88;
+  });
 }
 
 /** Decorative fallback — organic sine pattern while loading. */

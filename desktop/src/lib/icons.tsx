@@ -43,6 +43,7 @@ import {
   Music as _Music,
   PanelLeftClose as _PanelLeftClose,
   PanelLeftOpen as _PanelLeftOpen,
+  Pipette as _Pipette,
   Pause as _Pause,
   PictureInPicture2 as _PictureInPicture2,
   Play as _Play,
@@ -132,6 +133,7 @@ export const Minus = memo(_Minus);
 export const Music = memo(_Music);
 export const PanelLeftClose = memo(_PanelLeftClose);
 export const PanelLeftOpen = memo(_PanelLeftOpen);
+export const Pipette = memo(_Pipette);
 export const PictureInPicture2 = memo(_PictureInPicture2);
 export const Pause = memo(_Pause);
 export const Play = memo(_Play);

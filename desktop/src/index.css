@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* ── Manrope Variable Font ─────────────────────────────────── */
+@font-face {
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope-Variable.ttf') format('truetype');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-bg-primary: rgba(10, 10, 12, 0.95);
   --color-bg-glass: rgba(255, 255, 255, 0.03);
@@ -23,7 +32,7 @@
   --color-ui-accent-dim: rgba(99, 102, 241, 0.18);
   --color-ui-accent-glow: rgba(99, 102, 241, 0.35);
 
-  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: "Manrope", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   /* ── Easing ──────────────────────────────────────────────── */
   --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
@@ -50,6 +59,63 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+svg {
+  shape-rendering: geometricPrecision;
+}
+
+img {
+  image-rendering: auto;
+}
+
+/* ── Typography micro-tricks (Manrope variable font) ────────
+   Large headings: tight tracking → feels premium, dense.
+   Small labels/captions: airy tracking → easier to read at 10-12px. */
+
+h1, h2 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Track title (large, ~14-15px) — tight */
+.track-title {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Artist name / caption (small, 10-12px) — airy */
+.track-artist,
+.track-caption {
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Section headings */
+.section-title {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* Page animations */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 html,

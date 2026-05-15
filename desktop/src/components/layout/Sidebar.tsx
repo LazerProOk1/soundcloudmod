@@ -128,9 +128,9 @@ export const Sidebar = React.memo(() => {
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-r-full"
                     style={{
                       background:
-                        'linear-gradient(180deg, rgba(129,140,248,0.95) 0%, var(--color-ui-accent) 100%)',
+                        'linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-glow) 100%)',
                       boxShadow:
-                        '0 0 10px var(--color-ui-accent-glow), 0 0 3px rgba(129,140,248,0.6)',
+                        '0 0 10px var(--color-accent-glow), 0 0 3px var(--color-accent)',
                     }}
                   />
                 )}
@@ -139,7 +139,7 @@ export const Sidebar = React.memo(() => {
                   strokeWidth={1.8}
                   style={
                     isActive
-                      ? { color: 'rgba(165,170,255,0.95)' }
+                      ? { color: 'var(--color-accent)' }
                       : undefined
                   }
                 />

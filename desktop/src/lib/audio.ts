@@ -41,6 +41,8 @@ let cachedPlaybackRate = 1.0;   // effective speed sent to Rust (rate * pitch mu
 let cachedDuration = 0;
 let loadGen = 0;
 let lastEndedUrn: string | null = null;
+/** Ignore audio:ended events until this timestamp (set on seek to prevent spurious next()). */
+let seekGuardUntilMs = 0;
 const listeners = new Set<() => void>();
 const API_PREVIEW_DURATION_MS = 30_000;
 
@@ -126,6 +128,9 @@ export function seek(seconds: number) {
     }
     applyVolume(usePlayerStore.getState().volume);
   }
+
+  // Guard: ignore audio:ended for 600ms after seek — Rodio can emit ended mid-seek
+  seekGuardUntilMs = performance.now() + 600;
 
   invoke('audio_seek', { position: clamped }).catch(console.error);
   cachedTime = clamped;
@@ -519,6 +524,9 @@ listen<{ urn: string; progress: number }>('track:download-progress', (event) => 
 });
 
 listen('audio:ended', () => {
+  // Suppress spurious ended events fired by Rodio during/immediately after a seek
+  if (performance.now() < seekGuardUntilMs) return;
+
   if (currentUrn) {
     // Засчитываем full_play только если трек реально игрался: либо ≥30s,
     // либо проиграно ≥50% длительности (для коротких треков). Иначе это

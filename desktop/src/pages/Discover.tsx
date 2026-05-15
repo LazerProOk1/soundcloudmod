@@ -336,7 +336,7 @@ export function Discover() {
   const likedTracks = useMemo(() => likedQuery.tracks, [likedQuery.tracks]);
 
   return (
-    <div className="p-6 pb-4 space-y-8">
+    <div className="p-6 pb-4 space-y-8 page-enter">
       <DiscoverHero />
       <RecommendedShelf likedTracks={likedTracks} />
       <GenreDiscover likedTracks={likedTracks} />
