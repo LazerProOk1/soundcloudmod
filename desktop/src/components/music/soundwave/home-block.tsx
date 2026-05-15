@@ -186,7 +186,8 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
         aria-hidden
         style={{
           background:
-            'linear-gradient(180deg, rgba(8,8,10,0.45) 0%, rgba(8,8,10,0.35) 45%, rgba(8,8,10,0.85) 100%)',
+            /* Mesh background shows through at top, text stays readable at bottom */
+            'linear-gradient(180deg, rgba(8,8,10,0.05) 0%, rgba(8,8,10,0.18) 50%, rgba(8,8,10,0.72) 100%)',
           contain: 'strict',
         }}
       />

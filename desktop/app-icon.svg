@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Orange gradient background matching SoundCloud brand -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%" stop-color="#FF7700"/>
+      <stop offset="100%" stop-color="#FF3300"/>
+    </linearGradient>
+    <!-- Subtle inner shadow for depth -->
+    <radialGradient id="shine" cx="38%" cy="32%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background (iOS-style, r=224 ≈ 22%) -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+  <!-- Shine overlay -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#shine)"/>
+
+  <!--
+    SoundCloud logo — white cloud + waveform bars
+    Centered and scaled to fill ~72% of the icon canvas.
+    Translated so the full shape is centered at (512,512).
+  -->
+  <g transform="translate(148, 310)" fill="white">
+    <!--
+      SoundCloud waveform bars (7 bars, heights: 80 140 200 270 320 270 200)
+      Each bar: width=42px, gap=16px, total bars width = 7*42+6*16 = 390px
+      The full logo width ≈ 730px to match the original proportions.
+    -->
+
+    <!-- Bar 1 (shortest, leftmost) -->
+    <ellipse cx="21" cy="200" rx="21" ry="80"/>
+
+    <!-- Bar 2 -->
+    <ellipse cx="100" cy="200" rx="21" ry="120"/>
+
+    <!-- Bar 3 -->
+    <ellipse cx="179" cy="200" rx="21" ry="155"/>
+
+    <!-- Bar 4 -->
+    <ellipse cx="258" cy="200" rx="21" ry="185"/>
+
+    <!-- Bar 5 -->
+    <ellipse cx="337" cy="200" rx="21" ry="200"/>
+
+    <!-- Bar 6 -->
+    <ellipse cx="416" cy="200" rx="21" ry="185"/>
+
+    <!-- Bar 7 -->
+    <ellipse cx="495" cy="200" rx="21" ry="160"/>
+
+    <!--
+      Cloud shape — occupies the right portion, anchored to bar tops
+      The cloud sits to the right of the bars and is the dominant shape.
+      Scaled to ~285x248 px, positioned at x=445, y=-10
+    -->
+    <path d="
+      M 445 390
+      L 445 110
+      Q 448 62 494 52
+      Q 530 44 556 72
+      Q 572 36 612 28
+      Q 676 16 716 62
+      Q 756 96 748 152
+      Q 786 160 800 196
+      Q 820 248 790 296
+      Q 760 344 708 352
+      L 445 390 Z
+    "/>
+  </g>
+</svg>

@@ -80,7 +80,7 @@ const LanguageSection = React.memo(function LanguageSection() {
   const { t, i18n } = useTranslation();
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl">
+    <section className="glass-card p-6">
       <h3 className="text-[15px] font-bold text-white/80 tracking-tight mb-4">
         {t('settings.language')}
       </h3>
@@ -334,7 +334,7 @@ const CacheSection = React.memo(function CacheSection() {
       : 0;
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl space-y-2">
+    <section className="glass-card p-6 space-y-2">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[15px] font-bold text-white/80 tracking-tight">
           {t('settings.cache')}
@@ -755,7 +755,7 @@ const ThemeSection = React.memo(function ThemeSection() {
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl space-y-6">
+    <section className="glass-card p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-[15px] font-bold text-white/80 tracking-tight">
           {t('settings.appearance')}
@@ -966,7 +966,7 @@ const AudioDeviceSection = React.memo(function AudioDeviceSection() {
   if (sinks.length === 0) return null;
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl">
+    <section className="glass-card p-6">
       <h3 className="text-[15px] font-bold text-white/80 tracking-tight mb-4">
         {t('settings.audioDevice')}
       </h3>
@@ -996,7 +996,7 @@ const StartupSection = React.memo(function StartupSection() {
   const setStartupPage = useSettingsStore((s) => s.setStartupPage);
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl space-y-4">
+    <section className="glass-card p-6 space-y-4">
       <div>
         <h3 className="text-[15px] font-bold text-white/80 tracking-tight">
           {t('settings.startup')}
@@ -1048,7 +1048,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
   const discordRpcShowButton = useSettingsStore((s) => s.discordRpcShowButton);
   const setDiscordRpcShowButton = useSettingsStore((s) => s.setDiscordRpcShowButton);
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl space-y-5">
+    <section className="glass-card p-6 space-y-5">
       <h3 className="text-[15px] font-bold text-white/80 tracking-tight">
         {t('settings.playback')}
       </h3>
@@ -1216,7 +1216,7 @@ const ImportSection = React.memo(function ImportSection() {
   const [ymOpen, setYmOpen] = useState(false);
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl">
+    <section className="glass-card p-6">
       <h3 className="text-[15px] font-bold text-white/80 tracking-tight mb-4">
         {t('settings.import')}
       </h3>
@@ -1249,7 +1249,7 @@ const AccountSection = React.memo(function AccountSection() {
   const [transferOpen, setTransferOpen] = useState(false);
 
   return (
-    <section className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-[60px] rounded-3xl p-6 shadow-xl">
+    <section className="glass-card p-6">
       <h3 className="text-[15px] font-bold text-white/80 tracking-tight mb-5">
         {t('settings.account')}
       </h3>

@@ -284,11 +284,9 @@ body,
 .glass-featured {
   position: relative;
   isolation: isolate;
-  background: rgba(10, 10, 14, 0.38);
-  backdrop-filter:
-    blur(56px) saturate(220%) contrast(112%) brightness(94%);
-  -webkit-backdrop-filter:
-    blur(56px) saturate(220%) contrast(112%) brightness(94%);
+  background: rgba(10, 10, 14, 0.28);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.22) inset,
     0 3px 8px -2px rgba(255, 255, 255, 0.05) inset,
@@ -352,9 +350,9 @@ body,
 
 /* ── Generic glass card ───────────────────────────────────── */
 .glass-card {
-  background: rgba(10, 10, 14, 0.40);
-  backdrop-filter: blur(32px) saturate(190%) contrast(108%) brightness(96%);
-  -webkit-backdrop-filter: blur(32px) saturate(190%) contrast(108%) brightness(96%);
+  background: rgba(10, 10, 14, 0.36);
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
   border-radius: 20px;
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.18) inset,
@@ -395,17 +393,11 @@ body,
 .liquid-panel {
   position: relative;
   isolation: isolate;
-  background: rgba(10, 10, 14, 0.44);
-  backdrop-filter:
-    blur(var(--liquid-blur))
-    saturate(var(--liquid-saturate))
-    contrast(var(--liquid-contrast))
-    brightness(var(--liquid-brightness));
-  -webkit-backdrop-filter:
-    blur(var(--liquid-blur))
-    saturate(var(--liquid-saturate))
-    contrast(var(--liquid-contrast))
-    brightness(var(--liquid-brightness));
+  background: rgba(10, 10, 14, 0.38);
+  /* Perf: 2 ops (blur + saturate) instead of 4. Each extra op is a full-image pass.
+     contrast/brightness removed — differential box-shadow lighting carries that job. */
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
   box-shadow:
     /* ── Дифференциальные блики (свет сверху-слева) ─── */
     /* top: яркий глянцевый блик */
@@ -452,17 +444,10 @@ body,
 .liquid-panel-heavy {
   position: relative;
   isolation: isolate;
-  background: rgba(6, 6, 9, 0.76);
-  backdrop-filter:
-    blur(var(--liquid-blur-heavy))
-    saturate(var(--liquid-saturate))
-    contrast(var(--liquid-contrast))
-    brightness(92%);
-  -webkit-backdrop-filter:
-    blur(var(--liquid-blur-heavy))
-    saturate(var(--liquid-saturate))
-    contrast(var(--liquid-contrast))
-    brightness(92%);
+  background: rgba(6, 6, 9, 0.78);
+  /* Sidebar and player bar: 28px is plenty, saturate adds richness without 4-op cost */
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   box-shadow:
     /* top: яркий блик — стекло «открыто» сверху */
     0 1px 0 0 rgba(255, 255, 255, 0.22) inset,
@@ -860,15 +845,19 @@ body,
    composite-only, zero layout, zero React re-renders during playback. */
 .sw-bars {
   --sw-progress: 0%;
+  /* Ambient glow around the whole waveform — makes bars "float" */
+  filter: drop-shadow(0 0 18px rgba(99, 102, 241, 0.32)) drop-shadow(0 0 6px rgba(34, 211, 238, 0.18));
 }
 
 .sw-bar {
-  min-height: 3px;
-  border-radius: 1.5px;
+  /* Thicker + rounder — more organic, less barcode */
+  min-height: 4px;
+  border-radius: 3px;
+  opacity: 0.82;
 }
 
 .sw-layer-muted .sw-bar {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .sw-layer-accent {
@@ -1014,6 +1003,42 @@ body,
 /* ── Text readability utility for glass surfaces ────────────── */
 .text-glass {
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45), 0 0.5px 2px rgba(0, 0, 0, 0.28);
+}
+
+/* ── AmbientMeshBackground blob animations ───────────────────
+   ONLY transform (translate + scale) — compositor thread, no pixel cost.
+   Each blob has a unique trajectory so they never perfectly align.        */
+
+@keyframes mesh-drift-a {
+  0%   { transform: translate(0,    0)    scale(1.00); }
+  25%  { transform: translate(6%,   8%)   scale(1.08); }
+  50%  { transform: translate(12%,  4%)   scale(0.94); }
+  75%  { transform: translate(4%,  -6%)   scale(1.04); }
+  100% { transform: translate(0,    0)    scale(1.00); }
+}
+
+@keyframes mesh-drift-b {
+  0%   { transform: translate(0,    0)    scale(1.00); }
+  30%  { transform: translate(-8%,  6%)   scale(1.10); }
+  60%  { transform: translate(-4%, -8%)   scale(0.92); }
+  80%  { transform: translate(5%,  -3%)   scale(1.06); }
+  100% { transform: translate(0,    0)    scale(1.00); }
+}
+
+@keyframes mesh-drift-c {
+  0%   { transform: translate(0,    0)    scale(1.00); }
+  20%  { transform: translate(10%,  -5%)  scale(0.96); }
+  50%  { transform: translate(6%,    8%)  scale(1.12); }
+  70%  { transform: translate(-4%,   4%)  scale(0.98); }
+  100% { transform: translate(0,    0)    scale(1.00); }
+}
+
+@keyframes mesh-drift-d {
+  0%   { transform: translate(0,    0)    scale(1.00); }
+  35%  { transform: translate(-6%,  -8%)  scale(1.06); }
+  65%  { transform: translate(8%,   -4%)  scale(0.95); }
+  85%  { transform: translate(3%,    6%)  scale(1.08); }
+  100% { transform: translate(0,    0)    scale(1.00); }
 }
 
 /* ── Mini-player marquee ─────────────────────────────────────── */
