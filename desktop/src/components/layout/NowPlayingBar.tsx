@@ -955,7 +955,7 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
   return (
     <div className="flex items-center gap-3.5 w-[340px] min-w-0">
       <div
-        className="relative w-14 h-14 rounded-[12px] shrink-0 overflow-hidden cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
+        className="glass-artwork relative w-14 h-14 rounded-[12px] shrink-0 cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
         style={{
           boxShadow: `
             0 1px 0 0 rgba(255,255,255,0.20) inset,
@@ -972,7 +972,7 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
         ) : (
           <div className="w-full h-full bg-white/[0.04]" />
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover/art:bg-black/40 group-hover/art:opacity-100 transition-all duration-200">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover/art:bg-black/40 group-hover/art:opacity-100 transition-all duration-200" style={{ zIndex: 4 }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-white">
             <path
               d="M3 7V3h4M11 3h4v4M15 11v4h-4M7 15H3v-4"

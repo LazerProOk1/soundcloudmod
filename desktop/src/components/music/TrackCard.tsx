@@ -85,7 +85,7 @@ export const TrackCard = React.memo(
       >
         {/* ── Artwork ──────────────────────────────────────────── */}
         <div
-          className="relative aspect-square rounded-[22px] overflow-hidden cursor-pointer"
+          className="glass-artwork relative aspect-square rounded-[22px] cursor-pointer"
           style={{
             /* Liquid Glass border: top/left bright → bottom/right dark */
             boxShadow: `
@@ -119,14 +119,13 @@ export const TrackCard = React.memo(
             </div>
           )}
 
-          {/* Side vignette — soft gradient blur on left/right edges */}
+          {/* Corner vignette — soft radial shadow on all 4 corners */}
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none"
             style={{
-              background:
-                'linear-gradient(90deg, rgba(0,0,0,0.22) 0%, transparent 22%, transparent 78%, rgba(0,0,0,0.22) 100%)',
-              zIndex: 1,
+              background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.30) 100%)',
+              zIndex: 2,
             }}
           />
 

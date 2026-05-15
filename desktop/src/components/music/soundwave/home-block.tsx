@@ -109,11 +109,18 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
 
   const backendWorking = rawClusters.length > 0 || rawAllTracks.length > 0;
 
+  // Fast fallback chain: backend → localRecs (related pool) → likedTracks (instant, cached)
+  // likedTracks appear immediately while relatedPool loads in background.
+  const immediateBase = useMemo(() => {
+    if (backendWorking) return rawAllTracks;
+    if (localRecs.length > 0) return localRecs;
+    return likedTracks.slice(0, 40);
+  }, [backendWorking, rawAllTracks, localRecs, likedTracks]);
+
   const filteredAllTracks = useMemo(() => {
-    const base = backendWorking ? rawAllTracks : localRecs;
-    if (!hideLiked) return base;
-    return base.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn));
-  }, [backendWorking, rawAllTracks, localRecs, hideLiked]);
+    if (!hideLiked) return immediateBase;
+    return immediateBase.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn));
+  }, [immediateBase, hideLiked]);
 
   const filteredClusters = useMemo(() => {
     if (!hideLiked) return rawClusters;
@@ -176,8 +183,8 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   };
 
   const spinning = isRefreshing || isFetching;
-  // Show cold state only if backend is down AND no local recs available yet
-  const showCold = !isSearchMode && !isLoading && orderedClusters.length === 0 && localRecs.length === 0;
+  // Show cold state only if truly nothing available (backend down + no liked tracks cached)
+  const showCold = !isSearchMode && !isLoading && orderedClusters.length === 0 && immediateBase.length === 0;
   const showSearchEmpty = isSearchMode && !searchBusy && searchTracks.length === 0;
   const playableTracks = isSearchMode ? searchTracks : filteredAllTracks;
 
@@ -325,8 +332,8 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
               {filteredAllTracks.length > 0 && (
                 <ClusterRow
                   clusterId="wave"
-                  title={backendWorking ? t('soundwave.home.waveTitle') : t('home.recommended', 'Рекомендуем')}
-                  description={backendWorking ? t('soundwave.home.waveDesc') : t('discover.subtitle', 'Подобрано по твоим лайкам')}
+                  title={backendWorking ? t('soundwave.home.waveTitle') : localRecs.length > 0 ? t('home.recommended', 'Рекомендуем') : t('library.likedTracks', 'Понравившиеся')}
+                  description={backendWorking ? t('soundwave.home.waveDesc') : localRecs.length > 0 ? t('discover.subtitle', 'Подобрано по твоим лайкам') : t('soundwave.idleSub', 'Ставь лайки — SoundWave настроит волну')}
                   icon={backendWorking ? WAVE_ICON : <Sparkles size={14} />}
                   index={0}
                   tracks={filteredAllTracks}

@@ -286,7 +286,7 @@ body,
       90deg,
       rgba(255, 255, 255, 1),
       rgba(255, 255, 255, 0.8),
-      rgba(255, 85, 0, 0.8)
+      var(--color-accent)
     );
     background-clip: text;
     -webkit-background-clip: text;
@@ -415,6 +415,7 @@ body,
 
 /* ── Generic glass card ───────────────────────────────────── */
 .glass-card {
+  position: relative;
   background: rgba(10, 10, 14, 0.36);
   backdrop-filter: blur(20px) saturate(170%);
   -webkit-backdrop-filter: blur(20px) saturate(170%);
@@ -425,8 +426,23 @@ body,
     0 -1px 0 0 rgba(0, 0, 0, 0.38) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.06),
     0 8px 32px rgba(0, 0, 0, 0.38);
-  /* 120fps: only background transitions, box-shadow snaps */
   transition: background 0.28s var(--ease-spring);
+  overflow: hidden;
+}
+
+/* Top glass shine on cards */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.065) 0%,
+    rgba(255, 255, 255, 0.018) 28%,
+    transparent 55%
+  );
+  z-index: 1;
 }
 
 .glass-card:hover {
@@ -437,6 +453,44 @@ body,
     0 -1px 0 0 rgba(0, 0, 0, 0.42) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.09),
     0 12px 44px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Glass artwork container — strong liquid glass treatment ── */
+/* Apply to the artwork wrapper div in track/album cards */
+.glass-artwork {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top specular highlight (light hitting the top glass surface) */
+.glass-artwork::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 42%;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.04) 55%,
+    transparent 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Bottom depth shadow (light lost at the bottom of the lens) */
+.glass-artwork::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 45%;
+  background: linear-gradient(0deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.20) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* ── Glass pill button — frosted, inset white glint top-left ──── */

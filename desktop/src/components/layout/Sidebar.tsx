@@ -82,9 +82,7 @@ export const Sidebar = React.memo(() => {
           <span
             className="text-[11px] font-semibold tracking-tight truncate"
             style={{
-              /* Orange → bright white gradient: premium, on-brand */
-              background:
-                'linear-gradient(90deg, rgba(255,120,40,0.95) 0%, rgba(255,255,255,0.72) 100%)',
+              background: 'linear-gradient(90deg, var(--color-accent) 0%, rgba(255,255,255,0.78) 100%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               color: 'transparent',
