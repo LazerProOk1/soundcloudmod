@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { preloadTrack } from '../../lib/audio';
@@ -32,10 +32,12 @@ export const TrackCard = React.memo(
       togglePlayRaw();
     }, [clusterId, track.urn, togglePlayRaw]);
     const addToQueueNext = usePlayerStore((s) => s.addToQueueNext);
+    const cardRef = useRef<HTMLDivElement>(null);
     const artwork = art(track.artwork_url, 't300x300');
     const artistDisplay = useArtistDisplay(track);
     const displayTitle = useDisplayTitle(track);
     const isWanted = artistDisplay.availability !== 'indexed';
+
     const artistTarget =
       track.enrichment?.primary_artist?.id && artistDisplay.verified
         ? `/artist/${encodeURIComponent(track.enrichment.primary_artist.id)}`
@@ -48,30 +50,62 @@ export const TrackCard = React.memo(
       addToQueueNext([track]);
     };
 
+    /* Spring 3-D tilt on mouse move — full card tilts toward cursor */
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+      const el = cardRef.current;
+      if (!el) return;
+      const { left, top, width, height } = el.getBoundingClientRect();
+      const x = ((e.clientX - left) / width - 0.5) * 14;   // ±7°
+      const y = ((e.clientY - top) / height - 0.5) * -14;
+      el.style.transform = `perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateY(-4px) scale(1.02)`;
+    };
+
+    const handleMouseLeave = () => {
+      const el = cardRef.current;
+      if (el) {
+        el.style.transform =
+          'perspective(600px) rotateY(0deg) rotateX(0deg) translateY(0) scale(1)';
+      }
+    };
+
     return (
       <div
+        ref={cardRef}
         className="group relative select-none"
-        onMouseEnter={() => preloadTrack(track.urn)}
         style={{
+          transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1)',
           contentVisibility: 'auto',
           contain: 'layout paint style',
           containIntrinsicSize: '180px 260px',
+          willChange: 'transform',
         }}
+        onMouseEnter={() => preloadTrack(track.urn)}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
-        {/* Artwork */}
+        {/* ── Artwork ──────────────────────────────────────────── */}
         <div
-          className={`relative aspect-square rounded-2xl overflow-hidden bg-white/[0.03] cursor-pointer transition-all duration-300 ease-[var(--ease-apple)] ${
-            isThisPlaying
-              ? 'ring-2 ring-accent/60 shadow-[0_0_24px_var(--color-accent-glow)]'
-              : 'ring-1 ring-white/[0.06] group-hover:ring-white/[0.12] group-hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
-          }`}
+          className="relative aspect-square rounded-[22px] overflow-hidden cursor-pointer"
+          style={{
+            /* Liquid Glass border: top/left bright → bottom/right dark */
+            boxShadow: `
+              0 1px 0 0 rgba(255,255,255,0.18) inset,
+              1px 0 0 0 rgba(255,255,255,0.10) inset,
+              0 -1px 0 0 rgba(0,0,0,0.58) inset,
+              -1px 0 0 0 rgba(0,0,0,0.20) inset,
+              0 8px 32px rgba(0,0,0,0.45),
+              0 2px 8px rgba(0,0,0,0.25)
+            `,
+            background: 'rgba(255,255,255,0.035)',
+            backdropFilter: 'blur(2px)',
+          }}
           onClick={togglePlay}
         >
           {artwork ? (
             <img
               src={artwork}
               alt={track.title}
-              className="w-full h-full object-cover transition-transform duration-500 ease-[var(--ease-apple)] group-hover:scale-[1.04]"
+              className="w-full h-full object-cover transition-transform duration-500 ease-[var(--ease-spring)] group-hover:scale-[1.06]"
               decoding="async"
               loading="lazy"
             />
@@ -81,18 +115,37 @@ export const TrackCard = React.memo(
             </div>
           )}
 
-          {/* Hover overlay */}
+          {/* Liquid overlay — liquid glass gradient on hover/playing */}
           <div
-            className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-350 ease-[var(--ease-spring)] ${
               isThisPlaying
-                ? 'bg-black/30 backdrop-blur-[2px] opacity-100'
-                : 'bg-black/0 opacity-0 group-hover:bg-black/30 group-hover:backdrop-blur-[2px] group-hover:opacity-100'
+                ? 'opacity-100'
+                : 'opacity-0 group-hover:opacity-100'
             }`}
+            style={{
+              background: isThisPlaying
+                ? 'linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.48) 100%)'
+                : 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.38) 100%)',
+              backdropFilter: 'blur(4px) saturate(1.6)',
+            }}
           >
+            {/* Play/pause button — liquid glass pill */}
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ease-[var(--ease-apple)] shadow-xl ${
-                isThisPlaying ? 'bg-white scale-100' : 'bg-white/90 scale-75 group-hover:scale-100'
+              className={`flex items-center justify-center transition-all duration-400 ease-[var(--ease-spring)] ${
+                isThisPlaying ? 'scale-100' : 'scale-[0.7] group-hover:scale-100'
               }`}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.92)',
+                boxShadow: `
+                  0 1px 0 0 rgba(255,255,255,0.9) inset,
+                  0 -1px 0 0 rgba(0,0,0,0.15) inset,
+                  0 4px 20px rgba(0,0,0,0.42),
+                  0 0 0 8px rgba(255,255,255,0.06)
+                `,
+              }}
             >
               {isThisPlaying ? pauseBlack20 : playBlack20}
             </div>
@@ -100,29 +153,51 @@ export const TrackCard = React.memo(
 
           {/* Go+ badge for blocked tracks */}
           {track.access === 'blocked' && (
-            <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md rounded-full px-2 py-0.5">
-              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">Go+</span>
+            <div
+              className="absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-0.5"
+              style={{
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(12px) saturate(1.8)',
+                boxShadow: '0 1px 0 0 rgba(255,255,255,0.12) inset',
+              }}
+            >
+              <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">
+                Go+
+              </span>
             </div>
           )}
 
-          {/* Duration pill */}
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <div className="text-[10px] font-medium bg-black/50 backdrop-blur-md text-white/80 px-2 py-0.5 rounded-full">
+          {/* Duration pill — bottom right */}
+          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div
+              className="text-[10px] font-medium text-white/85 px-2 py-0.5 rounded-full"
+              style={{
+                background: 'rgba(0,0,0,0.45)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 1px 0 0 rgba(255,255,255,0.10) inset',
+              }}
+            >
               {dur(track.duration)}
             </div>
           </div>
 
-          {/* Like button — top left */}
+          {/* Like — top left (existing component) */}
           <LikeButton track={track} variant="overlay" />
 
-          {/* Top right: add to playlist + add to queue */}
+          {/* Playlist + queue — top right */}
           <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <AddToPlaylistDialog trackUrns={[track.urn]}>
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
-                className="cursor-pointer w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all duration-200"
+                className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white/85 hover:text-white transition-colors duration-200"
                 title={t('playlist.addToPlaylist')}
+                style={{
+                  background: 'rgba(0,0,0,0.45)',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow:
+                    '0 1px 0 0 rgba(255,255,255,0.13) inset, 0 2px 8px rgba(0,0,0,0.3)',
+                }}
               >
                 <ListPlus size={14} />
               </button>
@@ -130,40 +205,67 @@ export const TrackCard = React.memo(
             <button
               type="button"
               onClick={handleAddToQueue}
-              className="cursor-pointer w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all duration-200"
+              className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white/85 hover:text-white transition-colors duration-200"
               title={t('player.addToQueue')}
+              style={{
+                background: 'rgba(0,0,0,0.45)',
+                backdropFilter: 'blur(12px)',
+                boxShadow:
+                  '0 1px 0 0 rgba(255,255,255,0.13) inset, 0 2px 8px rgba(0,0,0,0.3)',
+              }}
             >
               <ListMusic size={14} />
             </button>
           </div>
         </div>
 
-        {/* Info */}
+        {/* ── Ambient glow from artwork ─────────────────────────── */}
+        {artwork && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 rounded-[22px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+            style={{
+              background: `url(${artwork}) center/cover`,
+              filter: 'blur(28px) saturate(1.4)',
+              transform: 'scale(0.9) translateY(8px)',
+            }}
+          />
+        )}
+
+        {/* ── Track info ─────────────────────────────────────────── */}
         <div className="mt-3 min-w-0">
           <p
-            className={`text-[13px] font-medium truncate leading-snug ${isWanted ? 'text-white/55' : 'text-white/90 cursor-pointer hover:text-white'} transition-colors duration-150`}
+            className={`text-[13px] font-medium truncate leading-snug transition-colors duration-150 ${
+              isWanted
+                ? 'text-white/45'
+                : 'text-white/90 cursor-pointer hover:text-white'
+            }`}
             onClick={
-              isWanted ? undefined : () => navigate(`/track/${encodeURIComponent(track.urn)}`)
+              isWanted
+                ? undefined
+                : () => navigate(`/track/${encodeURIComponent(track.urn)}`)
             }
           >
             {displayTitle}
           </p>
           <p
-            className={`text-[11px] truncate mt-0.5 flex items-center gap-1 ${
-              isWanted ? 'text-white/30' : 'text-white/35 cursor-pointer hover:text-white/55'
-            } transition-colors duration-150`}
+            className={`text-[11px] truncate mt-0.5 flex items-center gap-1 transition-colors duration-150 ${
+              isWanted
+                ? 'text-white/25'
+                : 'text-white/40 cursor-pointer hover:text-white/60'
+            }`}
             onClick={artistTarget && !isWanted ? () => navigate(artistTarget) : undefined}
           >
             <UploadKindDot kind={artistDisplay.uploadKind} />
             <span className="truncate">{artistDisplay.primary}</span>
           </p>
           {isWanted ? (
-            <p className="text-[10px] text-white/25 mt-1">
+            <p className="text-[10px] text-white/20 mt-1">
               {t('track.notFoundOnSc', 'not found on SoundCloud')}
             </p>
           ) : (
             track.playback_count != null && (
-              <p className="text-[10px] text-white/20 mt-1 tabular-nums">
+              <p className="text-[10px] text-white/15 mt-1 tabular-nums">
                 {fc(track.playback_count)} plays
               </p>
             )
@@ -175,7 +277,8 @@ export const TrackCard = React.memo(
   (prev, next) =>
     prev.track.urn === next.track.urn &&
     prev.track.user_favorite === next.track.user_favorite &&
-    prev.track.enrichment?.primary_artist?.name === next.track.enrichment?.primary_artist?.name &&
+    prev.track.enrichment?.primary_artist?.name ===
+      next.track.enrichment?.primary_artist?.name &&
     prev.track.enrichment?.upload_kind === next.track.enrichment?.upload_kind &&
     prev.track.enrichment?.availability === next.track.enrichment?.availability,
 );

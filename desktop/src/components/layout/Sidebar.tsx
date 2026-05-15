@@ -59,8 +59,11 @@ export const Sidebar = React.memo(() => {
 
   return (
     <aside
-      className="shrink-0 flex flex-col h-full border-r border-white/[0.04] transition-[width] duration-200 ease-[var(--ease-apple)]"
-      style={{ width: collapsed ? 56 : 210 }}
+      className="liquid-panel-heavy shrink-0 flex flex-col h-full transition-[width] duration-300 ease-[var(--ease-spring)]"
+      style={{
+        width: collapsed ? 56 : 210,
+        borderRight: '1px solid rgba(255,255,255,0.055)',
+      }}
     >
       {/* Logo / branding */}
       <div
@@ -85,10 +88,10 @@ export const Sidebar = React.memo(() => {
                 collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
               } ${
                 isActive
-                  ? 'text-white bg-white/[0.08] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
+                  ? 'text-white bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_1px_0_0_rgba(255,255,255,0.08),inset_0_-1px_0_rgba(0,0,0,0.35)]'
                   : item.to === '/offline' && appMode !== 'online'
                     ? 'text-white/82 bg-accent/[0.08] ring-1 ring-accent/15'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.05] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
               }`
             }
           >
@@ -154,8 +157,8 @@ export const Sidebar = React.memo(() => {
                   collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
                 } ${
                   isActive
-                    ? 'text-white bg-white/[0.07]'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                    ? 'text-white bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-1px_0_rgba(0,0,0,0.35)]'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/[0.05] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                 }`
               }
             >

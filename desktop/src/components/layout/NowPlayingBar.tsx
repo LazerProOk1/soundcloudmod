@@ -469,7 +469,17 @@ const PlayPauseBtn = React.memo(() => {
     <button
       type="button"
       onClick={togglePlay}
-      className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center text-black hover:bg-white hover:scale-105 active:scale-95 transition-all duration-200 ease-[var(--ease-apple)] cursor-pointer mx-1.5"
+      className="w-12 h-12 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all duration-300 ease-[var(--ease-spring)] cursor-pointer mx-1.5"
+      style={{
+        background: 'rgba(255,255,255,0.92)',
+        boxShadow: `
+          0 1px 0 0 rgba(255,255,255,0.95) inset,
+          0 -1px 0 0 rgba(0,0,0,0.18) inset,
+          0 4px 20px rgba(0,0,0,0.38),
+          0 0 0 1px rgba(255,255,255,0.15),
+          0 0 0 8px rgba(255,255,255,0.05)
+        `,
+      }}
     >
       {isPlaying ? pauseBlack20 : playBlack20}
     </button>
@@ -990,11 +1000,14 @@ const BackgroundGlow = React.memo(() => {
   if (!artwork) return null;
   return (
     <div
-      className="absolute inset-0 opacity-[0.09] blur-3xl pointer-events-none transition-[background-image] duration-[2s]"
+      aria-hidden="true"
+      className="absolute inset-0 pointer-events-none"
       style={{
         backgroundImage: `url(${artwork})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        opacity: 0.08,
+        filter: 'blur(60px)',
         contain: 'strict',
         transform: 'translateZ(0)',
       }}
@@ -1007,14 +1020,10 @@ const BackgroundGlow = React.memo(() => {
 export const NowPlayingBar = React.memo(
   ({ onQueueToggle, queueOpen }: { onQueueToggle: () => void; queueOpen: boolean }) => {
     return (
-      <div className="shrink-0 relative z-[50]">
-        {/* Gradient top separator */}
-        <div
-          className="absolute top-0 left-0 right-0 h-px pointer-events-none z-10"
-          style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 20%, rgba(255,255,255,0.07) 80%, transparent 100%)',
-          }}
-        />
+      <div
+        className="liquid-panel-heavy shrink-0 relative z-[50]"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+      >
         <BackgroundGlow />
         {/* Isolated layer — repaints here won't cascade to blur background */}
         <div className="relative" style={{ isolation: 'isolate' }}>

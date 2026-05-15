@@ -17,11 +17,11 @@ function GlassHeroPanelImpl({ hasStar, aura, className, children }: GlassHeroPan
       style={{
         background:
           'linear-gradient(165deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.04) 100%)',
-        backdropFilter: 'blur(40px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(40px) saturate(160%)',
+        backdropFilter: 'blur(56px) saturate(190%)',
+        WebkitBackdropFilter: 'blur(56px) saturate(190%)',
         boxShadow: hasStar
-          ? `0 30px 80px rgba(0,0,0,0.4), 0 0 80px ${auraRgba(aura, 0.18)}, inset 0 0 0 1px ${auraRgba(aura, 0.3)}, inset 0 1px 0 rgba(255,255,255,0.1)`
-          : '0 30px 80px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.08)',
+          ? `0 30px 80px rgba(0,0,0,0.42), 0 0 80px ${auraRgba(aura, 0.20)}, inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.5), inset 0 0 0 1px ${auraRgba(aura, 0.25)}`
+          : 'inset 0 1px 0 rgba(255,255,255,0.18), inset 1px 0 0 rgba(255,255,255,0.09), inset 0 -1px 0 rgba(0,0,0,0.52), 0 30px 80px rgba(0,0,0,0.38)',
         animation: 'hub-rise 700ms cubic-bezier(0.2,0.8,0.2,1) both',
         isolation: 'isolate',
       }}

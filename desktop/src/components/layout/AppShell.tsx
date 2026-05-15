@@ -195,16 +195,32 @@ const AmbientGlow = React.memo(() => {
   const artwork = usePlayerStore((s) => art(s.currentTrack?.artwork_url, 't500x500'));
   if (!artwork) return null;
   return (
-    <div
-      className="absolute bottom-0 left-0 right-0 h-[400px] opacity-[0.06] blur-[100px] pointer-events-none transition-all duration-[2s] ease-out"
-      style={{
-        backgroundImage: `url(${artwork})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        contain: 'strict',
-        transform: 'translateZ(0)',
-      }}
-    />
+    <>
+      {/* Bottom album-art bleed */}
+      <div
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 right-0 h-[480px] pointer-events-none transition-all duration-[2s] ease-out"
+        style={{
+          backgroundImage: `url(${artwork})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.09,
+          filter: 'blur(100px)',
+          contain: 'strict',
+          transform: 'translateZ(0)',
+        }}
+      />
+      {/* Subtle radial mesh gradient overlay for extra depth */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,85,0,0.04) 0%, transparent 70%)',
+          contain: 'strict',
+        }}
+      />
+    </>
   );
 });
 

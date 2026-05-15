@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { useShallow } from 'zustand/shallow';
 import { AppShell } from './components/layout/AppShell';
 import { MiniPlayer } from './components/layout/MiniPlayer';
+import { LiquidGlassDefs } from './components/ui/LiquidGlassDefs';
 import YMImportFloatingStatus from './components/music/YMImportFloatingStatus';
 import { ReAuthOverlay } from './components/ReAuthOverlay';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -234,6 +235,7 @@ export default function App() {
   if (!hydrated) {
     return (
       <ThemeProvider>
+        <LiquidGlassDefs />
         <AppLoadingScreen fullscreen />
       </ThemeProvider>
     );
@@ -243,6 +245,7 @@ export default function App() {
   if (isMini) {
     return (
       <ThemeProvider>
+        <LiquidGlassDefs />
         <MiniPlayer />
       </ThemeProvider>
     );
@@ -250,6 +253,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      <LiquidGlassDefs />
       <Toaster
         theme="dark"
         position="top-right"
