@@ -460,6 +460,11 @@ body,
 .glass-artwork {
   position: relative;
   overflow: hidden;
+  /* isolation: isolate forces a new stacking context, ensuring overflow:hidden
+     clips correctly even when a 3D-transformed ancestor creates a perspective layer */
+  isolation: isolate;
+  /* clip-path as belt-and-suspenders: clips image even in 3D context */
+  clip-path: inset(0 round var(--artwork-radius, 22px));
 }
 
 /* Top specular highlight (light hitting the top glass surface) */

@@ -97,8 +97,8 @@ export const TrackCard = React.memo(
               0 2px 8px rgba(0,0,0,0.25)
             `,
             background: 'rgba(255,255,255,0.035)',
-            /* clip-path clips the scaled img regardless of 3D parent transform — fixes sharp corners on hover */
-            clipPath: 'inset(0 round 22px)',
+            /* --artwork-radius drives clip-path in .glass-artwork CSS class */
+            ['--artwork-radius' as string]: '22px',
             transform: 'translateZ(0)',
             willChange: 'transform',
           }}

@@ -20,6 +20,7 @@ import {
   MessageCircle,
   MicVocal,
   pauseBlack18,
+  Pencil,
   playBlack18,
   repeat1Icon16,
   repeatIcon16,
@@ -51,6 +52,7 @@ import {
 } from '../../stores/lyrics';
 import { type Track, usePlayerStore } from '../../stores/player';
 import { useSettingsStore } from '../../stores/settings';
+import { useTrackOverridesStore } from '../../stores/track-overrides';
 import {
   ControlVolumeBtn,
   PlaybackRateSlider,
@@ -1380,6 +1382,8 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
     );
   }
 
+  const override = useTrackOverridesStore((s) => s.getOverride(track.urn));
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-12 text-center relative">
       <button
@@ -1395,6 +1399,23 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
       <p className="text-[12px] text-white/15 leading-relaxed max-w-[300px]">
         {t('track.lyricsNotFoundHint')}
       </p>
+      {/* Suggest editing track info for better lyrics matching */}
+      <button
+        type="button"
+        onClick={startSearch}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-medium cursor-pointer transition-all duration-200 mt-1"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          color: override ? 'var(--color-accent)' : 'rgba(255,255,255,0.35)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
+        }}
+      >
+        <Pencil size={12} />
+        {override
+          ? t('track.editInfoActive', 'Название изменено — поиск ещё раз')
+          : t('track.editInfoSuggest', 'Изменить название для поиска')}
+      </button>
     </div>
   );
 });

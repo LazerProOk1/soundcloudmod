@@ -1,4 +1,5 @@
 import type { Track } from '../stores/player';
+import { resolveTrackMeta } from '../stores/track-overrides';
 import { lrclibGet, lrclibSearch } from './lrclib';
 import { getLyricsByTrack, type LyricsResult, searchLyricsManual, splitArtistTitle } from './lyrics';
 import { getOfflineLyrics, rememberLyrics } from './offline-index';
@@ -34,9 +35,11 @@ export async function fetchLyricsForTrack(track: Track): Promise<LyricsResult | 
   const cached = await getOfflineLyrics(track.urn);
   if (cached?.synced?.length || cached?.plain) return cached;
 
-  const parsed = splitArtistTitle(track.title);
-  const searchArtist = parsed?.[0] ?? track.user.username;
-  const searchTitle = parsed?.[1] ?? track.title;
+  // Use saved override (user-edited title/artist) if available
+  const resolved = resolveTrackMeta(track.urn, track.title, track.user.username);
+  const parsed = splitArtistTitle(resolved.title);
+  const searchArtist = parsed?.[0] ?? resolved.artist;
+  const searchTitle = parsed?.[1] ?? resolved.title;
   const durationSec = track.duration > 0 ? track.duration / 1000 : undefined;
 
   // 2. Round 1: backend by URN + lrclib exact-match — return on first synced hit
