@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { preloadTrack } from '../../lib/audio';
 import { art, dur, fc } from '../../lib/formatters';
-import { ListMusic, ListPlus, pauseBlack20, playBlack20, playIcon32 } from '../../lib/icons';
+import { ListMusic, ListPlus, playIcon32 } from '../../lib/icons';
 import { recordClusterFeedback, setUrnCluster, useClusterFeedback } from '../../lib/recsFeedback';
 import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
 import { useTrackPlay } from '../../lib/useTrackPlay';

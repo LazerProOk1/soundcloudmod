@@ -82,6 +82,13 @@ export async function fetchAndHydrate(url: string): Promise<ClusterData> {
 
   const allTracks: Track[] = [];
   const seen = new Set<string>();
+  // Artist diversity: allow at most MAX_PER_ARTIST tracks per artist in the wave.
+  // Tracks that exceed the cap are kept in overflow and appended at the end so
+  // nothing is dropped — they just appear later in the queue.
+  const MAX_PER_ARTIST = 2;
+  const artistCount = new Map<string, number>();
+  const overflow: Track[] = [];
+
   const cursors = clusters.map(() => 0);
   let advanced = true;
   while (advanced) {
@@ -90,15 +97,27 @@ export async function fetchAndHydrate(url: string): Promise<ClusterData> {
       const c = clusters[ci];
       while (cursors[ci] < c.tracks.length) {
         const t = c.tracks[cursors[ci]++];
-        if (!seen.has(t.urn)) {
-          seen.add(t.urn);
+        if (seen.has(t.urn)) continue;
+        seen.add(t.urn);
+        const artistKey = t.user?.urn ?? t.user?.username ?? '';
+        const count = artistCount.get(artistKey) ?? 0;
+        if (!artistKey || count < MAX_PER_ARTIST) {
+          artistCount.set(artistKey, count + 1);
           allTracks.push(t);
+          advanced = true;
+          break;
+        } else {
+          // Over the per-artist cap — defer to overflow
+          overflow.push(t);
           advanced = true;
           break;
         }
       }
     }
   }
+
+  // Append overflow in original order — same artist won't cluster at the front
+  for (const t of overflow) allTracks.push(t);
 
   return { clusters, allTracks };
 }

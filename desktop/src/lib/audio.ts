@@ -50,6 +50,11 @@ let lastSeekPosition = 0;
 const listeners = new Set<() => void>();
 const API_PREVIEW_DURATION_MS = 30_000;
 
+/** Stored Tauri event unlisten functions — called on HMR dispose to prevent duplicate listeners. */
+const tauriUnlisteners: Array<() => void> = [];
+/** Timer ID for the deferred media-position update after a seek. */
+let seekPositionTimer: ReturnType<typeof setTimeout> | null = null;
+
 /* ── Crossfade state ─────────────────────────────────────────── */
 
 /** When crossfade fade-in is active, this is the rAF id. */
@@ -144,7 +149,12 @@ export function seek(seconds: number) {
   cachedTime = clamped;
   cachedTimeWallMs = performance.now();
   notify();
-  setTimeout(() => updateMediaPosition(), 150);
+  // Debounce the media-position update so rapid scrubbing doesn't queue many IPC calls.
+  if (seekPositionTimer !== null) clearTimeout(seekPositionTimer);
+  seekPositionTimer = setTimeout(() => {
+    seekPositionTimer = null;
+    updateMediaPosition();
+  }, 150);
 }
 
 export function handlePrev() {
@@ -510,7 +520,15 @@ function handleTrackEnd() {
 
 /* ── Tauri event listeners ───────────────────────────────────── */
 
-listen<number>('audio:tick', (event) => {
+/** Register a Tauri event listener and store its unlisten function for cleanup. */
+function tauriListen<T>(
+  event: string,
+  handler: (e: { payload: T }) => void,
+): void {
+  listen<T>(event, handler).then((unlisten) => tauriUnlisteners.push(unlisten)).catch(console.error);
+}
+
+tauriListen<number>('audio:tick', (event) => {
   cachedTime = event.payload;
   cachedTimeWallMs = performance.now();
   if (cachedDuration <= 0) cachedDuration = fallbackDuration;
@@ -529,14 +547,14 @@ listen<number>('audio:tick', (event) => {
   }
 });
 
-listen<{ urn: string; progress: number }>('track:download-progress', (event) => {
+tauriListen<{ urn: string; progress: number }>('track:download-progress', (event) => {
   const { urn, progress } = event.payload;
   if (urn === currentUrn) {
     usePlayerStore.setState({ downloadProgress: progress });
   }
 });
 
-listen('audio:ended', () => {
+tauriListen<void>('audio:ended', () => {
   // Suppress spurious ended events fired by Rodio during/immediately after a seek
   if (performance.now() < seekGuardUntilMs) return;
 
@@ -702,13 +720,13 @@ function updateMediaPosition() {
 }
 
 // Listen for media control events from souvlaki (MPRIS/SMTC)
-listen('media:play', () => usePlayerStore.getState().resume());
-listen('media:pause', () => usePlayerStore.getState().pause());
-listen('media:toggle', () => usePlayerStore.getState().togglePlay());
-listen('media:next', () => usePlayerStore.getState().next());
-listen('media:prev', () => handlePrev());
-listen<number>('media:seek', (e) => seek(e.payload));
-listen<number>('media:seek-relative', (e) => {
+tauriListen<void>('media:play', () => usePlayerStore.getState().resume());
+tauriListen<void>('media:pause', () => usePlayerStore.getState().pause());
+tauriListen<void>('media:toggle', () => usePlayerStore.getState().togglePlay());
+tauriListen<void>('media:next', () => usePlayerStore.getState().next());
+tauriListen<void>('media:prev', () => handlePrev());
+tauriListen<number>('media:seek', (e) => seek(e.payload));
+tauriListen<number>('media:seek-relative', (e) => {
   const offset = e.payload;
   if (offset > 0) {
     seek(Math.min(getCurrentTime() + offset, getDuration()));
@@ -716,6 +734,18 @@ listen<number>('media:seek-relative', (e) => {
     seek(Math.max(getCurrentTime() + offset, 0));
   }
 });
+
+/* ── HMR cleanup — prevents duplicate listeners on hot reload ── */
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    for (const unlisten of tauriUnlisteners) unlisten();
+    tauriUnlisteners.length = 0;
+    if (seekPositionTimer !== null) {
+      clearTimeout(seekPositionTimer);
+      seekPositionTimer = null;
+    }
+  });
+}
 
 /* ── Autoplay ────────────────────────────────────────────────── */
 

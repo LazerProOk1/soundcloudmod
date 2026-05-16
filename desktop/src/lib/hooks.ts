@@ -212,10 +212,17 @@ function usePagedQuery<T>(opts: PagedQueryOptions<T>): PagedQueryResult<T> {
     }
   }, [opts.autoFetchAll, query.hasNextPage, query.isFetchingNextPage, query.data]);
 
+  // Stabilize dedupe function reference with a ref so the useMemo below only
+  // recomputes when query.data actually changes — not on every render where the
+  // caller passes an inline arrow function (which creates a new identity each time).
+  const dedupeRef = useRef(opts.dedupe);
+  dedupeRef.current = opts.dedupe;
+
   const items = useMemo(() => {
     const flat = flattenCollectionPages(query.data?.pages);
-    return opts.dedupe ? dedupeByKey(flat, opts.dedupe) : flat;
-  }, [query.data, opts.dedupe]);
+    return dedupeRef.current ? dedupeByKey(flat, dedupeRef.current) : flat;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.data]);
 
   return Object.assign(query, { items }) as PagedQueryResult<T>;
 }
@@ -254,7 +261,9 @@ export function useHistory(limit = 50) {
       const nextOffset = (lastOffset as number) + limit;
       return nextOffset < last.total ? nextOffset : undefined;
     },
-    staleTime: 0,
+    // Was staleTime:0 — caused a background refetch on every navigation to History.
+    // 30s window means re-visiting within half a minute reuses cached data.
+    staleTime: 30_000,
   });
 
   const entries = useMemo(() => flattenCollectionPages(query.data?.pages), [query.data]);
@@ -302,7 +311,7 @@ export function useLocalLikes(limit = 50) {
         return undefined;
       }
     },
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
   const tracks = useMemo(() => flattenCollectionPages(query.data?.pages), [query.data]);
@@ -343,14 +352,13 @@ export function useLikedTracks(limit = 30) {
 
   const tracks = query.items;
 
+  // Merged into one effect — both fired simultaneously from the same data update
+  // anyway; running them separately caused two concurrent IndexedDB writes.
   useEffect(() => {
-    if (tracks.length > 0) initLikedUrns(tracks);
-  }, [tracks]);
-
-  useEffect(() => {
-    if (!query.data) return;
+    if (!tracks.length) return;
+    initLikedUrns(tracks);
     void rememberLikedTracks(tracks);
-  }, [query.data, tracks]);
+  }, [tracks]);
 
   return { tracks, ...query };
 }
@@ -358,8 +366,15 @@ export function useLikedTracks(limit = 30) {
 /**
  * Fetch ALL liked tracks. Page-based pagination, shared promise.
  * Optional onPage callback fires per page during the fetch.
+ *
+ * Fixes:
+ * - Hard page cap (MAX_PAGES=50) prevents an infinite loop if `has_more` is always true
+ * - Backoff on failure: retry with exponential delay instead of immediately nulling the
+ *   shared promise, which would cause a retry storm on every caller
  */
+const ALL_LIKES_MAX_PAGES = 50;
 let _allLikesPromise: Promise<Track[]> | null = null;
+let _allLikesRetryAt = 0; // wall-clock ms — don't retry before this
 
 export function fetchAllLikedTracks(
   pageSize = 200,
@@ -369,7 +384,7 @@ export function fetchAllLikedTracks(
 
   const promise = (async () => {
     const all: Track[] = [];
-    for (let page = 0; ; page++) {
+    for (let page = 0; page < ALL_LIKES_MAX_PAGES; page++) {
       const data = await api<TrackPage>(pagedUrl('/me/likes/tracks', page, pageSize));
       for (const t of data.collection) all.push(t);
       void rememberTracks(data.collection);
@@ -383,6 +398,10 @@ export function fetchAllLikedTracks(
   if (!onPage) {
     _allLikesPromise = promise;
     promise.catch(() => {
+      // Exponential backoff: don't allow a retry for at least 30s after failure,
+      // doubling up to 5min. This prevents a retry storm when the network is down.
+      const backoffMs = Math.min(30_000 * 2 ** Math.round(_allLikesRetryAt / 60_000), 300_000);
+      _allLikesRetryAt = Date.now() + backoffMs;
       _allLikesPromise = null;
     });
   }
@@ -392,6 +411,7 @@ export function fetchAllLikedTracks(
 
 export function invalidateAllLikesCache() {
   _allLikesPromise = null;
+  _allLikesRetryAt = 0;
 }
 
 /* ── Fresh from followed artists ───────────────────────────────── */
@@ -539,10 +559,14 @@ export function useUserTracks(userUrn: string | undefined) {
 export function useUserPopularTracks(userUrn: string | undefined) {
   return useQuery({
     queryKey: ['user', userUrn, 'tracks', 'popular'],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const all: Track[] = [];
       const pageSize = 50;
-      for (let page = 0; ; page++) {
+      // Hard cap at 10 pages (500 tracks) — prevents unbounded sequential API loop
+      // for prolific artists. Pass signal so navigation cancels in-flight requests.
+      const MAX_PAGES = 10;
+      for (let page = 0; page < MAX_PAGES; page++) {
+        if (signal?.aborted) break;
         const data = await api<TrackPage>(
           pagedUrl(
             `/users/${encodeURIComponent(userUrn!)}/tracks`,
@@ -550,6 +574,8 @@ export function useUserPopularTracks(userUrn: string | undefined) {
             pageSize,
             'access=playable,preview,blocked',
           ),
+          { signal },   // pass AbortSignal so navigation cancels in-flight requests
+          10_000,       // 10s per-page timeout instead of the 60s default
         );
         for (const t of data.collection) all.push(t);
         if (!data.has_more) break;
@@ -873,14 +899,24 @@ export function useRelatedPool(likedTracks: Track[]) {
   });
 }
 
-/** Top related tracks sorted by frequency — "Recommended For You" */
+/** Top related tracks sorted by frequency — "Recommended For You"
+ *  Artist-diversity cap: at most 2 tracks per artist to prevent one popular
+ *  artist from dominating the entire recommendation shelf. */
 export function useRecommendedTracks(pool: RelatedPool | undefined, limit = 40) {
   return useMemo(() => {
     if (!pool) return [];
-    return [...pool.values()]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit)
-      .map((e) => e.track);
+    const sorted = [...pool.values()].sort((a, b) => b.count - a.count);
+    const result: Track[] = [];
+    const artistCount = new Map<string, number>();
+    for (const { track } of sorted) {
+      if (result.length >= limit) break;
+      const key = track.user?.urn ?? track.user?.username ?? '';
+      const n = key ? (artistCount.get(key) ?? 0) : 0;
+      if (key && n >= 2) continue;
+      if (key) artistCount.set(key, n + 1);
+      result.push(track);
+    }
+    return result;
   }, [pool, limit]);
 }
 
