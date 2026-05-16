@@ -1051,7 +1051,7 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
   const openLyricsPanel = useLyricsStore((s) => s.openPanel);
   const artistDisplay = useArtistDisplay(track);
   const displayTitle = useDisplayTitle(track);
-  const playbackSource = usePlayerStore((s) => s.currentTransport?.source ?? null);
+  const playbackSource = usePlayerStore((s) => s.playbackSource);
   const [editOpen, setEditOpen] = useState(false);
   const override = useTrackOverridesStore((s) => s.getOverride(track.urn));
   const artistTarget =

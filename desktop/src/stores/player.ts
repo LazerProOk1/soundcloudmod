@@ -410,14 +410,23 @@ export const usePlayerStore = create<PlayerState>()(
 
       replaceTrackMetadata: (track) =>
         set((s) => {
+          // Short-circuit: if no queue member matches, avoid creating new array references
+          // which would trigger cascading re-renders of all queue consumers.
+          const queueHasTrack = s.queue.some((t) => t.urn === track.urn);
+          const origHasTrack = s.originalQueue?.some((t) => t.urn === track.urn) ?? false;
+          const currentMatches = s.currentTrack?.urn === track.urn;
+
+          if (!queueHasTrack && !origHasTrack && !currentMatches) return s;
+
           const mergeTrack = (item: Track) =>
             item.urn === track.urn ? { ...item, ...track } : item;
 
           return {
-            currentTrack:
-              s.currentTrack?.urn === track.urn ? { ...s.currentTrack, ...track } : s.currentTrack,
-            queue: s.queue.map(mergeTrack),
-            originalQueue: s.originalQueue?.map(mergeTrack) ?? null,
+            currentTrack: currentMatches ? { ...s.currentTrack!, ...track } : s.currentTrack,
+            queue: queueHasTrack ? s.queue.map(mergeTrack) : s.queue,
+            originalQueue: origHasTrack
+              ? s.originalQueue!.map(mergeTrack)
+              : s.originalQueue,
           };
         }),
 

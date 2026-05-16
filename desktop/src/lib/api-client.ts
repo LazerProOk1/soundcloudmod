@@ -74,10 +74,25 @@ function resolveApiBases(path: string): string[] {
 function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs: number = 60_000,
+  timeoutMs: number = 15_000,
 ): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), timeoutMs);
+
+  // Forward an external AbortSignal (e.g. TanStack Query's cancellation) to our controller
+  // so that navigation away from a page aborts the in-flight request immediately.
+  const externalSignal = options.signal as AbortSignal | undefined | null;
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      clearTimeout(timer);
+      controller.abort(externalSignal.reason);
+    } else {
+      externalSignal.addEventListener('abort', () => controller.abort(externalSignal.reason), {
+        once: true,
+      });
+    }
+  }
+
   return fetch(url, { ...options, signal: controller.signal }).finally(() =>
     clearTimeout(timer),
   ) as Promise<Response>;

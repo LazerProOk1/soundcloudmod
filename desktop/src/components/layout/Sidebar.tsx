@@ -109,13 +109,13 @@ export const Sidebar = React.memo(() => {
             }
             className={({ isActive }) =>
               `relative flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 ease-[var(--ease-apple)] ${
-                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+                collapsed ? 'justify-center px-0 py-2' : 'px-3 py-2'
               } ${
                 isActive
-                  ? 'text-white/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_1px_0_0_rgba(255,255,255,0.09),inset_0_-1px_0_rgba(0,0,0,0.40)]'
+                  ? 'text-white/92'
                   : item.to === '/offline' && appMode !== 'online'
-                    ? 'text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(0,0,0,0.30)] ring-1 ring-accent/20'
-                    : 'text-white/38 hover:text-white/72 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]'
+                    ? 'text-white/70 ring-1 ring-accent/15'
+                    : 'text-white/38 hover:text-white/72 hover:bg-white/[0.04]'
               }`
             }
           >

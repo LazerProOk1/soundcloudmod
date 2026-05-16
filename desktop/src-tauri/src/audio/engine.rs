@@ -200,7 +200,9 @@ pub async fn load_url(
 ) -> Result<AudioLoadResult, String> {
     let generation = state.load_gen.load(Ordering::Relaxed);
 
-    let client = reqwest::Client::new();
+    // Use the shared client from AudioState — preserves the connection pool and TLS sessions
+    // across track loads, avoiding a new TLS handshake on every track.
+    let client = &state.http_client;
     let retry_delays = [300u64, 800, 2000];
     let mut last_err = String::new();
     let mut bytes: Vec<u8> = Vec::new();

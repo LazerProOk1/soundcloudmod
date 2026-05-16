@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLiquidLight } from '../../../lib/useLiquidLight';
 import { useTranslation } from 'react-i18next';
 import {
@@ -8,19 +8,17 @@ import {
   Headphones,
   playBlack14,
   RefreshCw,
-  Search,
   Sparkles,
   Star,
 } from '../../../lib/icons';
 import { isUrnLiked } from '../../../lib/likes';
-import { fetchWaveTailFromSeed, hydrateByIds, useSoundWaveSearch } from '../../../lib/soundwave';
+import { fetchWaveTailFromSeed, hydrateByIds } from '../../../lib/soundwave';
 import { useLikedTracks, useRecommendedTracks, useRelatedPool } from '../../../lib/hooks';
 import { useAuthStore } from '../../../stores/auth';
 import type { Track } from '../../../stores/player';
 import { usePlayerStore } from '../../../stores/player';
 import { useSettingsStore } from '../../../stores/settings';
 import {
-  ClusterEmptyState,
   type ClusterHydrated,
   type ClusterId,
   ClusterRow,
@@ -29,10 +27,8 @@ import {
   useClusterWave,
 } from '../cluster';
 import { AmbientLayer } from './ambient';
-import { SearchHeader } from './headers';
 import { HideLikedToggle } from './hide-liked-toggle';
 import { LanguageFilter } from './language-filter';
-import { RecommendationsStrip } from './strip';
 import { WaveTrackHeader } from './track-header';
 import { useInfiniteWave } from './use-infinite-wave';
 import { LiveWaveform } from './waveform';
@@ -68,7 +64,6 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeQuery, setActiveQuery] = useState('');
   /* Dynamic cursor spotlight — tracks mouse position on the glass panel */
   const panelRef = useLiquidLight<HTMLElement>();
 
@@ -89,13 +84,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
     enabled: isAuthenticated,
   });
 
-  const {
-    data: searchData,
-    isLoading: searchLoading,
-    isFetching: searchFetching,
-  } = useSoundWaveSearch({ q: activeQuery, languages: stableLanguages });
-
-  const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
+const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
   const rawAllTracks = useMemo(() => data?.allTracks ?? [], [data]);
 
   // ── Fallback: SC native recommendations via liked tracks ──────
@@ -139,11 +128,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
     return CLUSTER_ORDER.map((id) => byId.get(id)).filter((c): c is NonNullable<typeof c> => !!c);
   }, [filteredClusters]);
 
-  const searchTracks = useMemo(() => searchData?.tracks ?? [], [searchData]);
-  const isSearchMode = activeQuery.length >= 2;
-  const searchBusy = searchLoading || searchFetching;
-
-  const waveTrack = currentTrack ?? filteredAllTracks[0] ?? null;
+const waveTrack = currentTrack ?? filteredAllTracks[0] ?? null;
   const isCurrent = !!currentTrack && waveTrack?.urn === currentTrack.urn;
 
   const fetchMore = useCallback(
@@ -152,18 +137,12 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   );
 
   useInfiniteWave({
-    enabled: isAuthenticated && !isSearchMode,
+    enabled: isAuthenticated,
     tracks: filteredAllTracks,
     fetchMore,
   });
 
-  const handleSubmitSearch = useCallback((q: string) => setActiveQuery(q), []);
-  const handleClearSearch = useCallback(() => {
-    searchRef.current?.clear();
-    setActiveQuery('');
-  }, []);
-
-  if (!isAuthenticated) return null;
+if (!isAuthenticated) return null;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -181,9 +160,8 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
 
   const spinning = isRefreshing || isFetching;
   // Show cold state only if truly nothing available (backend down + no liked tracks cached)
-  const showCold = !isSearchMode && !isLoading && orderedClusters.length === 0 && immediateBase.length === 0;
-  const showSearchEmpty = isSearchMode && !searchBusy && searchTracks.length === 0;
-  const playableTracks = isSearchMode ? searchTracks : filteredAllTracks;
+  const showCold = !isLoading && orderedClusters.length === 0 && immediateBase.length === 0;
+  const playableTracks = filteredAllTracks;
 
   return (
     <section
@@ -284,16 +262,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
         </div>
 
         <div className="min-h-[280px]">
-          {isSearchMode ? (
-            <SearchSection
-              query={activeQuery}
-              count={searchTracks.length}
-              tracks={searchTracks}
-              busy={searchBusy}
-              empty={showSearchEmpty}
-              onClear={handleClearSearch}
-            />
-          ) : isLoading ? (
+          {isLoading ? (
             <ClusterSkeletonState rows={3} itemsPerRow={6} />
           ) : showCold ? (
             <div className="flex flex-col items-center justify-center py-10 gap-5">
@@ -361,41 +330,10 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   );
 });
 
-interface SearchSectionProps {
-  query: string;
-  count: number;
-  tracks: Track[];
-  busy: boolean;
-  empty: boolean;
-  onClear: () => void;
-}
 
-const SearchSection = React.memo(function SearchSection({
-  query,
-  count,
-  tracks,
-  busy,
-  empty,
-  onClear,
-}: SearchSectionProps) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col gap-4">
-      <SearchHeader query={query} count={count} onClear={onClear} />
-      {busy ? (
-        <ClusterSkeletonState rows={1} itemsPerRow={6} />
-      ) : empty ? (
-        <ClusterEmptyState
-          icon={<Search size={18} style={{ color: 'var(--color-accent)' }} />}
-          title={t('soundwave.searchEmptyTitle')}
-          description={t('soundwave.searchEmptyDesc')}
-        />
-      ) : (
-        <RecommendationsStrip tracks={tracks} />
-      )}
-    </div>
-  );
-});
+// Alternate between 'similar' and 'diverse' on every tail fetch so the queue
+// doesn't spiral into a single-artist rabbit hole.
+let _tailFetchCount = 0;
 
 async function fetchTail(languages: string[], hideLiked: boolean): Promise<Track[]> {
   const q = usePlayerStore.getState().queue;
@@ -403,8 +341,35 @@ async function fetchTail(languages: string[], hideLiked: boolean): Promise<Track
   if (!last) return [];
   const trackId = String(last.urn.split(':').pop() ?? '');
   if (!trackId) return [];
-  const recs = await fetchWaveTailFromSeed(trackId, { languages, mode: 'similar' });
+
+  const mode = _tailFetchCount % 2 === 0 ? 'similar' : 'diverse';
+  _tailFetchCount++;
+
+  const recs = await fetchWaveTailFromSeed(trackId, { languages, mode });
   if (!recs.length) return [];
-  const tracks = await hydrateByIds(recs);
+  let tracks = await hydrateByIds(recs);
+
+  // Artist-diversity cap: max 2 tracks per artist in each tail batch
+  const artistCount = new Map<string, number>();
+  tracks = tracks.filter((tr) => {
+    const key = tr.user?.urn ?? tr.user?.username ?? '';
+    if (!key) return true;
+    const n = artistCount.get(key) ?? 0;
+    if (n >= 2) return false;
+    artistCount.set(key, n + 1);
+    return true;
+  });
+
+  // Also skip tracks by artists already heavy in the current queue (>= 3 appearances)
+  const queueArtistCount = new Map<string, number>();
+  for (const t of q) {
+    const key = t.user?.urn ?? t.user?.username ?? '';
+    if (key) queueArtistCount.set(key, (queueArtistCount.get(key) ?? 0) + 1);
+  }
+  tracks = tracks.filter((tr) => {
+    const key = tr.user?.urn ?? tr.user?.username ?? '';
+    return !key || (queueArtistCount.get(key) ?? 0) < 3;
+  });
+
   return hideLiked ? tracks.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn)) : tracks;
 }
