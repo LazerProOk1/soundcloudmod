@@ -783,8 +783,8 @@ export function useSearchPlaylists(q: string) {
     maxPages: 5,
     enabled: !!q.trim(),
     dedupe: (p) => p.urn,
-    retry: 1,
-    timeoutMs: 10_000,
+    retry: 2,
+    timeoutMs: 12_000,
   });
 
   return { playlists: query.items, ...query };

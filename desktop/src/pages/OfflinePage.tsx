@@ -250,37 +250,41 @@ const OverviewMetric = React.memo(function OverviewMetric({
   icon,
   label,
   value,
-  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
-  tone: 'likes' | 'playable' | 'cached';
 }) {
-  const styles = {
-    likes: {
-      border: 'border-accent/16',
-      bg: 'bg-accent/[0.08]',
-      icon: 'border-accent/18 bg-accent/[0.14] text-white/88',
-    },
-    playable: {
-      border: 'border-emerald-400/16',
-      bg: 'bg-emerald-400/[0.08]',
-      icon: 'border-emerald-400/16 bg-emerald-400/[0.12] text-emerald-50',
-    },
-    cached: {
-      border: 'border-sky-400/16',
-      bg: 'bg-sky-400/[0.08]',
-      icon: 'border-sky-400/16 bg-sky-400/[0.12] text-sky-50',
-    },
-  }[tone];
-
   return (
     <div
-      className={`rounded-[26px] border ${styles.border} ${styles.bg} px-4 py-4 backdrop-blur-sm`}
+      className="rounded-[26px] px-4 py-4"
+      style={{
+        background: 'rgba(10,10,14,0.30)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        boxShadow: `
+          0 1px 0 0 rgba(255,255,255,0.18) inset,
+          1px 0 0 0 rgba(255,255,255,0.09) inset,
+          0 -1px 0 0 rgba(0,0,0,0.38) inset,
+          0 0 0 0.5px rgba(255,255,255,0.07),
+          0 8px 32px rgba(0,0,0,0.20)
+        `,
+      }}
     >
+      {/* Liquid-glass icon pill */}
       <div
-        className={`flex size-11 items-center justify-center rounded-[18px] border ${styles.icon}`}
+        className="flex size-11 items-center justify-center rounded-[18px] text-white/90"
+        style={{
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%)',
+          boxShadow: `
+            0 1px 0 0 rgba(255,255,255,0.30) inset,
+            0 -1px 0 0 rgba(0,0,0,0.22) inset,
+            0 4px 14px rgba(0,0,0,0.20),
+            0 0 0 0.5px var(--color-accent)
+          `,
+          border: '1px solid rgba(255,255,255,0.12)',
+          color: 'var(--color-accent)',
+        }}
       >
         {icon}
       </div>
@@ -299,7 +303,6 @@ const SectionSwitchCard = React.memo(function SectionSwitchCard({
   icon,
   onClick,
   title,
-  tone,
 }: {
   active: boolean;
   count: number;
@@ -307,24 +310,15 @@ const SectionSwitchCard = React.memo(function SectionSwitchCard({
   icon: React.ReactNode;
   onClick: () => void;
   title: string;
-  tone: OfflineSectionKey;
 }) {
+  // Both sections use accent colour — unified liquid-glass style
   const styles = {
-    likes: {
-      activeBorder: 'border-accent/18',
-      activeBg: 'bg-accent/[0.09]',
-      activeIcon: 'border-accent/18 bg-accent/[0.14] text-white/88',
-      activeCount: 'border-accent/18 bg-accent/[0.14] text-white/88',
-      glow: 'shadow-[0_18px_50px_rgba(255,85,0,0.08)]',
-    },
-    cached: {
-      activeBorder: 'border-sky-400/18',
-      activeBg: 'bg-sky-400/[0.08]',
-      activeIcon: 'border-sky-400/16 bg-sky-400/[0.14] text-sky-50',
-      activeCount: 'border-sky-400/16 bg-sky-400/[0.14] text-sky-50',
-      glow: 'shadow-[0_18px_50px_rgba(56,189,248,0.08)]',
-    },
-  }[tone];
+    activeBorder: 'border-accent/20',
+    activeBg: 'bg-accent/[0.07]',
+    activeIcon: 'border-accent/20 bg-accent/[0.14] text-white/90',
+    activeCount: 'border-accent/20 bg-accent/[0.14] text-white/90',
+    glow: 'shadow-[0_18px_50px_var(--color-accent-glow,rgba(255,85,0,0.10))]',
+  };
 
   return (
     <button
@@ -338,11 +332,14 @@ const SectionSwitchCard = React.memo(function SectionSwitchCard({
     >
       <div className="flex items-start gap-4">
         <div
-          className={`flex size-12 shrink-0 items-center justify-center rounded-[18px] border ${
-            active
-              ? styles.activeIcon
-              : 'border-white/10 bg-white/[0.05] text-white/72 group-hover:text-white/86'
+          className={`flex size-12 shrink-0 items-center justify-center rounded-[18px] transition-all duration-300 ${
+            active ? styles.activeIcon : 'border border-white/10 bg-white/[0.05] text-white/60 group-hover:text-white/80'
           }`}
+          style={active ? {
+            boxShadow: '0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 14px rgba(0,0,0,0.18)',
+          } : {
+            boxShadow: '0 1px 0 0 rgba(255,255,255,0.10) inset, 0 -1px 0 0 rgba(0,0,0,0.18) inset',
+          }}
         >
           {icon}
         </div>
@@ -385,7 +382,6 @@ function OfflineSection({
   cachedUrns,
   emptyText,
   likesMode = false,
-  tone,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -393,23 +389,15 @@ function OfflineSection({
   cachedUrns: Set<string>;
   emptyText: string;
   likesMode?: boolean;
-  tone: OfflineSectionKey;
 }) {
   const playableQueue = useMemo(() => buildPlayableQueue(items, cachedUrns), [items, cachedUrns]);
+  // Unified accent-based styles — no hardcoded section tones
   const styles = {
-    likes: {
-      border: 'border-accent/14',
-      icon: 'border-accent/18 bg-accent/[0.14] text-white/88',
-      badge: 'border-accent/18 bg-accent/[0.14] text-white/88',
-      glow: 'bg-[radial-gradient(circle_at_top_left,rgba(255,85,0,0.18),transparent_58%)]',
-    },
-    cached: {
-      border: 'border-sky-400/14',
-      icon: 'border-sky-400/16 bg-sky-400/[0.14] text-sky-50',
-      badge: 'border-sky-400/16 bg-sky-400/[0.14] text-sky-50',
-      glow: 'bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_58%)]',
-    },
-  }[tone];
+    border: 'border-accent/12',
+    icon: 'border-accent/20 bg-accent/[0.12] text-white/90',
+    badge: 'border-accent/20 bg-accent/[0.12] text-white/90',
+    glow: '',
+  };
 
   return (
     <section
@@ -438,6 +426,9 @@ function OfflineSection({
           <div className="flex min-w-0 items-start gap-3">
             <div
               className={`flex size-12 shrink-0 items-center justify-center rounded-[18px] border ${styles.icon}`}
+              style={{
+                boxShadow: '0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 16px rgba(0,0,0,0.18)',
+              }}
             >
               {icon}
             </div>
@@ -577,7 +568,7 @@ export const OfflinePage = React.memo(() => {
     let cancelled = false;
 
     const loadStats = () => {
-      api<PendingStats>('/pending-actions/stats')
+      api<PendingStats>('/pending-actions/stats', { silent: true })
         .then((stats) => {
           if (!cancelled) {
             setPendingStats(stats);
@@ -616,9 +607,9 @@ export const OfflinePage = React.memo(() => {
     if (appMode !== 'online') return;
 
     setSyncing(true);
-    api<{ synced: number; failed: number }>('/pending-actions/sync', { method: 'POST' })
+    api<{ synced: number; failed: number }>('/pending-actions/sync', { method: 'POST', silent: true })
       .then(() => {
-        api<PendingStats>('/pending-actions/stats')
+        api<PendingStats>('/pending-actions/stats', { silent: true })
           .then(setPendingStats)
           .catch(() => {});
       })
@@ -694,19 +685,16 @@ export const OfflinePage = React.memo(() => {
                 icon={<Heart size={18} />}
                 label={t('offline.statsLikes')}
                 value={state.likedTracks.length}
-                tone="likes"
               />
               <OverviewMetric
                 icon={<Download size={18} />}
                 label={t('offline.statsPlayableLikes')}
                 value={cachedLikesCount}
-                tone="playable"
               />
               <OverviewMetric
                 icon={<Download size={18} />}
                 label={t('offline.statsCached')}
                 value={state.cachedTracks.length}
-                tone="cached"
               />
             </div>
           </div>
@@ -737,7 +725,6 @@ export const OfflinePage = React.memo(() => {
                 icon={<Heart size={18} />}
                 onClick={() => setActiveSection('likes')}
                 title={t('offline.likesTitle')}
-                tone="likes"
               />
               <SectionSwitchCard
                 active={activeSection === 'cached'}
@@ -749,7 +736,6 @@ export const OfflinePage = React.memo(() => {
                 icon={<Download size={18} />}
                 onClick={() => setActiveSection('cached')}
                 title={t('offline.cachedTitle')}
-                tone="cached"
               />
             </div>
 
@@ -763,7 +749,6 @@ export const OfflinePage = React.memo(() => {
                 cachedUrns={state.cachedUrns}
                 emptyText={normalizedQuery ? t('offline.searchEmpty') : t('offline.likesEmpty')}
                 likesMode
-                tone="likes"
               />
             ) : (
               <OfflineSection
@@ -772,7 +757,6 @@ export const OfflinePage = React.memo(() => {
                 items={filteredCached}
                 cachedUrns={state.cachedUrns}
                 emptyText={normalizedQuery ? t('offline.searchEmpty') : t('offline.cachedEmpty')}
-                tone="cached"
               />
             )}
           </>

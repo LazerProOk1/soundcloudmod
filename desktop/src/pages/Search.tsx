@@ -351,7 +351,16 @@ const SearchPlaylistsTab = React.memo(function SearchPlaylistsTab({ query }: { q
           <Loader2 size={32} className="animate-spin text-white/20" />
         </div>
       ) : playlistsQuery.isError ? (
-        <div className="py-20 text-center text-red-400/60 text-sm">{t('search.error', 'Search failed. Try again.')}</div>
+        <div className="py-20 flex flex-col items-center gap-4">
+          <div className="text-white/25 text-sm">{t('search.playlistsUnavailable', 'Поиск по плейлистам временно недоступен')}</div>
+          <button
+            type="button"
+            onClick={() => playlistsQuery.refetch()}
+            className="px-4 py-2 rounded-xl text-[12px] font-medium bg-white/[0.05] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.09] transition-all duration-200 cursor-pointer"
+          >
+            {t('common.retry', 'Повторить')}
+          </button>
+        </div>
       ) : playlistsQuery.playlists.length === 0 ? (
         <div className="py-20 text-center text-white/30">{t('search.noResults')}</div>
       ) : (
@@ -492,11 +501,29 @@ export const Search = React.memo(() => {
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={t('search.placeholder')}
-          className={`w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] text-white placeholder:text-white/30 text-[16px] py-4 pl-12 pr-12 rounded-[20px] outline-none border transition-all duration-300 shadow-xl backdrop-blur-md ${
-            isUrl
-              ? 'border-accent/30 ring-1 ring-accent/20'
-              : 'border-white/[0.05] focus:border-accent/30 focus:ring-1 focus:ring-accent/30'
+          className={`w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] text-white placeholder:text-white/30 text-[16px] py-4 pl-12 pr-12 rounded-[20px] outline-none transition-all duration-300 shadow-xl backdrop-blur-md ${
+            isUrl ? '' : ''
           }`}
+          style={{
+            border: isUrl
+              ? '1px solid var(--color-accent)'
+              : '1px solid rgba(255,255,255,0.07)',
+            boxShadow: isUrl
+              ? `0 0 0 3px var(--color-accent-glow, rgba(255,85,0,0.12)), 0 1px 0 0 rgba(255,255,255,0.12) inset, 0 8px 24px rgba(0,0,0,0.22)`
+              : '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(0,0,0,0.20)',
+          }}
+          onFocus={e => {
+            if (!isUrl) {
+              (e.currentTarget as HTMLInputElement).style.border = '1px solid var(--color-accent)';
+              (e.currentTarget as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--color-accent-glow, rgba(255,85,0,0.12)), 0 1px 0 0 rgba(255,255,255,0.12) inset, 0 8px 24px rgba(0,0,0,0.22)';
+            }
+          }}
+          onBlur={e => {
+            if (!isUrl) {
+              (e.currentTarget as HTMLInputElement).style.border = '1px solid rgba(255,255,255,0.07)';
+              (e.currentTarget as HTMLInputElement).style.boxShadow = '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(0,0,0,0.20)';
+            }
+          }}
           autoFocus
         />
         {inputValue && (

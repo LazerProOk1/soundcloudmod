@@ -103,7 +103,9 @@ export const Sidebar = React.memo(() => {
             style={({ isActive }) =>
               isActive
                 ? { background: 'color-mix(in srgb, var(--color-accent) 14%, transparent)' }
-                : undefined
+                : item.to === '/offline' && appMode !== 'online'
+                  ? { background: 'color-mix(in srgb, var(--color-accent) 10%, transparent)' }
+                  : undefined
             }
             className={({ isActive }) =>
               `relative flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 ease-[var(--ease-apple)] ${
@@ -112,7 +114,7 @@ export const Sidebar = React.memo(() => {
                 isActive
                   ? 'text-white/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_1px_0_0_rgba(255,255,255,0.09),inset_0_-1px_0_rgba(0,0,0,0.40)]'
                   : item.to === '/offline' && appMode !== 'online'
-                    ? 'text-white/82 bg-accent/[0.07] ring-1 ring-accent/12'
+                    ? 'text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(0,0,0,0.30)] ring-1 ring-accent/20'
                     : 'text-white/38 hover:text-white/72 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]'
               }`
             }
@@ -158,18 +160,40 @@ export const Sidebar = React.memo(() => {
         <NavLink
           to="/library?tab=history"
           title={collapsed ? t('library.history') : undefined}
+          style={({ isActive }) =>
+            isActive
+              ? { background: 'color-mix(in srgb, var(--color-accent) 14%, transparent)' }
+              : undefined
+          }
           className={({ isActive }) =>
-            `flex items-center gap-2.5 w-full rounded-xl text-[12px] font-medium transition-all duration-200 ${
+            `relative flex items-center gap-2.5 w-full rounded-xl text-[12px] font-medium transition-all duration-200 ${
               collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
             } ${
               isActive
-                ? 'text-white bg-white/[0.07]'
-                : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                ? 'text-white/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_1px_0_0_rgba(255,255,255,0.09),inset_0_-1px_0_rgba(0,0,0,0.40)]'
+                : 'text-white/40 hover:text-white/70 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]'
             }`
           }
         >
-          <Clock size={16} strokeWidth={1.8} />
-          {!collapsed && <span className="truncate">{t('library.history')}</span>}
+          {({ isActive }: { isActive: boolean }) => (
+            <>
+              {isActive && !collapsed && (
+                <span
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-r-full"
+                  style={{
+                    background: 'linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-glow) 100%)',
+                    boxShadow: '0 0 10px var(--color-accent-glow), 0 0 3px var(--color-accent)',
+                  }}
+                />
+              )}
+              <Clock
+                size={16}
+                strokeWidth={1.8}
+                style={isActive ? { color: 'var(--color-accent)' } : undefined}
+              />
+              {!collapsed && <span className="truncate">{t('library.history')}</span>}
+            </>
+          )}
         </NavLink>
 
         {pinnedPlaylists.map((playlist) => {
@@ -215,7 +239,7 @@ export const Sidebar = React.memo(() => {
           type="button"
           onClick={toggleSidebar}
           title={collapsed ? t('nav.expand') : undefined}
-          className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium text-white/40 hover:text-white/70 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center' : ''}`}
         >
           {collapsed ? (
             <PanelLeftOpen size={16} strokeWidth={1.8} />
@@ -228,7 +252,7 @@ export const Sidebar = React.memo(() => {
           type="button"
           onClick={toggleLanguage}
           title={collapsed ? currentLang.label : undefined}
-          className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium text-white/40 hover:text-white/70 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center' : ''}`}
         >
           <Globe size={16} strokeWidth={1.8} />
           {!collapsed && <span className="truncate">{currentLang.label}</span>}
@@ -236,18 +260,42 @@ export const Sidebar = React.memo(() => {
         <NavLink
           to="/settings"
           title={collapsed ? t('nav.settings') : undefined}
+          style={({ isActive }) =>
+            isActive
+              ? { background: 'color-mix(in srgb, var(--color-accent) 14%, transparent)' }
+              : undefined
+          }
           className={({ isActive }) =>
-            `flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-200 ${
+            `relative flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-200 ${
               collapsed ? 'justify-center' : ''
             } ${
               isActive
-                ? 'text-white/70 bg-white/[0.07]'
-                : 'text-white/40 hover:text-white/70 hover:bg-white/[0.04]'
+                ? 'text-white/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_1px_0_0_rgba(255,255,255,0.09),inset_0_-1px_0_rgba(0,0,0,0.40)]'
+                : 'text-white/40 hover:text-white/70 hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]'
             }`
           }
         >
-          <Settings size={16} strokeWidth={1.8} />
-          {!collapsed && <span className="truncate">{t('nav.settings')}</span>}
+          {({ isActive }: { isActive: boolean }) => (
+            <>
+              {isActive && !collapsed && (
+                <span
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-r-full"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-glow) 100%)',
+                    boxShadow:
+                      '0 0 10px var(--color-accent-glow), 0 0 3px var(--color-accent)',
+                  }}
+                />
+              )}
+              <Settings
+                size={16}
+                strokeWidth={1.8}
+                style={isActive ? { color: 'var(--color-accent)' } : undefined}
+              />
+              {!collapsed && <span className="truncate">{t('nav.settings')}</span>}
+            </>
+          )}
         </NavLink>
       </div>
 

@@ -4,6 +4,7 @@ import { tauriStorage } from '../lib/tauri-storage';
 
 export type ThemePreset = 'soundcloud' | 'dark' | 'neon' | 'forest' | 'crimson' | 'custom';
 export type StartupPage = 'home' | 'search' | 'library' | 'settings';
+export type ApiMode = 'original' | 'direct';
 export type DiscordRpcMode = 'track' | 'artist' | 'activity';
 export interface SidebarPinnedPlaylist {
   urn: string;
@@ -83,6 +84,10 @@ export interface SettingsState {
   /** Crossfade duration in seconds. 0 = disabled. */
   crossfadeDuration: number;
   artistWaveCollapsed: boolean;
+  /** API mode: 'original' = scdinternal.site (all features), 'direct' = api-v2.soundcloud.com */
+  apiMode: ApiMode;
+  /** Raw SoundCloud OAuth token used in direct mode */
+  directOAuthToken: string;
   setAccentColor: (color: string) => void;
   setBgPrimary: (bg: string) => void;
   setThemePreset: (id: ThemePreset) => void;
@@ -114,6 +119,8 @@ export interface SettingsState {
   setCacheListenedTracks: (v: boolean) => void;
   setCrossfadeDuration: (secs: number) => void;
   setArtistWaveCollapsed: (v: boolean) => void;
+  setApiMode: (mode: ApiMode) => void;
+  setDirectOAuthToken: (token: string) => void;
   resetTheme: () => void;
 }
 
@@ -149,6 +156,8 @@ const DEFAULTS = {
   cacheListenedTracks: true,
   crossfadeDuration: 0,
   artistWaveCollapsed: false,
+  apiMode: 'original' as ApiMode,
+  directOAuthToken: '',
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -207,6 +216,8 @@ export const useSettingsStore = create<SettingsState>()(
       setCacheListenedTracks: (cacheListenedTracks) => set({ cacheListenedTracks }),
       setCrossfadeDuration: (crossfadeDuration) => set({ crossfadeDuration }),
       setArtistWaveCollapsed: (artistWaveCollapsed) => set({ artistWaveCollapsed }),
+      setApiMode: (apiMode) => set({ apiMode }),
+      setDirectOAuthToken: (directOAuthToken) => set({ directOAuthToken }),
       resetTheme: () =>
         set({
           accentColor: DEFAULTS.accentColor,
@@ -221,7 +232,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'sc-settings',
       storage: createJSONStorage(() => tauriStorage),
-      version: 15,
+      version: 16,
       migrate: (persistedState) => {
         const prev = (persistedState ?? {}) as Partial<SettingsState> & {
           soundwaveDiversity?: number;
@@ -268,6 +279,8 @@ export const useSettingsStore = create<SettingsState>()(
         cacheListenedTracks: s.cacheListenedTracks,
         crossfadeDuration: s.crossfadeDuration,
         artistWaveCollapsed: s.artistWaveCollapsed,
+        apiMode: s.apiMode,
+        directOAuthToken: s.directOAuthToken,
       }),
     },
   ),

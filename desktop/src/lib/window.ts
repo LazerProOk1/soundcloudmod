@@ -1,5 +1,6 @@
 import { LogicalSize } from '@tauri-apps/api/dpi';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
 
 export async function toggleWindowFullscreen() {
   const currentWindow = getCurrentWindow();
@@ -9,8 +10,8 @@ export async function toggleWindowFullscreen() {
 
 // ── Mini-player ───────────────────────────────────────────────
 
-const MINI_W = 360;
-const MINI_H = 96;
+const MINI_W = 420;
+const MINI_H = 120;
 const FULL_MIN_W = 800;
 const FULL_MIN_H = 470;
 
@@ -34,6 +35,8 @@ export async function enterMiniPlayer(): Promise<void> {
   await win.setAlwaysOnTop(true);
   await win.setResizable(false);
   await win.center();
+  // Квадратные углы: DWM не должен скруглять мини-плеер
+  void invoke('set_window_corner_preference', { round: false }).catch(() => {});
 }
 
 export async function exitMiniPlayer(): Promise<void> {
@@ -47,4 +50,6 @@ export async function exitMiniPlayer(): Promise<void> {
   await win.setSize(new LogicalSize(width, height));
   await win.center();
   savedSize = null;
+  // Вернуть системные скругления для основного окна
+  void invoke('set_window_corner_preference', { round: true }).catch(() => {});
 }

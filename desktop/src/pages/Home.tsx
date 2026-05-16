@@ -346,7 +346,7 @@ const FeedTrackCard = React.memo(
               alt={track.title}
               className="w-full h-full object-cover"
               decoding="async"
-              loading="lazy"
+              loading="eager"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
@@ -490,7 +490,7 @@ const FeedPlaylistCard = React.memo(
               alt={origin.title}
               className="w-full h-full object-cover"
               decoding="async"
-              loading="lazy"
+              loading="eager"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/[0.04] to-white/[0.01]">

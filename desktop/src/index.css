@@ -152,6 +152,11 @@ body,
   overflow: hidden;
 }
 
+/* ── Mini-player ──────────────────────────────────────────────── */
+body.mini #root::after {
+  display: none;
+}
+
 /**
  * Глобальный grain-оверлей — имитирует физическую текстуру стекла.
  * SVG-шум (feTurbulence, fractalNoise) поверх всего UI.
