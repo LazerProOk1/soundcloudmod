@@ -2,7 +2,6 @@ import { listen } from '@tauri-apps/api/event';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { CallProxySection } from '../components/settings/CallProxySection.tsx';
 import { LiquidSwitch } from '../components/ui/LiquidSwitch.tsx';
 import { Skeleton } from '../components/ui/Skeleton.tsx';
 import { changeAppLanguage } from '../i18n';
@@ -88,11 +87,18 @@ const LanguageSection = React.memo(function LanguageSection() {
           <button
             key={lang.code}
             onClick={() => void changeAppLanguage(lang.code)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 cursor-pointer border ${
-              i18n.language === lang.code
-                ? 'bg-white/[0.1] text-white/90 border-white/[0.15]'
-                : 'bg-white/[0.02] text-white/40 border-white/[0.05] hover:bg-white/[0.06] hover:text-white/60'
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-[14px] text-[13px] font-semibold transition-all duration-200 cursor-pointer ${
+              i18n.language === lang.code ? 'text-white/92' : 'text-white/45 hover:text-white/70'
             }`}
+            style={i18n.language === lang.code ? {
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid var(--color-accent)',
+              boxShadow: '0 1px 0 0 rgba(255,255,255,0.20) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 0 10px var(--color-accent-glow, rgba(255,85,0,0.12))',
+            } : {
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              boxShadow: '0 1px 0 0 rgba(255,255,255,0.08) inset',
+            }}
           >
             <Globe size={14} strokeWidth={1.8} />
             {lang.label}
@@ -1006,11 +1012,26 @@ const AudioDeviceSection = React.memo(function AudioDeviceSection() {
             key={sink.name}
             onClick={() => handleSwitch(sink.name)}
             disabled={switching}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 cursor-pointer border ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-[16px] text-[13px] font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 ${
               sink.is_default
-                ? 'bg-white/[0.1] text-white/90 border-white/[0.15]'
-                : 'bg-white/[0.02] text-white/40 border-white/[0.05] hover:bg-white/[0.06] hover:text-white/60'
-            } disabled:opacity-50`}
+                ? 'text-white/92'
+                : 'text-white/45 hover:text-white/70'
+            }`}
+            style={sink.is_default ? {
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid var(--color-accent)',
+              boxShadow: `
+                0 1px 0 0 rgba(255,255,255,0.22) inset,
+                0 -1px 0 0 rgba(0,0,0,0.22) inset,
+                0 0 12px var(--color-accent-glow, rgba(255,85,0,0.15)),
+                0 4px 12px rgba(0,0,0,0.18)
+              `,
+            } : {
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              boxShadow: '0 1px 0 0 rgba(255,255,255,0.09) inset, 0 -1px 0 0 rgba(0,0,0,0.16) inset',
+            }}
           >
             {sink.description}
           </button>
@@ -1252,7 +1273,21 @@ const ImportSection = React.memo(function ImportSection() {
       </h3>
       <button
         onClick={() => setYmOpen(true)}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold bg-white/[0.06] text-white/70 hover:bg-white/[0.1] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 cursor-pointer"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-[18px] text-[13px] font-semibold text-white/80 hover:text-white transition-all duration-200 cursor-pointer"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          boxShadow: `
+            0 1px 0 0 rgba(255,255,255,0.20) inset,
+            1px 0 0 0 rgba(255,255,255,0.10) inset,
+            0 -1px 0 0 rgba(0,0,0,0.28) inset,
+            0 0 0 0.5px rgba(255,255,255,0.08),
+            0 4px 16px rgba(0,0,0,0.18)
+          `,
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'; }}
       >
         {t('settings.importYandex')}
       </button>
@@ -1344,6 +1379,152 @@ const AccountSection = React.memo(function AccountSection() {
   );
 });
 
+/* ── ApiSource Section ──────────────────────────────────── */
+
+const ApiSourceSection = React.memo(function ApiSourceSection() {
+  const { t } = useTranslation();
+  const apiMode = useSettingsStore((s) => s.apiMode);
+  const setApiMode = useSettingsStore((s) => s.setApiMode);
+  const directOAuthToken = useSettingsStore((s) => s.directOAuthToken);
+  const setDirectOAuthToken = useSettingsStore((s) => s.setDirectOAuthToken);
+  const [tokenInput, setTokenInput] = useState(directOAuthToken);
+  const [saved, setSaved] = useState(false);
+
+  const handleSaveToken = () => {
+    setDirectOAuthToken(tokenInput.trim());
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <section className="glass-card p-6">
+      <h3 className="text-[15px] font-bold text-white/80 tracking-tight mb-1">
+        {t('settings.apiSource', 'Источник данных')}
+      </h3>
+      <p className="text-[12px] text-white/35 mb-5">
+        {t(
+          'settings.apiSourceDesc',
+          'Оригинальный режим использует scdinternal.site (все функции). Прямой — api-v2.soundcloud.com (меньше функций, может быть быстрее).',
+        )}
+      </p>
+
+      {/* Mode toggle */}
+      <div className="flex gap-2 mb-5">
+        {(['original', 'direct'] as const).map((mode) => {
+          const isActive = apiMode === mode;
+          const label =
+            mode === 'original'
+              ? t('settings.apiModeOriginal', 'Оригинальный')
+              : t('settings.apiModeDirect', 'Прямой');
+          return (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setApiMode(mode)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-[14px] text-[13px] font-semibold transition-all duration-200 cursor-pointer"
+              style={
+                isActive
+                  ? {
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid var(--color-accent)',
+                      boxShadow:
+                        '0 1px 0 0 rgba(255,255,255,0.20) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 0 10px var(--color-accent-glow, rgba(255,85,0,0.12))',
+                      color: 'rgba(255,255,255,0.92)',
+                    }
+                  : {
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                      boxShadow: '0 1px 0 0 rgba(255,255,255,0.08) inset',
+                      color: 'rgba(255,255,255,0.45)',
+                    }
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Direct mode: OAuth token input */}
+      {apiMode === 'direct' && (
+        <div className="flex flex-col gap-3">
+          {/* Warning banner */}
+          <div
+            className="flex gap-3 p-3 rounded-[14px]"
+            style={{
+              background: 'rgba(234,179,8,0.06)',
+              border: '1px solid rgba(234,179,8,0.18)',
+            }}
+          >
+            <span className="text-yellow-400 text-[15px] leading-none mt-0.5">⚠</span>
+            <p className="text-[12px] text-yellow-400/80 leading-relaxed">
+              {t(
+                'settings.apiDirectWarning',
+                'В прямом режиме недоступны: тексты песен, ML-рекомендации, метаданные из MusicBrainz и Netease. Введите ваш OAuth токен SoundCloud для авторизации.',
+              )}
+            </p>
+          </div>
+
+          {/* Token input */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[12px] text-white/50 font-medium">
+              {t('settings.oauthToken', 'OAuth токен SoundCloud')}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={tokenInput}
+                onChange={(e) => {
+                  setTokenInput(e.target.value);
+                  setSaved(false);
+                }}
+                placeholder="2-XXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                className="flex-1 px-3 py-2.5 rounded-[12px] text-[13px] font-mono text-white/80 placeholder:text-white/20 outline-none transition-all duration-200"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                  boxShadow: '0 1px 0 0 rgba(255,255,255,0.06) inset',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.border = '1px solid var(--color-accent)';
+                  e.currentTarget.style.boxShadow =
+                    '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 0 0 2px var(--color-accent-glow, rgba(255,85,0,0.12))';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.border = '1px solid rgba(255,255,255,0.10)';
+                  e.currentTarget.style.boxShadow = '0 1px 0 0 rgba(255,255,255,0.06) inset';
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSaveToken}
+                disabled={!tokenInput.trim() || tokenInput.trim() === directOAuthToken}
+                className="px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: saved
+                    ? 'rgba(34,197,94,0.15)'
+                    : 'color-mix(in srgb, var(--color-accent) 14%, transparent)',
+                  border: saved ? '1px solid rgba(34,197,94,0.35)' : '1px solid var(--color-accent)',
+                  color: saved ? 'rgb(134,239,172)' : 'var(--color-accent)',
+                  boxShadow: '0 1px 0 0 rgba(255,255,255,0.10) inset',
+                }}
+              >
+                {saved ? '✓' : t('common.save', 'Сохранить')}
+              </button>
+            </div>
+            <p className="text-[11px] text-white/25">
+              {t(
+                'settings.oauthTokenHint',
+                'Откройте DevTools на soundcloud.com → Network → любой запрос к api-v2.soundcloud.com → скопируйте значение заголовка Authorization (без "OAuth ").',
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+});
+
 /* ── Main ───────────────────────────────────────────────── */
 
 export function Settings() {
@@ -1359,7 +1540,7 @@ export function Settings() {
       <PlaybackSection />
       <AudioDeviceSection />
       <ImportSection />
-      <CallProxySection />
+      <ApiSourceSection />
       <AccountSection />
     </div>
   );

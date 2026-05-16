@@ -35,7 +35,6 @@ import { LanguageFilter } from './language-filter';
 import { RecommendationsStrip } from './strip';
 import { WaveTrackHeader } from './track-header';
 import { useInfiniteWave } from './use-infinite-wave';
-import { VibeSearchBar, type VibeSearchBarHandle } from './vibe-search-bar';
 import { LiveWaveform } from './waveform';
 
 const CLUSTER_ORDER: ClusterId[] = [
@@ -70,7 +69,6 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeQuery, setActiveQuery] = useState('');
-  const searchRef = useRef<VibeSearchBarHandle>(null);
   /* Dynamic cursor spotlight — tracks mouse position on the glass panel */
   const panelRef = useLiquidLight<HTMLElement>();
 
@@ -284,14 +282,6 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
 
           <LiveWaveform track={waveTrack} isCurrent={isCurrent} />
         </div>
-
-        <VibeSearchBar
-          ref={searchRef}
-          onSubmit={handleSubmitSearch}
-          onClear={handleClearSearch}
-          loading={searchBusy}
-          active={isSearchMode}
-        />
 
         <div className="min-h-[280px]">
           {isSearchMode ? (

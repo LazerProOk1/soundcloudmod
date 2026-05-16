@@ -118,7 +118,7 @@ export const TrackCard = React.memo(
               className="w-full h-full object-cover transition-transform duration-500 ease-[var(--ease-spring)] group-hover:scale-[1.06]"
               style={{ willChange: 'transform' }}
               decoding="async"
-              loading="lazy"
+              loading="eager"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white/20">

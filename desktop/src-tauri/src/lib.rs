@@ -9,6 +9,47 @@ mod track_cache;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
+// ── Windows 11: управление скруглением углов окна (DWM) ───────────────────────
+// DWMWCP_DONOTROUND=1 → квадратные углы (для мини-плеера с плотным фоном)
+// DWMWCP_DEFAULT=0    → системные скругления (для основного окна)
+#[cfg(target_os = "windows")]
+#[link(name = "Dwmapi")]
+extern "system" {
+    fn DwmSetWindowAttribute(
+        hwnd: *mut std::ffi::c_void,
+        dw_attribute: u32,
+        pv_attribute: *const std::ffi::c_void,
+        cb_attribute: u32,
+    ) -> i32;
+}
+
+#[tauri::command]
+fn set_window_corner_preference(window: tauri::WebviewWindow, round: bool) {
+    #[cfg(target_os = "windows")]
+    {
+        use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+        const DWMWA_WINDOW_CORNER_PREFERENCE: u32 = 33;
+        const DWMWCP_DEFAULT: u32 = 0;    // системные (Win11 = ~8px)
+        const DWMWCP_ROUNDSMALL: u32 = 3; // небольшое скругление
+
+        let Ok(handle) = window.window_handle() else { return };
+        let RawWindowHandle::Win32(h) = handle.as_raw() else { return };
+        let hwnd = h.hwnd.get() as *mut std::ffi::c_void;
+        let pref: u32 = if round { DWMWCP_DEFAULT } else { DWMWCP_ROUNDSMALL };
+        unsafe {
+            DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_WINDOW_CORNER_PREFERENCE,
+                &pref as *const u32 as *const std::ffi::c_void,
+                std::mem::size_of::<u32>() as u32,
+            );
+        }
+    }
+    // no-op on macOS/Linux
+    #[cfg(not(target_os = "windows"))]
+    let _ = (window, round);
+}
+
 use discord::DiscordState;
 use network::server::ServerState;
 
@@ -129,6 +170,7 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            set_window_corner_preference,
             network::server::get_server_ports,
             app::diagnostics::diagnostics_log,
             discord::discord_connect,

@@ -4,6 +4,8 @@ pub const DOMAIN_WHITELIST: &[&str] = &[
     "localhost",
     "127.0.0.1",
     "tauri.localhost",
+    // Direct SoundCloud API (used in direct-mode settings)
+    "api-v2.soundcloud.com",
     "api.soundcloud.su",
     "images.soundcloud.su",
     "stream.soundcloud.su",

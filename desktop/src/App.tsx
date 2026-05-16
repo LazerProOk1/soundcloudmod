@@ -124,6 +124,12 @@ export default function App() {
   const hasLocalSession = Boolean(sessionId);
   const canUseMainShell = isAuthenticated || hasLocalSession;
 
+  // Toggle body.mini so CSS can make #root transparent (enables real backdrop-filter glass)
+  // Also clip <html> to border-radius so WebView corners are truly transparent (not square cutouts)
+  useEffect(() => {
+    document.body.classList.toggle('mini', isMini);
+  }, [isMini]);
+
   useEffect(() => {
     useYmImportStore.getState().initBridge();
   }, []);

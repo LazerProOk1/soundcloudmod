@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useAppStatusStore } from '../stores/app-status';
 import { useSessionExpiryStore } from '../stores/session-expiry';
 import { useSettingsStore } from '../stores/settings';
-import { API_BASE, BYPASS_API_BASE } from './constants';
+import { API_BASE, BYPASS_API_BASE, DIRECT_SC_API_BASE } from './constants';
 import { logHttpError, logHttpFailure, trackAsync } from './diagnostics';
 import { isHealthy, markHealthy, markUnhealthy } from './host-health';
 import { getIsPremium } from './premium-cache';
@@ -40,7 +40,17 @@ function isAuthPath(path: string): boolean {
   return AUTH_PATHS.some((p) => path.startsWith(p));
 }
 
+function isDirectMode(): boolean {
+  const { apiMode, directOAuthToken } = useSettingsStore.getState();
+  return apiMode === 'direct' && directOAuthToken.trim().length > 0;
+}
+
 function resolveApiBases(path: string): string[] {
+  // Direct mode: go straight to SoundCloud, no fallback
+  if (isDirectMode() && !isAuthPath(path)) {
+    return [DIRECT_SC_API_BASE];
+  }
+
   // Auth paths: always try primary API first, BYPASS as fallback.
   // BYPASS host can be independently unavailable and must not block auth.
   if (isAuthPath(path)) {
@@ -104,10 +114,23 @@ export async function apiRequest<T = unknown>(
 ): Promise<T> {
   const { silent, ...fetchOptions } = options;
   const headers = new Headers(fetchOptions.headers);
-  // Защита от попадания строки "undefined"/"null" в header при апгрейдах формата API.
-  if (sessionId && sessionId !== 'undefined' && sessionId !== 'null') {
-    headers.set('x-session-id', sessionId);
+
+  const direct = isDirectMode();
+  if (direct && !isAuthPath(path)) {
+    // Direct SoundCloud mode: use OAuth token instead of scdinternal session
+    const { directOAuthToken } = useSettingsStore.getState();
+    headers.set('Authorization', `OAuth ${directOAuthToken.trim()}`);
+    headers.set('Accept', 'application/json; charset=utf-8');
+    if (!headers.has('User-Agent')) {
+      headers.set('User-Agent', 'SoundCloud-Android/2024.03.20-release (Android 13)');
+    }
+  } else {
+    // Original mode: Защита от попадания строки "undefined"/"null" в header при апгрейдах формата API.
+    if (sessionId && sessionId !== 'undefined' && sessionId !== 'null') {
+      headers.set('x-session-id', sessionId);
+    }
   }
+
   if (!headers.has('Content-Type') && fetchOptions.body) headers.set('Content-Type', 'application/json');
 
   const bases = resolveApiBases(path);
@@ -133,8 +156,31 @@ export async function apiRequest<T = unknown>(
         const err = new ApiError(res.status, body);
         logHttpError(label, res.status, url, body);
 
+        // 429: rate-limit (only relevant in direct mode hitting SC directly)
+        if (res.status === 429) {
+          console.warn(`[RateLimit] SoundCloud rate-limited: ${path}`);
+          if (!silent) {
+            toast.error('SoundCloud rate limit — попробуйте позже', {
+              id: 'sc-rate-limit',
+              duration: 5000,
+            });
+          }
+          throw err;
+        }
+
         // 401: only show re-auth modal for actual session expiry, not missing headers
         if (res.status === 401) {
+          // In direct mode a 401 means the OAuth token is invalid/expired
+          if (direct) {
+            console.error(`[DirectMode] OAuth token rejected by SoundCloud: ${path}`);
+            if (!silent) {
+              toast.error('OAuth токен недействителен — обновите его в настройках', {
+                id: 'sc-oauth-invalid',
+                duration: 8000,
+              });
+            }
+            throw err;
+          }
           const isSessionExpiry =
             body.includes('Session not found') ||
             body.includes('Refresh token expired') ||
@@ -178,10 +224,10 @@ export async function apiRequest<T = unknown>(
     }
   }
 
-  // Only mark the backend as unreachable for non-auth paths. Auth endpoints use a different
-  // host (BYPASS) that can be unavailable independently of the main API, so a failed
-  // /auth/* call must not kick the user into offline mode.
-  if (!isAuthPath(path)) {
+  // Only mark the backend as unreachable for non-auth, non-direct paths.
+  // Auth endpoints use a different host (BYPASS) that can be unavailable independently.
+  // Direct mode talks to SoundCloud directly — its unavailability must not kick the app offline.
+  if (!isAuthPath(path) && !direct) {
     useAppStatusStore.getState().setBackendReachable(false);
   }
   throw lastError ?? new Error('All API hosts unreachable');
