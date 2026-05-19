@@ -9,7 +9,7 @@ use bytes::{Bytes, BytesMut};
 use reqwest::Client;
 use url::Url;
 
-const HLS_PREFETCH_SEGMENTS: usize = 3;
+const HLS_PREFETCH_SEGMENTS: usize = 10;
 
 /// Fetch a single-file (progressive) audio stream.
 pub async fn download_progressive(client: &Client, url: &str) -> Result<Bytes, String> {

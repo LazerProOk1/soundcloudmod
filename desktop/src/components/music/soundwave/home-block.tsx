@@ -64,6 +64,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   const currentTrack = usePlayerStore((s) => s.currentTrack);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshSeed, setRefreshSeed] = useState(0);
   /* Dynamic cursor spotlight — tracks mouse position on the glass panel */
   const panelRef = useLiquidLight<HTMLElement>();
 
@@ -74,14 +75,16 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
     if (!isAuthenticated) return null;
     const qs = new URLSearchParams();
     if (stableLanguages.length > 0) qs.set('languages', stableLanguages.join(','));
-    const suffix = qs.toString() ? `?${qs}` : '';
-    return `/recommendations${suffix}`;
-  }, [isAuthenticated, stableLanguages]);
+    // seed > 0 busts both the TanStack Query cache (via queryKey) and the server cache
+    if (refreshSeed > 0) qs.set('seed', String(refreshSeed));
+    return `/recommendations?${qs}`;
+  }, [isAuthenticated, stableLanguages, refreshSeed]);
 
-  const { data, isLoading, isFetching, refetch } = useClusterWave({
-    queryKey: ['cluster-wave', 'home', langKey],
+  const { data, isLoading, isFetching } = useClusterWave({
+    queryKey: ['cluster-wave', 'home', langKey, refreshSeed],
     url,
     enabled: isAuthenticated,
+    staleMs: refreshSeed === 0 ? 30_000 : 0,
   });
 
 const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
@@ -144,13 +147,10 @@ const waveTrack = currentTrack ?? filteredAllTracks[0] ?? null;
 
 if (!isAuthenticated) return null;
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 350);
-    }
+    setRefreshSeed((s) => s + 1);
+    setTimeout(() => setIsRefreshing(false), 600);
   };
 
   const handlePlayAll = () => {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { fetchWithAuthFallback, setSessionId } from '../lib/api';
 import { tauriStorage } from '../lib/tauri-storage';
+import { useSettingsStore } from './settings';
 
 interface User {
   id: number;
@@ -39,8 +40,10 @@ export const useAuthStore = create<AuthState>()(
 
       fetchUser: async () => {
         const { sessionId } = get();
-        if (!sessionId) return;
-        setSessionId(sessionId);
+        const { apiMode, directOAuthToken } = useSettingsStore.getState();
+        const isDirect = apiMode === 'direct' && directOAuthToken.trim().length > 0;
+        if (!sessionId && !isDirect) return;
+        if (sessionId) setSessionId(sessionId);
         const user = await fetchWithAuthFallback<User>('/me');
         set({ user, isAuthenticated: true });
       },

@@ -19,8 +19,8 @@ use crate::track_cache::sc_anon::AnonClient;
 const MIN_AUDIO_SIZE: u64 = 8192;
 const AUDIO_SNIFF_LEN: usize = 16;
 const STREAM_WRITE_BUFFER_SIZE: usize = 256 * 1024;
-const STORAGE_CONNECT_TIMEOUT_MS: u64 = 500;
-const STORAGE_TIMEOUT_MS: u64 = 800;
+const STORAGE_CONNECT_TIMEOUT_MS: u64 = 3_000;
+const STORAGE_TIMEOUT_MS: u64 = 8_000;
 const STORAGE_COOLDOWN_SECS: u64 = 30;
 const DOWNLOAD_CONNECT_TIMEOUT_MS: u64 = 4_000;
 const DOWNLOAD_READ_TIMEOUT_SECS: u64 = 30; // per-chunk read timeout — enough for slow servers

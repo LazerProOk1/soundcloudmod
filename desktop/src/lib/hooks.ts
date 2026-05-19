@@ -864,7 +864,8 @@ export function useRelatedPool(likedTracks: Track[]) {
   // 5 seeds: enough diversity, fast enough (all run in parallel = ~1 round-trip).
   const seedRef = useRef<string[]>([]);
   if (seedRef.current.length === 0 && likedTracks.length > 0) {
-    seedRef.current = sampleTrackUrns(likedTracks, 5);
+    // 3 seeds: enough diversity, 2 fewer requests than 5 (less rate-limit pressure).
+    seedRef.current = sampleTrackUrns(likedTracks, 3);
   }
   const seedUrns = seedRef.current;
 
@@ -874,9 +875,10 @@ export function useRelatedPool(likedTracks: Track[]) {
     queryKey: ['discover', 'related-pool', seedUrns],
     queryFn: async () => {
       // All requests fire in parallel — latency = 1 round-trip instead of 3 sequential batches.
+      // silent: true suppresses 429 toasts — this is a fallback pool, missing it is fine.
       const results = await Promise.all(
         seedUrns.map((urn) =>
-          api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`).catch(
+          api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`, { silent: true }).catch(
             () => ({ collection: [] as Track[], page: 0, page_size: 20, has_more: false }) as TrackPage,
           ),
         ),

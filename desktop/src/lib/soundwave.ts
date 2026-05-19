@@ -22,28 +22,72 @@ function normLanguages(langs: string[] | undefined): string | undefined {
 }
 
 /**
- * Hydrate Qdrant numeric IDs → full SC track metadata, preserving recommendation order.
+ * Hydrate recommendation IDs → full SC track metadata, preserving order.
  *
- * Per-track `/tracks/:urn` returns full metadata with real duration (vs. the
- * preview-only public search endpoint). Backend caches these for 10m so a warm
- * cache is effectively free; a cold cache fans out the requests in parallel.
+ * Uses SoundCloud's batch endpoint `/tracks?ids=id1,id2,...` (up to 50 per call)
+ * instead of individual per-track requests. This reduces N requests to ceil(N/50),
+ * which eliminates rate-limit pressure on first load.
+ *
+ * If the batch endpoint fails (e.g. backend doesn't support it), falls back to
+ * individual `/tracks/:urn` requests with concurrency-2 throttle.
  */
 export async function hydrateByIds(recs: RecommendResult[]): Promise<Track[]> {
-  const urns = recs
-    .map((r) => {
-      const id = String(r.id);
-      return id ? `soundcloud:tracks:${id}` : null;
-    })
-    .filter((u): u is string => u !== null);
-  if (!urns.length) return [];
+  const ids = recs
+    .map((r) => String(r.id))
+    .filter((id) => id && id !== 'undefined' && id !== 'null');
+  if (!ids.length) return [];
 
-  const results = await Promise.all(
-    urns.map((urn) =>
-      api<Track>(`/tracks/${encodeURIComponent(urn)}`).catch(() => null as Track | null),
-    ),
-  );
+  const BATCH_SIZE = 50;
+  const allFetched: Track[] = [];
+  let batchFailed = false;
 
-  return results.filter((t): t is Track => t !== null);
+  // ── Batch path: 1-2 requests instead of 50-90 ───────────────
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const chunk = ids.slice(i, i + BATCH_SIZE);
+    try {
+      const batch = await api<Track[]>(`/tracks?ids=${chunk.join(',')}`, { silent: true });
+      if (Array.isArray(batch) && batch.length > 0) {
+        allFetched.push(...batch);
+      } else {
+        // Empty array can mean the endpoint isn't supported — try fallback
+        batchFailed = true;
+        break;
+      }
+    } catch {
+      batchFailed = true;
+      break;
+    }
+  }
+
+  // ── Fallback: individual requests (concurrency-2) if batch failed ──
+  if (batchFailed) {
+    const urns = ids.map((id) => `soundcloud:tracks:${id}`);
+    const results: Array<Track | null> = new Array(urns.length);
+    let index = 0;
+
+    async function worker() {
+      while (index < urns.length) {
+        const i = index++;
+        results[i] = await api<Track>(
+          `/tracks/${encodeURIComponent(urns[i])}`,
+          { silent: true },
+        ).catch(() => null);
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(2, urns.length) }, worker));
+    return results.filter((t): t is Track => t !== null);
+  }
+
+  // Restore recommendation order
+  const byId = new Map<string, Track>();
+  for (const t of allFetched) {
+    const numId = t.urn?.split(':').pop();
+    if (numId) byId.set(numId, t);
+    if (t.id != null) byId.set(String(t.id), t);
+  }
+
+  return ids.map((id) => byId.get(id)).filter((t): t is Track => t != null);
 }
 
 export type SoundWaveMode = 'similar' | 'diverse';
