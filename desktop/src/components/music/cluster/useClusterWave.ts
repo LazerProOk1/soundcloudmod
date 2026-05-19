@@ -1,6 +1,7 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { api } from '../../../lib/api';
 import { hydrateByIds, type RecommendResult } from '../../../lib/soundwave';
+import { getArtistDisplay } from '../../../lib/track-display';
 import type { Track } from '../../../stores/player';
 import type { ClusterData, ClusterHydrated, ClusterId, ClusterResponseDto } from './types';
 
@@ -99,7 +100,7 @@ export async function fetchAndHydrate(url: string): Promise<ClusterData> {
         const t = c.tracks[cursors[ci]++];
         if (seen.has(t.urn)) continue;
         seen.add(t.urn);
-        const artistKey = t.user?.urn ?? t.user?.username ?? '';
+        const artistKey = getArtistDisplay(t).primary || t.user?.urn || '';
         const count = artistCount.get(artistKey) ?? 0;
         if (!artistKey || count < MAX_PER_ARTIST) {
           artistCount.set(artistKey, count + 1);

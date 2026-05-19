@@ -119,11 +119,14 @@ export function useArtistDisplay(track: Pick<Track, 'user' | 'enrichment' | 'pub
   );
 }
 
-export function getArtistTarget(track: Pick<Track, 'user' | 'enrichment'>): string | null {
+export function getArtistTarget(track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>): string | null {
   const real = track.enrichment?.primary_artist;
-  if (real?.id && real.verified) {
+  // Prefer verified enrichment artist; fall back to unverified if it has an id
+  if (real?.id) {
     return `/artist/${encodeURIComponent(real.id)}`;
   }
+  // If publisher_metadata has an artist name different from the uploader,
+  // the track belongs to a real artist — link to the uploader profile as best we can
   if (track.user?.urn) {
     return `/user/${encodeURIComponent(track.user.urn)}`;
   }

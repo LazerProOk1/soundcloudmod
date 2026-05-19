@@ -20,6 +20,7 @@ import {
   X,
 } from '../lib/icons';
 import { getOfflineLikedTracks, getOfflineTracksByUrns } from '../lib/offline-index';
+import { getArtistDisplay } from '../lib/track-display';
 import { useAppStatusStore } from '../stores/app-status';
 import type { Track } from '../stores/player';
 import { usePlayerStore } from '../stores/player';
@@ -58,8 +59,8 @@ function filterTracks(tracks: Track[], query: string): Track[] {
   return tracks.filter((track) => {
     const title = track.title?.toLowerCase() ?? '';
     if (title.includes(query)) return true;
-    const username = track.user?.username?.toLowerCase() ?? '';
-    return username.includes(query);
+    const artist = getArtistDisplay(track).primary.toLowerCase();
+    return artist.includes(query);
   });
 }
 

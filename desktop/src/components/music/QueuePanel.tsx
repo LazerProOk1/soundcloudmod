@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import { art, dur } from '../../lib/formatters';
 import { GripVertical, pauseTextWhite12, playIcon32, Trash2, X } from '../../lib/icons';
-import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
+import { getArtistDisplay, useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
 import { usePlayerStore } from '../../stores/player';
 import { UploadKindDot } from './UploadKindDot';
 
@@ -54,7 +54,7 @@ const NowPlayingItem = React.memo(() => {
         <p className="text-[12px] text-accent font-medium truncate leading-snug">
           {currentTrack.title}
         </p>
-        <p className="text-[10px] text-white/30 truncate mt-0.5">{currentTrack.user.username}</p>
+        <p className="text-[10px] text-white/30 truncate mt-0.5">{getArtistDisplay(currentTrack).primary}</p>
       </div>
       <span className="text-[10px] text-white/20 tabular-nums shrink-0">
         {dur(currentTrack.duration)}

@@ -14,6 +14,7 @@ import {
 import { isUrnLiked } from '../../../lib/likes';
 import { fetchWaveTailFromSeed, hydrateByIds } from '../../../lib/soundwave';
 import { useLikedTracks, useRecommendedTracks, useRelatedPool } from '../../../lib/hooks';
+import { getArtistDisplay } from '../../../lib/track-display';
 import { useAuthStore } from '../../../stores/auth';
 import type { Track } from '../../../stores/player';
 import { usePlayerStore } from '../../../stores/player';
@@ -352,7 +353,7 @@ async function fetchTail(languages: string[], hideLiked: boolean): Promise<Track
   // Artist-diversity cap: max 2 tracks per artist in each tail batch
   const artistCount = new Map<string, number>();
   tracks = tracks.filter((tr) => {
-    const key = tr.user?.urn ?? tr.user?.username ?? '';
+    const key = getArtistDisplay(tr).primary || tr.user?.urn || '';
     if (!key) return true;
     const n = artistCount.get(key) ?? 0;
     if (n >= 2) return false;
@@ -363,11 +364,11 @@ async function fetchTail(languages: string[], hideLiked: boolean): Promise<Track
   // Also skip tracks by artists already heavy in the current queue (>= 3 appearances)
   const queueArtistCount = new Map<string, number>();
   for (const t of q) {
-    const key = t.user?.urn ?? t.user?.username ?? '';
+    const key = getArtistDisplay(t).primary || t.user?.urn || '';
     if (key) queueArtistCount.set(key, (queueArtistCount.get(key) ?? 0) + 1);
   }
   tracks = tracks.filter((tr) => {
-    const key = tr.user?.urn ?? tr.user?.username ?? '';
+    const key = getArtistDisplay(tr).primary || tr.user?.urn || '';
     return !key || (queueArtistCount.get(key) ?? 0) < 3;
   });
 

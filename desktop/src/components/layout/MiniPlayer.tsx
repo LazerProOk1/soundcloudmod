@@ -10,6 +10,7 @@ import { getCurrentTime, getDuration, handlePrev, seek } from '../../lib/audio';
 import { art } from '../../lib/formatters';
 import { optimisticToggleLike } from '../../lib/likes';
 import { invalidateAllLikesCache } from '../../lib/hooks';
+import { getArtistDisplay } from '../../lib/track-display';
 import { usePlayerStore } from '../../stores/player';
 import { useMiniPlayerStore } from '../../stores/mini-player';
 import type { Track } from '../../stores/player';
@@ -279,7 +280,7 @@ function MiniPlayerInner() {
               fontSize: 10.5, color: 'rgba(255,255,255,0.38)', marginTop: 1,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
-              {currentTrack?.user?.username ?? ''}
+              {currentTrack ? getArtistDisplay(currentTrack).primary : ''}
             </div>
           </div>
 

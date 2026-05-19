@@ -41,7 +41,7 @@ import {
 } from '../../lib/lyrics';
 import { fetchLyricsForTrack, firstSynced, lyricsQueryKey } from '../../lib/lyrics-fetch';
 import { rememberLyrics } from '../../lib/offline-index';
-import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
+import { getArtistDisplay, useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
 import {
   clampLyricsSplit,
   LYRICS_SPLIT_DEFAULT,
@@ -1278,14 +1278,14 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
     if (!manualQuery) {
       setManualQuery(
         (prev) =>
-          prev ?? { artist: parsed?.[0] || track.user.username, title: parsed?.[1] || track.title },
+          prev ?? { artist: parsed?.[0] || getArtistDisplay(track).primary, title: parsed?.[1] || track.title },
       );
     }
   };
 
   if (isEditing) {
     const parsed = splitArtistTitle(track.title);
-    const initialArtist = manualQuery?.artist || parsed?.[0] || track.user.username;
+    const initialArtist = manualQuery?.artist || parsed?.[0] || getArtistDisplay(track).primary;
     const initialTitle = manualQuery?.title || parsed?.[1] || track.title;
     return (
       <ManualSearchPanel

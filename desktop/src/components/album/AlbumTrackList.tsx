@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { type Aura, auraRgba } from '../../lib/aura';
 import { dur, fc } from '../../lib/formatters';
 import { ListMusic, Music } from '../../lib/icons';
+import { getArtistDisplay } from '../../lib/track-display';
 import type { Track } from '../../stores/player';
 import { AlbumTrackRow } from './AlbumTrackRow';
 
@@ -52,7 +53,7 @@ const WantedRow = memo(function WantedRow({ track, position }: { track: Track; p
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-white/55 truncate">{track.title}</p>
-        <p className="text-[11px] text-white/25 truncate">{track.user?.username}</p>
+        <p className="text-[11px] text-white/25 truncate">{getArtistDisplay(track).primary}</p>
       </div>
       {track.duration ? (
         <span className="text-[11px] text-white/25 tabular-nums shrink-0 w-12 text-right">
