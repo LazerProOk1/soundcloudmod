@@ -55,7 +55,9 @@
     "tagline": "Your music, your way",
     "orSeparator": "or",
     "continueOffline": "Continue without signing in",
-    "continueOfflineDesc": "Listen to downloaded tracks and likes from your local library"
+    "continueOfflineDesc": "Listen to downloaded tracks and likes from your local library",
+    "errorExpiredTitle": "Authorization link expired",
+    "errorFailedTitle": "Authorization failed"
   },
   "reauth": {
     "title": "Session Expired",

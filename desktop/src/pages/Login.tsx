@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { QrLinkSheet } from '../components/auth/QrLinkSheet';
 import {
+  AlertCircle,
   Check,
   ChevronRight,
   ClipboardCopy,
@@ -11,6 +12,7 @@ import {
   Globe,
   Smartphone,
 } from '../lib/icons';
+import type { OAuthFlowError } from '../lib/use-oauth-flow';
 import { queryClient } from '../lib/query-client';
 import { useOAuthFlow } from '../lib/use-oauth-flow';
 import { useAppStatusStore } from '../stores/app-status';
@@ -24,6 +26,7 @@ export function Login() {
   const setOfflineBypass = useAppStatusStore((s) => s.setOfflineBypass);
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [flowError, setFlowError] = useState<OAuthFlowError | null>(null);
 
   const handleEnterOffline = () => {
     setOfflineBypass(true);
@@ -36,9 +39,14 @@ export function Login() {
     queryClient.invalidateQueries();
   };
 
-  const { startLogin, authUrl, isPolling, step } = useOAuthFlow(onLoginSuccess);
+  const handleFlowError = (err: OAuthFlowError) => {
+    setFlowError(err);
+  };
+
+  const { startLogin, authUrl, isPolling, step } = useOAuthFlow(onLoginSuccess, handleFlowError);
 
   const handleLogin = async () => {
+    setFlowError(null);
     try {
       await startLogin();
     } catch (e) {
@@ -83,6 +91,18 @@ export function Login() {
             {isPolling ? t('auth.signingIn') : t('auth.tagline')}
           </p>
         </div>
+
+        {flowError && (
+          <div className="w-full flex items-start gap-2.5 rounded-xl bg-red-500/10 border border-red-500/20 px-3.5 py-3">
+            <AlertCircle size={15} className="shrink-0 text-red-400 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-[12.5px] font-medium text-red-300">
+                {flowError.kind === 'expired' ? t('auth.errorExpiredTitle') : t('auth.errorFailedTitle')}
+              </p>
+              <p className="text-[11px] text-red-400/70 mt-0.5 break-words">{flowError.message}</p>
+            </div>
+          </div>
+        )}
 
         {isPolling ? (
           <div className="flex flex-col items-center gap-4">

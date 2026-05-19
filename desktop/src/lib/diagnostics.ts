@@ -73,8 +73,19 @@ export function logHttpError(
   logError(parts.join(' | '));
 }
 
-export function logHttpFailure(label: string, url: string, error: unknown) {
-  logError(`[Perf] HTTP FAIL ${label} ${url} | error=${String(error)}`);
+export function logHttpFailure(label: string, url: string, error: unknown, elapsedMs?: number) {
+  const elapsed = elapsedMs !== undefined ? ` | elapsed=${roundMs(elapsedMs)}ms` : '';
+  logError(`[Perf] HTTP FAIL ${label} ${url} | error=${String(error)}${elapsed}`);
+}
+
+export function describeError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }
 
 export async function trackAsync<T>(
