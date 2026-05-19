@@ -19,6 +19,7 @@ pub struct DiscordTrackInfo {
     track_url: Option<String>,
     duration_secs: Option<i64>,
     elapsed_secs: Option<i64>,
+    playback_rate: Option<f64>,
     is_playing: Option<bool>,
     mode: Option<DiscordRpcMode>,
     show_button: Option<bool>,
@@ -78,6 +79,7 @@ pub fn discord_set_activity(
         .as_secs() as i64;
 
     let elapsed = track.elapsed_secs.unwrap_or(0);
+    let rate = track.playback_rate.unwrap_or(1.0).max(0.01);
     let start = now - elapsed;
     let is_playing = track.is_playing.unwrap_or(true);
     let mode = track.mode.unwrap_or(DiscordRpcMode::Track);
@@ -117,7 +119,11 @@ pub fn discord_set_activity(
     if is_playing {
         let mut timestamps = Timestamps::new().start(start);
         if let Some(dur) = track.duration_secs {
-            timestamps = timestamps.end(start + dur);
+            // Adjust end time for playback rate so the Discord countdown reflects
+            // how many real seconds remain, not how many audio seconds remain.
+            let remaining_audio_secs = (dur - elapsed).max(0);
+            let remaining_real_secs = (remaining_audio_secs as f64 / rate).round() as i64;
+            timestamps = timestamps.end(now + remaining_real_secs);
         }
         activity = activity.timestamps(timestamps);
     }

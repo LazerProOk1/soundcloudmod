@@ -36,7 +36,7 @@ async function updatePresence(track: Track) {
   if (!(await ensureConnected())) return;
 
   try {
-    const isPlaying = usePlayerStore.getState().isPlaying;
+    const { isPlaying, playbackRate } = usePlayerStore.getState();
     const { discordRpcMode, discordRpcShowButton } = useSettingsStore.getState();
     const display = getArtistDisplay(track);
     await invoke('discord_set_activity', {
@@ -47,6 +47,7 @@ async function updatePresence(track: Track) {
         track_url: track.permalink_url ? `${track.permalink_url}`.replace(/\?.*$/, '') : undefined,
         duration_secs: Math.round(track.duration / 1000),
         elapsed_secs: Math.round(getCurrentTime()),
+        playback_rate: playbackRate,
         is_playing: isPlaying,
         mode: discordRpcMode,
         show_button: discordRpcShowButton,
@@ -70,6 +71,7 @@ async function clearPresence() {
 let lastUrn: string | null = null;
 let lastPlaying = false;
 let lastElapsed = 0;
+let lastPlaybackRate = 1;
 let seekSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
 function schedulePresenceSync(track: Track, delayMs: number) {
@@ -82,10 +84,11 @@ function schedulePresenceSync(track: Track, delayMs: number) {
 }
 
 usePlayerStore.subscribe((state) => {
-  const { currentTrack, isPlaying } = state;
+  const { currentTrack, isPlaying, playbackRate } = state;
 
   const trackChanged = currentTrack?.urn !== lastUrn;
   const playChanged = isPlaying !== lastPlaying;
+  const rateChanged = playbackRate !== lastPlaybackRate;
 
   if (!currentTrack) {
     if (lastPlaying || trackChanged) {
@@ -98,10 +101,11 @@ usePlayerStore.subscribe((state) => {
     lastUrn = null;
     lastPlaying = false;
     lastElapsed = 0;
+    lastPlaybackRate = 1;
     return;
   }
 
-  if (trackChanged || playChanged) {
+  if (trackChanged || playChanged || rateChanged) {
     if (seekSyncTimer) {
       clearTimeout(seekSyncTimer);
       seekSyncTimer = null;
@@ -109,6 +113,7 @@ usePlayerStore.subscribe((state) => {
     lastUrn = currentTrack.urn;
     lastPlaying = isPlaying;
     lastElapsed = Math.round(getCurrentTime());
+    lastPlaybackRate = playbackRate;
     updatePresence(currentTrack);
   }
 });
