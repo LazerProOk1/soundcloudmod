@@ -74,38 +74,10 @@ const SOURCE_LABELS: Record<LyricsSource, string> = {
   none: '',
 };
 
-const PAUSE_MARKER = '♪♪♪';
-const PAUSE_GAP_THRESHOLD = 4.5; // seconds — when to insert ♪♪♪
-
-type DisplayLine = LyricLine & { pause?: boolean; duration?: number };
+type DisplayLine = LyricLine;
 
 function buildDisplayLines(lines: LyricLine[]): DisplayLine[] {
-  if (!lines.length) return [];
-  const out: DisplayLine[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const cur = lines[i];
-    const prev = lines[i - 1];
-    if (prev) {
-      const gap = cur.time - prev.time;
-      if (gap >= PAUSE_GAP_THRESHOLD) {
-        out.push({
-          time: prev.time + 0.5,
-          text: PAUSE_MARKER,
-          pause: true,
-          duration: gap - 0.6,
-        });
-      }
-    } else if (cur.time >= PAUSE_GAP_THRESHOLD) {
-      out.push({
-        time: 0.05,
-        text: PAUSE_MARKER,
-        pause: true,
-        duration: Math.max(0.5, cur.time - 0.1),
-      });
-    }
-    out.push(cur);
-  }
-  return out;
+  return lines as DisplayLine[];
 }
 
 /* ── Color extraction ──────────────────────────────────────── */
@@ -639,7 +611,7 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
   const linesRef = useRef(displayLines);
   const lineElsRef = useRef<HTMLElement[]>([]);
   const lineCharElsRef = useRef<HTMLElement[][]>([]);
-  const pauseBarsRef = useRef<Array<HTMLElement | null>>([]);
+
   const manualScrollRef = useRef(false);
   const lastScrollTsRef = useRef(0);
   const lineProgressRef = useRef(0);
@@ -652,9 +624,6 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
     lineElsRef.current = Array.from(container.querySelectorAll<HTMLElement>('.lyric-line'));
     lineCharElsRef.current = lineElsRef.current.map((el) =>
       Array.from(el.querySelectorAll<HTMLElement>('[data-char-index]')),
-    );
-    pauseBarsRef.current = lineElsRef.current.map((el) =>
-      el.querySelector<HTMLElement>('.lyric-pause-bar'),
     );
     activeRef.current = -1;
     lineProgressRef.current = 0;
@@ -697,11 +666,6 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
         }
       }
 
-      const line = linesRef.current[i];
-      const bar = pauseBarsRef.current[i];
-      if (bar && line.pause) {
-        bar.style.width = `${(value * 100).toFixed(2)}%`;
-      }
     };
 
     const setLineState = (i: number, state: string) => {
@@ -709,17 +673,10 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
       if (!el || el.dataset.state === state) return;
       el.dataset.state = state;
 
-      const line = linesRef.current[i];
-      const bar = pauseBarsRef.current[i];
-
       if (state === 'past' || state === 'past-near') {
         writeLineProgress(i, 1);
-        if (bar && line.pause) bar.dataset.state = 'past';
       } else if (state === 'next' || state === 'next-near') {
         writeLineProgress(i, 0);
-        if (bar && line.pause) bar.dataset.state = '';
-      } else if (state === 'active') {
-        if (bar && line.pause) bar.dataset.state = 'active';
       }
     };
 
@@ -811,20 +768,6 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
     >
       <div className="flex flex-col gap-2">
         {displayLines.map((line, i) => {
-          if (line.pause) {
-            return (
-              <div
-                key={`p-${line.time}-${i}`}
-                className="lyric-line lyric-pause"
-                style={{ ['--pause-duration' as string]: `${line.duration ?? 2}s` }}
-              >
-                <span className="note-gradient-text">{PAUSE_MARKER}</span>
-                <div className="lyric-pause-track">
-                  <div className="lyric-pause-bar" />
-                </div>
-              </div>
-            );
-          }
           const cells = splitChars(line.text);
           const groups = splitWordsForChars(cells);
           // animatedIndex must be stable across whole line (chars-only count) so
@@ -1292,6 +1235,8 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [manualQuery, setManualQuery] = useState<{ artist: string; title: string } | null>(null);
+  // Must be unconditional — hooks cannot be called after conditional returns
+  const override = useTrackOverridesStore((s) => s.getOverride(track.urn));
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset only on track switch
   useEffect(() => {
@@ -1381,8 +1326,6 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
       </>
     );
   }
-
-  const override = useTrackOverridesStore((s) => s.getOverride(track.urn));
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-12 text-center relative">

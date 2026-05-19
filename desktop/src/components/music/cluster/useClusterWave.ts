@@ -122,10 +122,16 @@ export async function fetchAndHydrate(url: string): Promise<ClusterData> {
   return { clusters, allTracks };
 }
 
+/** Max tracks to hydrate in one wave load. Caps SoundCloud API usage. */
+const MAX_HYDRATE_IDS = 60;
+
 function collectUniqueIds(dto: ClusterResponseDto): string[] {
   const set = new Set<string>();
   for (const c of dto.clusters) {
-    for (const id of c.track_ids) set.add(String(id));
+    for (const id of c.track_ids) {
+      set.add(String(id));
+      if (set.size >= MAX_HYDRATE_IDS) return Array.from(set);
+    }
   }
   return Array.from(set);
 }

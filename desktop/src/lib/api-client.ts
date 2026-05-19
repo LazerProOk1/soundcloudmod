@@ -1,9 +1,9 @@
 import { fetch } from '@tauri-apps/plugin-http';
 import { toast } from 'sonner';
 import { useAppStatusStore } from '../stores/app-status';
-import { useSessionExpiryStore } from '../stores/session-expiry';
 import { useSettingsStore } from '../stores/settings';
 import { API_BASE, BYPASS_API_BASE, DIRECT_SC_API_BASE } from './constants';
+import { noteAuthGap, noteRateLimit, noteSuccess } from './auth-recovery';
 import { logHttpError, logHttpFailure, trackAsync } from './diagnostics';
 import { isHealthy, markHealthy, markUnhealthy } from './host-health';
 import { getIsPremium } from './premium-cache';
@@ -31,6 +31,50 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+
+// ─── Global rate-limit guard for direct mode ────────────────
+//
+// In direct mode every request hits api-v2.soundcloud.com directly.
+// SoundCloud enforces strict per-IP rate limits (~10-20 req/s).
+// We allow at most DIRECT_CONCURRENCY in-flight requests at once and
+// add a small inter-request gap to stay well under the limit.
+//
+// Proxy mode (api.scdinternal.site) does NOT use a semaphore — the backend
+// handles its own concurrency and adding a client-side queue would only
+// slow down critical requests like /me while the queue drains.
+
+function makeSemaphore(maxConcurrent: number, gapMs: number) {
+  let active = 0;
+  let lastStartMs = 0;
+  const queue: Array<() => void> = [];
+
+  function release() {
+    active--;
+    if (queue.length > 0) {
+      const next = queue.shift()!;
+      const wait = Math.max(0, lastStartMs + gapMs - Date.now());
+      setTimeout(() => { lastStartMs = Date.now(); active++; next(); }, wait);
+    }
+  }
+
+  function acquire(): Promise<void> {
+    return new Promise((resolve) => {
+      const tryAcquire = () => {
+        if (active < maxConcurrent) {
+          const wait = Math.max(0, lastStartMs + gapMs - Date.now());
+          setTimeout(() => { lastStartMs = Date.now(); active++; resolve(); }, wait);
+        } else {
+          queue.push(tryAcquire);
+        }
+      };
+      tryAcquire();
+    });
+  }
+
+  return { acquire, release };
+}
+
+const _directSem = makeSemaphore(2, 150); // SoundCloud direct API only
 
 // ─── Host resolution ────────────────────────────────────────
 
@@ -71,10 +115,19 @@ function resolveApiBases(path: string): string[] {
 
 // ─── Helpers ────────────────────────────────────────────────
 
+// Bypass hosts (white.*) get a shorter probe timeout so a downed bypass
+// host doesn't block the entire app for 15 s before falling back.
+const BYPASS_TIMEOUT_MS  = 4_000;
+const DEFAULT_TIMEOUT_MS = 15_000;
+
+function isBypassUrl(url: string): boolean {
+  return url.includes('white.');
+}
+
 function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs: number = 15_000,
+  timeoutMs: number = isBypassUrl(url) ? BYPASS_TIMEOUT_MS : DEFAULT_TIMEOUT_MS,
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), timeoutMs);
@@ -131,6 +184,29 @@ export async function apiRequest<T = unknown>(
   const headers = new Headers(fetchOptions.headers);
 
   const direct = isDirectMode();
+
+  // Throttle direct-mode requests through the global semaphore
+  // so we never flood api-v2.soundcloud.com and trigger 429s.
+  let releaseSlot: (() => void) | null = null;
+  if (direct && !isAuthPath(path)) {
+    await _directSem.acquire();
+    releaseSlot = _directSem.release;
+  }
+
+  try {
+    return await _apiRequestInner<T>(path, options, timeoutMs, { silent, fetchOptions, headers, direct });
+  } finally {
+    releaseSlot?.();
+  }
+}
+
+async function _apiRequestInner<T>(
+  path: string,
+  _options: ApiOptions,
+  timeoutMs: number | undefined,
+  ctx: { silent: boolean | undefined; fetchOptions: Omit<ApiOptions, 'silent'>; headers: Headers; direct: boolean },
+): Promise<T> {
+  const { silent, fetchOptions, headers, direct } = ctx;
   if (direct && !isAuthPath(path)) {
     // Direct SoundCloud mode: use OAuth token instead of scdinternal session
     const { directOAuthToken } = useSettingsStore.getState();
@@ -171,21 +247,16 @@ export async function apiRequest<T = unknown>(
         const err = new ApiError(res.status, body);
         logHttpError(label, res.status, url, body);
 
-        // 429: rate-limit (only relevant in direct mode hitting SC directly)
+        // 429: rate-limit — fail fast, auth-recovery counts hits and triggers
+        // silent renewal after 3+ events in 15 s. No toast, no retry.
         if (res.status === 429) {
-          console.warn(`[RateLimit] SoundCloud rate-limited: ${path}`);
-          if (!silent) {
-            toast.error('SoundCloud rate limit — попробуйте позже', {
-              id: 'sc-rate-limit',
-              duration: 5000,
-            });
-          }
+          noteRateLimit();
+          console.warn(`[RateLimit] 429 on ${path} — failing fast`);
           throw err;
         }
 
-        // 401: only show re-auth modal for actual session expiry, not missing headers
+        // 401: trigger auth-recovery orchestrator
         if (res.status === 401) {
-          // In direct mode a 401 means the OAuth token is invalid/expired
           if (direct) {
             console.error(`[DirectMode] OAuth token rejected by SoundCloud: ${path}`);
             if (!silent) {
@@ -196,13 +267,7 @@ export async function apiRequest<T = unknown>(
             }
             throw err;
           }
-          const isSessionExpiry =
-            body.includes('Session not found') ||
-            body.includes('Refresh token expired') ||
-            body.includes('re-authenticate');
-          if (isSessionExpiry) {
-            useSessionExpiryStore.getState().setSessionExpired(true);
-          }
+          noteAuthGap();
           console.error(`HTTP ERROR: url: ${path}, `, err);
           throw err;
         }
@@ -219,6 +284,7 @@ export async function apiRequest<T = unknown>(
         throw err;
       }
 
+      noteSuccess();
       const ct = res.headers.get('content-type');
       const reply = await (ct?.includes('application/json') ? res.json() : (res.text() as T));
 
