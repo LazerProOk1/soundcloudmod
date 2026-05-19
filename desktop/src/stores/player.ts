@@ -63,6 +63,14 @@ export interface Track {
   reposts_count?: number;
   user_favorite?: boolean;
   access?: 'playable' | 'preview' | 'blocked';
+  publisher_metadata?: {
+    artist?: string | null;
+    album_title?: string | null;
+    upc_or_ean?: string | null;
+    isrc?: string | null;
+    explicit?: boolean;
+    contains_music?: boolean;
+  } | null;
   user: {
     id: number;
     urn: string;
