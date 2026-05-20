@@ -89,9 +89,12 @@ function isDirectMode(): boolean {
   return apiMode === 'direct' && directOAuthToken.trim().length > 0;
 }
 
-function resolveApiBases(path: string): string[] {
-  // Direct mode: go straight to SoundCloud, no fallback
-  if (isDirectMode() && !isAuthPath(path)) {
+function resolveApiBases(path: string, direct?: boolean): string[] {
+  // Direct mode: go straight to SoundCloud, no fallback.
+  // Accept the pre-captured `direct` flag to avoid re-reading settings
+  // after they may have changed while waiting in the semaphore queue.
+  const d = direct ?? (isDirectMode() && !isAuthPath(path));
+  if (d && !isAuthPath(path)) {
     return [DIRECT_SC_API_BASE];
   }
 
@@ -224,7 +227,9 @@ async function _apiRequestInner<T>(
 
   if (!headers.has('Content-Type') && fetchOptions.body) headers.set('Content-Type', 'application/json');
 
-  const bases = resolveApiBases(path);
+  // Pass the already-captured direct flag so resolveApiBases doesn't
+  // re-read settings that might have changed while waiting in the semaphore.
+  const bases = resolveApiBases(path, direct);
   const method = fetchOptions.method ?? 'GET';
   let lastError: unknown = null;
 

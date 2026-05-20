@@ -24,6 +24,7 @@ import { getArtistDisplay } from '../lib/track-display';
 import { useAppStatusStore } from '../stores/app-status';
 import type { Track } from '../stores/player';
 import { usePlayerStore } from '../stores/player';
+import { useSettingsStore } from '../stores/settings';
 
 interface OfflineLibraryState {
   cachedTracks: Track[];
@@ -562,7 +563,10 @@ export const OfflinePage = React.memo(() => {
   }, [appMode]);
 
   useEffect(() => {
-    if (appMode !== 'online') {
+    const { apiMode, directOAuthToken } = useSettingsStore.getState();
+    const isDirect = apiMode === 'direct' && directOAuthToken.trim().length > 0;
+    // pending-actions is a backend-only feature; not available in direct mode
+    if (appMode !== 'online' || isDirect) {
       setSyncing(false);
       setPendingStats(EMPTY_STATS);
       return;
@@ -607,7 +611,9 @@ export const OfflinePage = React.memo(() => {
   }, [activeSection, state.cachedTracks.length, state.likedTracks.length]);
 
   const handleSync = useCallback(() => {
-    if (appMode !== 'online') return;
+    const { apiMode, directOAuthToken } = useSettingsStore.getState();
+    const isDirect = apiMode === 'direct' && directOAuthToken.trim().length > 0;
+    if (appMode !== 'online' || isDirect) return;
 
     setSyncing(true);
     api<{ synced: number; failed: number }>('/pending-actions/sync', { method: 'POST', silent: true })

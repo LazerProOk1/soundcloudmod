@@ -3,6 +3,12 @@ import { useEffect, useSyncExternalStore } from 'react';
 import type { Track } from '../stores/player';
 import { api } from './api';
 import { recordEvent } from './events';
+import { useSettingsStore } from '../stores/settings';
+
+function isDirectMode(): boolean {
+  const { apiMode, directOAuthToken } = useSettingsStore.getState();
+  return apiMode === 'direct' && directOAuthToken.trim().length > 0;
+}
 
 const _dislikedUrns = new Map<string, boolean>();
 const _listeners = new Set<() => void>();
@@ -39,6 +45,7 @@ const _inflightStatus = new Map<string, Promise<boolean>>();
 /** Fetch dislike status once per URN session-wide. Result is cached in the global store. */
 export async function fetchDislikeStatus(urn: string): Promise<boolean> {
   if (_dislikedUrns.has(urn)) return true;
+  if (isDirectMode()) return false; // endpoint not available in direct/public SoundCloud API
   const existing = _inflightStatus.get(urn);
   if (existing) return existing;
   const p = api<{ disliked: boolean }>(`/dislikes/status/${encodeURIComponent(urn)}`)
@@ -77,6 +84,7 @@ export function useDislikeStatus(urn: string | undefined): boolean {
 let _bulkLoaded = false;
 export async function loadAllDislikedIds(): Promise<void> {
   if (_bulkLoaded) return;
+  if (isDirectMode()) { _bulkLoaded = true; return; } // not available in direct mode
   try {
     const r = await api<{ ids: string[] }>('/dislikes/ids');
     for (const id of r.ids) {
@@ -98,6 +106,7 @@ export async function toggleDislike(
   setDislikedUrn(track.urn, nowDisliked);
   if (nowDisliked) recordEvent('dislike', track.urn);
 
+  if (isDirectMode()) return; // persist locally only, no backend in direct mode
   try {
     if (nowDisliked) {
       await api(`/dislikes/${encodeURIComponent(track.urn)}`, {

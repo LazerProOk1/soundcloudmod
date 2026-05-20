@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import type { Track } from '../stores/player';
+import { useSettingsStore } from '../stores/settings';
 import { api } from './api';
 import { initLikedUrns } from './likes';
 import { rememberFollowingTracks, rememberLikedTracks, rememberTracks } from './offline-index';
@@ -247,12 +248,27 @@ export interface HistoryEntry {
 }
 
 export function useHistory(limit = 50) {
+  const { apiMode, directOAuthToken } = useSettingsStore();
+  const isDirect = apiMode === 'direct' && directOAuthToken.trim().length > 0;
   const query = useInfiniteQuery({
-    queryKey: ['history'],
+    queryKey: ['history', isDirect],
     queryFn: async ({ pageParam = 0 }) => {
-      return api<{ collection: HistoryEntry[]; total: number }>(
-        `/history?limit=${limit}&offset=${pageParam}`,
-      );
+      // SoundCloud public API uses /me/play-history/tracks; our backend uses /history
+      const path = isDirect
+        ? `/me/play-history/tracks?limit=${limit}&offset=${pageParam}`
+        : `/history?limit=${limit}&offset=${pageParam}`;
+      const raw = await api<{ collection: unknown[]; total?: number; next_href?: string }>(path);
+      // Normalize: direct API returns { collection: [{track, played_at}] }
+      if (isDirect) {
+        return {
+          collection: raw.collection.map((item: unknown) => {
+            const e = item as Record<string, unknown>;
+            return { track: e.track, playedAt: e.played_at };
+          }) as HistoryEntry[],
+          total: raw.collection.length,
+        };
+      }
+      return raw as { collection: HistoryEntry[]; total: number };
     },
     initialPageParam: 0,
     gcTime: INFINITE_GC_MS,
