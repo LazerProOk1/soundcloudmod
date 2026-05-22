@@ -11,13 +11,9 @@ import { HorizontalScroll } from '../components/ui/HorizontalScroll';
 import { Skeleton } from '../components/ui/Skeleton';
 import { preloadTrack } from '../lib/audio';
 import { ago, art, dur, fc } from '../lib/formatters';
-import {
-  getOfflineFollowingTracks,
-  getOfflineLikedTracks,
-  getRecentlyPlayed,
-} from '../lib/offline-index';
 import type { FeedItem } from '../lib/hooks';
 import {
+  useBatchTrackHydration,
   useDiscoverData,
   useFeed,
   useFollowingTracks,
@@ -48,6 +44,11 @@ import {
   Repeat2,
   Sparkles,
 } from '../lib/icons';
+import {
+  getOfflineFollowingTracks,
+  getOfflineLikedTracks,
+  getRecentlyPlayed,
+} from '../lib/offline-index';
 import { getArtistTarget, useArtistDisplay, useDisplayTitle } from '../lib/track-display';
 import { useTrackPlay } from '../lib/useTrackPlay';
 import { useAuthStore } from '../stores/auth';
@@ -570,7 +571,6 @@ const FeedPlaylistCard = React.memo(
   (prev, next) => prev.item.origin.urn === next.item.origin.urn,
 );
 
-
 /* ── Isolated Sections ────────────────────────────────────── */
 
 const FeaturedHero = React.memo(function FeaturedHero({
@@ -607,7 +607,9 @@ const LikedShelf = React.memo(function LikedShelf({
   const [offlineLiked, setOfflineLiked] = useState<Track[]>([]);
 
   useEffect(() => {
-    getOfflineLikedTracks().then(setOfflineLiked).catch(() => {});
+    getOfflineLikedTracks()
+      .then(setOfflineLiked)
+      .catch(() => {});
   }, []);
 
   const displayTracks = likedTracks.length > 0 ? likedTracks : offlineLiked;
@@ -648,7 +650,9 @@ const FollowingShelf = React.memo(function FollowingShelf({
   const [offlineFollowing, setOfflineFollowing] = useState<Track[]>([]);
 
   useEffect(() => {
-    getOfflineFollowingTracks().then(setOfflineFollowing).catch(() => {});
+    getOfflineFollowingTracks()
+      .then(setOfflineFollowing)
+      .catch(() => {});
   }, []);
 
   const displayTracks = followingTracks.length > 0 ? followingTracks : offlineFollowing;
@@ -682,7 +686,9 @@ const RecentlyPlayedShelf = React.memo(function RecentlyPlayedShelf() {
   const [tracks, setTracks] = useState<Track[]>([]);
 
   useEffect(() => {
-    getRecentlyPlayed().then(setTracks).catch(() => {});
+    getRecentlyPlayed()
+      .then(setTracks)
+      .catch(() => {});
   }, []);
 
   if (tracks.length === 0) return null;
@@ -714,6 +720,7 @@ const DiscoverSection = React.memo(function DiscoverSection({
 
   // ── Recommended ──
   const recommendedTracks = useRecommendedTracks(pool, 40);
+  useBatchTrackHydration(recommendedTracks);
 
   // ── Discover by genre ──
   const discoverData = useDiscoverData(pool, likedTracks);
@@ -822,6 +829,13 @@ const FeedStream = React.memo(function FeedStream({
     [feedItems, featuredItem],
   );
 
+  // Hydrate tracks that are missing publisher_metadata in the feed response
+  const feedTracks = useMemo(
+    () => streamItems.map((i) => i.origin as Track).filter((t) => t?.urn),
+    [streamItems],
+  );
+  useBatchTrackHydration(feedTracks);
+
   return (
     <section>
       <SectionHeader
@@ -876,8 +890,13 @@ export function Home() {
   const likedTracksQuery = useLikedTracks(100);
   const followingQuery = useFollowingTracks(20);
 
+  // Hydrate full metadata for liked + following tracks (may lack publisher_metadata)
+  useBatchTrackHydration(likedTracksQuery.tracks ?? []);
+  useBatchTrackHydration(followingQuery.data?.collection ?? []);
+
   const featuredItem = useMemo(
-    () => feedQuery.items.find((item) => item.type.includes('track') && !item.type.includes('repost')),
+    () =>
+      feedQuery.items.find((item) => item.type.includes('track') && !item.type.includes('repost')),
     [feedQuery.items],
   );
   const feedTrackQueue = useMemo(

@@ -14,22 +14,16 @@ import { useNavigate } from 'react-router-dom';
 import { TrackCard } from '../components/music/TrackCard';
 import { HorizontalScroll } from '../components/ui/HorizontalScroll';
 import { Skeleton } from '../components/ui/Skeleton';
-import { getRecentlyPlayed } from '../lib/offline-index';
 import {
+  useBatchTrackHydration,
   useDiscoverData,
   useFollowingTracks,
   useLikedTracks,
   useRecommendedTracks,
   useRelatedPool,
 } from '../lib/hooks';
-import {
-  ChevronRight,
-  Compass,
-  Headphones,
-  Heart,
-  Music,
-  Sparkles,
-} from '../lib/icons';
+import { ChevronRight, Compass, Headphones, Heart, Music, Sparkles } from '../lib/icons';
+import { getRecentlyPlayed } from '../lib/offline-index';
 import type { Track } from '../stores/player';
 
 /* ── Section Header ────────────────────────────────────────── */
@@ -127,11 +121,7 @@ const RecommendedShelf = React.memo(function RecommendedShelf({
 
 /* ── Genre discover ────────────────────────────────────────── */
 
-const GenreDiscover = React.memo(function GenreDiscover({
-  likedTracks,
-}: {
-  likedTracks: Track[];
-}) {
+const GenreDiscover = React.memo(function GenreDiscover({ likedTracks }: { likedTracks: Track[] }) {
   const { t } = useTranslation();
   const { data: pool, isLoading } = useRelatedPool(likedTracks);
   const discoverData = useDiscoverData(pool, likedTracks);
@@ -236,7 +226,9 @@ const RecentlyPlayedShelf = React.memo(function RecentlyPlayedShelf() {
   const [tracks, setTracks] = useState<Track[]>([]);
 
   useEffect(() => {
-    getRecentlyPlayed().then(setTracks).catch(() => {});
+    getRecentlyPlayed()
+      .then(setTracks)
+      .catch(() => {});
   }, []);
 
   if (tracks.length === 0) return null;
@@ -334,6 +326,7 @@ function DiscoverHero() {
 export function Discover() {
   const likedQuery = useLikedTracks(100);
   const likedTracks = useMemo(() => likedQuery.tracks, [likedQuery.tracks]);
+  useBatchTrackHydration(likedTracks);
 
   return (
     <div className="p-6 pb-4 space-y-8 page-enter">

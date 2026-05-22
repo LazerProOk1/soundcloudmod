@@ -195,7 +195,8 @@ function usePagedQuery<T>(opts: PagedQueryOptions<T>): PagedQueryResult<T> {
     number
   >({
     queryKey: opts.queryKey,
-    queryFn: ({ pageParam }) => api<PagedResponse<T>>(opts.url(pageParam, limit), {}, opts.timeoutMs),
+    queryFn: ({ pageParam }) =>
+      api<PagedResponse<T>>(opts.url(pageParam, limit), {}, opts.timeoutMs),
     initialPageParam: 0,
     getNextPageParam: (last) => (last.has_more ? last.page + 1 : undefined),
     staleTime: opts.staleTime,
@@ -222,7 +223,7 @@ function usePagedQuery<T>(opts: PagedQueryOptions<T>): PagedQueryResult<T> {
   const items = useMemo(() => {
     const flat = flattenCollectionPages(query.data?.pages);
     return dedupeRef.current ? dedupeByKey(flat, dedupeRef.current) : flat;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.data]);
 
   return Object.assign(query, { items }) as PagedQueryResult<T>;
@@ -261,10 +262,21 @@ export function useHistory(limit = 50) {
       // Normalize: direct API returns { collection: [{track, played_at}] }
       if (isDirect) {
         return {
-          collection: raw.collection.map((item: unknown) => {
+          collection: raw.collection.map((item: unknown): HistoryEntry => {
             const e = item as Record<string, unknown>;
-            return { track: e.track, playedAt: e.played_at };
-          }) as HistoryEntry[],
+            const t = (e.track ?? {}) as Record<string, unknown>;
+            const user = (t.user ?? {}) as Record<string, unknown>;
+            return {
+              id: String(t.urn ?? t.id ?? ''),
+              scTrackId: String(t.urn ?? t.id ?? ''),
+              title: String(t.title ?? ''),
+              artistName: String(user.username ?? ''),
+              artistUrn: (user.urn as string | null) ?? null,
+              artworkUrl: (t.artwork_url as string | null) ?? null,
+              duration: Number(t.duration ?? 0),
+              playedAt: String(e.played_at ?? ''),
+            };
+          }),
           total: raw.collection.length,
         };
       }
@@ -333,6 +345,99 @@ export function useLocalLikes(limit = 50) {
   const tracks = useMemo(() => flattenCollectionPages(query.data?.pages), [query.data]);
 
   return { tracks, ...query };
+}
+
+/* ── Batch track hydration ─────────────────────────────────────── */
+
+/**
+ * Background-fetches full track objects for tracks missing publisher_metadata
+ * and patches all related query-cache entries with the fresh data.
+ *
+ * SoundCloud feed/stream endpoints often return partial track objects that lack
+ * publisher_metadata.artist (and therefore show the uploader channel name instead
+ * of the real artist). Fetching /tracks?ids=... returns full objects with all fields.
+ */
+export function useBatchTrackHydration(tracks: Track[]) {
+  const qc = useQueryClient();
+  // Build a stable key from the URNs that actually need hydration
+  const needsHydration = useMemo(
+    () =>
+      tracks.filter(
+        (t) =>
+          t.publisher_metadata === undefined &&
+          !t.enrichment?.primary_artist?.name,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tracks.map((t) => t.urn).join(',')],
+  );
+
+  useEffect(() => {
+    if (needsHydration.length === 0) return;
+
+    const BATCH = 50;
+    let cancelled = false;
+
+    const run = async () => {
+      for (let i = 0; i < needsHydration.length; i += BATCH) {
+        if (cancelled) break;
+        const batch = needsHydration.slice(i, i + BATCH);
+        const ids = batch.map((t) => t.urn).join(',');
+        try {
+          const fresh = await api<Track[]>(`/tracks?ids=${encodeURIComponent(ids)}`, {
+            silent: true,
+          });
+          if (cancelled) break;
+          // Build a lookup map for O(1) access
+          const byUrn = new Map<string, Track>(fresh.map((t) => [t.urn, t]));
+
+          // Patch every cached page that references these tracks
+          const patchTrack = (old: Track): Track => {
+            const f = byUrn.get(old.urn);
+            return f ? { ...old, ...f, user: old.user } : old;
+          };
+
+          // Patch feed pages
+          qc.setQueriesData<InfiniteData<PagedResponse<FeedItem>, number>>(
+            { queryKey: ['feed'] },
+            (data) => {
+              if (!data) return data;
+              return {
+                ...data,
+                pages: data.pages.map((page) => ({
+                  ...page,
+                  collection: page.collection.map((item) =>
+                    item.origin?.urn && byUrn.has(item.origin.urn)
+                      ? { ...item, origin: patchTrack(item.origin as Track) as FeedOrigin }
+                      : item,
+                  ),
+                })),
+              };
+            },
+          );
+
+          // Patch any paged Track lists (likes, following, recommended, etc.)
+          qc.setQueriesData<InfiniteData<PagedResponse<Track>, number>>(
+            { predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] !== 'feed' },
+            (data) => {
+              if (!data) return data;
+              return {
+                ...data,
+                pages: data.pages.map((page) => ({
+                  ...page,
+                  collection: page.collection.map(patchTrack),
+                })),
+              };
+            },
+          );
+        } catch {
+          // Fire-and-forget — failure is acceptable
+        }
+      }
+    };
+
+    void run();
+    return () => { cancelled = true; };
+  }, [needsHydration, qc]);
 }
 
 /* ── Feed ──────────────────────────────────────────────────────── */
@@ -590,8 +695,8 @@ export function useUserPopularTracks(userUrn: string | undefined) {
             pageSize,
             'access=playable,preview,blocked',
           ),
-          { signal },   // pass AbortSignal so navigation cancels in-flight requests
-          10_000,       // 10s per-page timeout instead of the 60s default
+          { signal }, // pass AbortSignal so navigation cancels in-flight requests
+          10_000, // 10s per-page timeout instead of the 60s default
         );
         for (const t of data.collection) all.push(t);
         if (!data.has_more) break;
@@ -850,7 +955,6 @@ export function useSearchUsers(q: string) {
 
 /* ── Fallback / Seed Tracks ────────────────────────────────────── */
 
-
 /* ── Discover ──────────────────────────────────────────────────── */
 
 type RelatedPool = Map<string, { count: number; track: Track }>;
@@ -894,8 +998,11 @@ export function useRelatedPool(likedTracks: Track[]) {
       // silent: true suppresses 429 toasts — this is a fallback pool, missing it is fine.
       const results = await Promise.all(
         seedUrns.map((urn) =>
-          api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`, { silent: true }).catch(
-            () => ({ collection: [] as Track[], page: 0, page_size: 20, has_more: false }) as TrackPage,
+          api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`, {
+            silent: true,
+          }).catch(
+            () =>
+              ({ collection: [] as Track[], page: 0, page_size: 20, has_more: false }) as TrackPage,
           ),
         ),
       );
