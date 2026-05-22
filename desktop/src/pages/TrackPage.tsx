@@ -429,7 +429,7 @@ const DownloadButton = React.memo(({ track }: { track: Track }) => {
     if (loading) return;
     setLoading(true);
     try {
-      await downloadTrack(track.urn, track.user.username, track.title);
+      await downloadTrack(track.urn, getArtistDisplay(track).primary, track.title);
       toast.success(t('track.downloaded'));
     } catch (e: unknown) {
       if (e instanceof Error && e.message === 'cancelled') return;
@@ -581,8 +581,13 @@ export const TrackPage = React.memo(() => {
                 {track.genre}
               </span>
             )}
-            <h1 className="text-2xl font-bold text-white/95 leading-tight mb-2 line-clamp-2">
+            <h1 className="text-2xl font-bold text-white/95 leading-tight mb-2 line-clamp-2 flex items-start gap-2 flex-wrap">
               {getDisplayTitle(track)}
+              {track.publisher_metadata?.explicit && (
+                <span className="inline-flex items-center shrink-0 self-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/[0.10] text-white/45 border border-white/[0.10] tracking-widest uppercase leading-none translate-y-px">
+                  E
+                </span>
+              )}
             </h1>
 
             {/* Artist */}
@@ -689,6 +694,16 @@ export const TrackPage = React.memo(() => {
                 </div>
               );
             })()}
+
+            {/* Album title badge */}
+            {track.publisher_metadata?.album_title && (
+              <div className="flex items-center gap-1.5 mb-4 text-[11.5px] text-white/35">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>{track.publisher_metadata.album_title}</span>
+              </div>
+            )}
 
             {/* ── Action bar: primary + engagement chips + icon rail ── */}
             <div className="flex items-center gap-3 flex-wrap">
@@ -885,7 +900,7 @@ export const TrackPage = React.memo(() => {
               />
               <div className="min-w-0">
                 <p className="text-[13px] font-medium text-white/80 truncate group-hover/ac:text-white transition-colors">
-                  {track.user.username}
+                  {getArtistDisplay(track).primary}
                 </p>
               </div>
             </div>

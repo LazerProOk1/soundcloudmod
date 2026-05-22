@@ -4239,7 +4239,7 @@ dependencies = [
 
 [[package]]
 name = "soundcloud-desktop"
-version = "1.0.0"
+version = "1.2.0"
 dependencies = [
  "audiopus",
  "base64 0.22.1",

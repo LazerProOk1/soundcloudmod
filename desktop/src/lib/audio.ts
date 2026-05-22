@@ -11,6 +11,7 @@ import {
   resolveTrackFromStreaming,
   streamFallbackUrls,
 } from './api';
+import { proxiedAssetUrl } from './asset-url';
 import {
   enforceAudioCacheLimit,
   ensureTrackCached,
@@ -22,7 +23,6 @@ import { isUrnDisliked } from './dislikes';
 import { recordEvent } from './events';
 import { art } from './formatters';
 import { rememberRecentlyPlayed, rememberTracks } from './offline-index';
-import { proxiedAssetUrl } from './asset-url';
 import { getUrnCluster, recordClusterFeedback } from './recsFeedback';
 import { getArtistDisplay, getDisplayTitle } from './track-display';
 
@@ -36,8 +36,8 @@ let currentUrn: string | null = null;
 let hasTrack = false;
 let fallbackDuration = 0;
 let cachedTime = 0;
-let cachedTimeWallMs = 0;       // performance.now() when cachedTime was last set by a tick
-let cachedPlaybackRate = 1.0;   // effective speed sent to Rust (rate * pitch multiplier)
+let cachedTimeWallMs = 0; // performance.now() when cachedTime was last set by a tick
+let cachedPlaybackRate = 1.0; // effective speed sent to Rust (rate * pitch multiplier)
 let cachedDuration = 0;
 let loadGen = 0;
 let lastEndedUrn: string | null = null;
@@ -79,7 +79,7 @@ function animateVolume(from: number, to: number, durationMs: number, onDone?: ()
   const step = () => {
     const elapsed = performance.now() - startMs;
     const t = Math.min(1, elapsed / durationMs);
-    applyVolume(Math.round(from + diff * t));
+    applyVolume(from + diff * t);
     if (t < 1) {
       fadeInRafId = requestAnimationFrame(step);
     } else {
@@ -321,7 +321,9 @@ function commitTrackMetadata(track: Track) {
 
 async function fetchFreshTrackMetadata(track: Track): Promise<Track> {
   try {
-    const freshTrack = await api<Track>(`/tracks/${encodeURIComponent(track.urn)}`, { silent: true });
+    const freshTrack = await api<Track>(`/tracks/${encodeURIComponent(track.urn)}`, {
+      silent: true,
+    });
     return mergeTrackMetadata(track, freshTrack);
   } catch (error) {
     console.warn('[Audio] Failed to hydrate track metadata:', error);
@@ -368,7 +370,12 @@ async function loadTrack(track: Track) {
   invoke('audio_set_normalization', { enabled: normalizeVolume }).catch(console.error);
 
   // Sync volume + playback rate (pitch is folded into the speed value sent to Rust)
-  invoke('audio_set_volume', { volume: usePlayerStore.getState().volume }).catch(console.error);
+  // If a crossfade is in progress, start the new track silent so the fade-in can
+  // ramp up from 0 — otherwise loadTrack would reset the faded-out volume back to
+  // user volume and the first audio buffer would play at full level.
+  const _cfDuration = useSettingsStore.getState().crossfadeDuration;
+  const startVolume = crossfading && _cfDuration > 0 ? 0 : usePlayerStore.getState().volume;
+  invoke('audio_set_volume', { volume: startVolume }).catch(console.error);
   const initialRate = getEffectivePlaybackRate();
   cachedPlaybackRate = initialRate;
   cachedTime = 0;
@@ -456,7 +463,15 @@ function afterLoad(track: Track, gen: number) {
       : track;
 
   // Record to listening history (fire-and-forget), skip on repeat-one (same track looping)
-  if (historyTrack?.urn && historyTrack.title && usePlayerStore.getState().repeat !== 'one') {
+  // Guard: /history is a backend-only endpoint — skip in direct mode (SoundCloud API doesn't have it)
+  const { apiMode, directOAuthToken } = useSettingsStore.getState();
+  const isDirectMode = apiMode === 'direct' && directOAuthToken.trim().length > 0;
+  if (
+    !isDirectMode &&
+    historyTrack?.urn &&
+    historyTrack.title &&
+    usePlayerStore.getState().repeat !== 'one'
+  ) {
     api('/history', {
       method: 'POST',
       silent: true,
@@ -472,19 +487,23 @@ function afterLoad(track: Track, gen: number) {
   }
 
   const isPlaying = usePlayerStore.getState().isPlaying;
-  invoke(isPlaying ? 'audio_play' : 'audio_pause').catch(console.error);
 
   // ── Crossfade fade-in ───────────────────────────────────────
+  // applyVolume(0) MUST be called before audio_play, otherwise the first
+  // audio buffer fires at user volume before the IPC set-volume arrives.
   const crossfadeSecs = useSettingsStore.getState().crossfadeDuration;
   if (crossfading && crossfadeSecs > 0 && isPlaying) {
     const userVolume = usePlayerStore.getState().volume;
-    // Start silent, ramp up over crossfade duration
     applyVolume(0);
+    invoke('audio_play').catch(console.error);
     animateVolume(0, userVolume, crossfadeSecs * 1000, () => {
       crossfading = false;
+      // Restore exact user volume in case float drift occurred
+      applyVolume(usePlayerStore.getState().volume);
     });
   } else {
     crossfading = false;
+    invoke(isPlaying ? 'audio_play' : 'audio_pause').catch(console.error);
   }
   updatePlaybackState(isPlaying);
   updateMediaPosition();
@@ -521,11 +540,10 @@ function handleTrackEnd() {
 /* ── Tauri event listeners ───────────────────────────────────── */
 
 /** Register a Tauri event listener and store its unlisten function for cleanup. */
-function tauriListen<T>(
-  event: string,
-  handler: (e: { payload: T }) => void,
-): void {
-  listen<T>(event, handler).then((unlisten) => tauriUnlisteners.push(unlisten)).catch(console.error);
+function tauriListen<T>(event: string, handler: (e: { payload: T }) => void): void {
+  listen<T>(event, handler)
+    .then((unlisten) => tauriUnlisteners.push(unlisten))
+    .catch(console.error);
 }
 
 tauriListen<number>('audio:tick', (event) => {
@@ -702,7 +720,7 @@ function updateMetadata(track: Track, durationSecs?: number) {
   const title = getDisplayTitle(track);
   invoke('audio_set_metadata', {
     title,
-    artist: display.primary || track.user.username,
+    artist: display.primary,
     coverUrl: coverUrl || null,
     durationSecs: durationSecs ?? track.duration / 1000,
   }).catch(console.error);

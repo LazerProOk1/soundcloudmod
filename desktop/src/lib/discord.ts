@@ -42,7 +42,7 @@ async function updatePresence(track: Track) {
     await invoke('discord_set_activity', {
       track: {
         title: getDisplayTitle(track),
-        artist: display.primary || track.user.username,
+        artist: display.primary,
         artwork_url: artworkToLarge(track.artwork_url),
         track_url: track.permalink_url ? `${track.permalink_url}`.replace(/\?.*$/, '') : undefined,
         duration_secs: Math.round(track.duration / 1000),

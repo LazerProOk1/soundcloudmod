@@ -6,7 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/shallow';
 import { api } from '../../lib/api';
-import { getAudioSecond, getCurrentTime, getDuration, handlePrev, seek, subscribe } from '../../lib/audio';
+import {
+  getAudioSecond,
+  getCurrentTime,
+  getDuration,
+  handlePrev,
+  seek,
+  subscribe,
+} from '../../lib/audio';
 import { toggleDislike, useDislikeStatus } from '../../lib/dislikes';
 import { art, formatTime } from '../../lib/formatters';
 import { invalidateAllLikesCache } from '../../lib/hooks';
@@ -16,8 +23,8 @@ import {
   listMusic16,
   MicVocal,
   Moon,
-  pauseBlack20,
   Pencil,
+  pauseBlack20,
   playBlack20,
   repeat1Icon16,
   repeatIcon16,
@@ -33,7 +40,7 @@ import {
 } from '../../lib/icons';
 import { optimisticToggleLike } from '../../lib/likes';
 import { getSleepTimerRemaining, useSleepTimer } from '../../lib/sleep-timer';
-import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
+import { getArtistDisplay, useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
 import { useLyricsStore } from '../../stores/lyrics';
 import {
   getEffectivePitchSemitones,
@@ -130,13 +137,29 @@ export const ProgressSlider = React.memo(() => {
 
   const [dragging, setDragging] = useState(false);
   const [dragValue, setDragValue] = useState(0);
+  // syncedValue mirrors the last user-committed seek position so Radix Slider's
+  // internal state stays close to reality. Reset to 0 on each track change so
+  // Radix doesn't try to render the previous track's position on the new one.
   const [syncedValue, setSyncedValue] = useState(0);
 
   const draggingRef = useRef(false);
   const rangeRef = useRef<HTMLSpanElement>(null);
   const thumbRef = useRef<HTMLSpanElement>(null);
 
-  // Direct DOM updates at 60fps — zero React re-renders
+  // Reset slider state on track change so Radix doesn't render stale position.
+  const currentUrn = usePlayerStore((s) => s.currentTrack?.urn);
+  const prevUrnRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (currentUrn !== prevUrnRef.current) {
+      prevUrnRef.current = currentUrn;
+      setSyncedValue(0);
+      setDragging(false);
+      draggingRef.current = false;
+    }
+  }, [currentUrn]);
+
+  // Direct DOM updates at 60fps — zero React re-renders during playback.
+  // Also keeps syncedValue in sync so Radix computes correct delta on next drag start.
   useEffect(() => {
     return subscribe(() => {
       if (draggingRef.current) return;
@@ -304,10 +327,14 @@ export const VolumeLabel = React.memo(() => {
 export const ProgressTime = React.memo(() => {
   const [currentSecond, setCurrentSecond] = useState(getAudioSecond);
   const [duration, setDuration] = useState(getDuration);
-  useEffect(() => subscribe(() => {
-    setCurrentSecond(getAudioSecond());
-    setDuration(getDuration());
-  }), []);
+  useEffect(
+    () =>
+      subscribe(() => {
+        setCurrentSecond(getAudioSecond());
+        setDuration(getDuration());
+      }),
+    [],
+  );
 
   return (
     <div className="flex items-center gap-1.5">
@@ -475,7 +502,8 @@ const PlayPauseBtn = React.memo(() => {
       className="relative w-12 h-12 rounded-full flex items-center justify-center text-black hover:scale-[1.07] active:scale-[0.94] transition-all duration-300 ease-[var(--ease-spring)] cursor-pointer mx-1.5"
       style={{
         /* Frosted metal: warm white with subtle gradient sheen */
-        background: 'linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(230,230,236,0.93) 100%)',
+        background:
+          'linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(230,230,236,0.93) 100%)',
         boxShadow: `
           /* Differential glass border */
           0 1px 0 0 rgba(255,255,255,1.0) inset,
@@ -828,9 +856,7 @@ const SleepTimerBtn = React.memo(() => {
             <div className="grid grid-cols-3 gap-1">
               {SLEEP_PRESETS_MIN.map((min) => {
                 const activeMins =
-                  endsAt !== null
-                    ? Math.round((endsAt - Date.now()) / 60000)
-                    : null;
+                  endsAt !== null ? Math.round((endsAt - Date.now()) / 60000) : null;
                 const isSelected =
                   endsAt !== null && activeMins !== null && Math.abs(activeMins - min) <= 1;
                 return (
@@ -933,10 +959,13 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
   const existing = getOverride(track.urn);
 
   const [titleVal, setTitleVal] = useState(existing?.title ?? track.title);
-  const [artistVal, setArtistVal] = useState(existing?.artist ?? track.user.username);
+  const [artistVal, setArtistVal] = useState(existing?.artist ?? getArtistDisplay(track).primary);
 
   const handleSave = () => {
-    setOverride(track.urn, { title: titleVal.trim() || undefined, artist: artistVal.trim() || undefined });
+    setOverride(track.urn, {
+      title: titleVal.trim() || undefined,
+      artist: artistVal.trim() || undefined,
+    });
     // Invalidate lyrics cache so next open re-fetches with new metadata
     void qc.invalidateQueries({ queryKey: ['lyrics', 'track', track.urn] });
     onClose();
@@ -945,7 +974,7 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
   const handleClear = () => {
     clearOverride(track.urn);
     setTitleVal(track.title);
-    setArtistVal(track.user.username);
+    setArtistVal(getArtistDisplay(track).primary);
     void qc.invalidateQueries({ queryKey: ['lyrics', 'track', track.urn] });
     onClose();
   };
@@ -963,15 +992,23 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
       }}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[12px] font-semibold text-white/70">{t('track.editInfo', 'Редактировать трек')}</span>
-        <button type="button" onClick={onClose} className="text-white/30 hover:text-white/70 transition-colors cursor-pointer">
+        <span className="text-[12px] font-semibold text-white/70">
+          {t('track.editInfo', 'Редактировать трек')}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-white/30 hover:text-white/70 transition-colors cursor-pointer"
+        >
           <X size={14} />
         </button>
       </div>
 
       <div className="space-y-2">
         <div>
-          <label className="text-[10px] text-white/30 uppercase tracking-wide mb-1 block">{t('track.title', 'Название')}</label>
+          <label className="text-[10px] text-white/30 uppercase tracking-wide mb-1 block">
+            {t('track.title', 'Название')}
+          </label>
           <input
             value={titleVal}
             onChange={(e) => setTitleVal(e.target.value)}
@@ -982,13 +1019,15 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
           />
         </div>
         <div>
-          <label className="text-[10px] text-white/30 uppercase tracking-wide mb-1 block">{t('track.artist', 'Исполнитель')}</label>
+          <label className="text-[10px] text-white/30 uppercase tracking-wide mb-1 block">
+            {t('track.artist', 'Исполнитель')}
+          </label>
           <input
             value={artistVal}
             onChange={(e) => setArtistVal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/20 outline-none focus:border-white/[0.18] focus:bg-white/[0.09] transition-all"
-            placeholder={track.user.username}
+            placeholder={getArtistDisplay(track).primary}
           />
         </div>
       </div>
@@ -1014,7 +1053,10 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
       </div>
 
       <p className="text-[10px] text-white/20 mt-2 leading-relaxed">
-        {t('track.editInfoHint', 'Используется для поиска текстов. Не изменяет данные в SoundCloud.')}
+        {t(
+          'track.editInfoHint',
+          'Используется для поиска текстов. Не изменяет данные в SoundCloud.',
+        )}
       </p>
     </div>
   );
@@ -1062,9 +1104,7 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
         : null;
   return (
     <div className="flex items-center gap-3.5 w-[340px] min-w-0 relative">
-      {editOpen && (
-        <EditTrackInfoDialog track={track} onClose={() => setEditOpen(false)} />
-      )}
+      {editOpen && <EditTrackInfoDialog track={track} onClose={() => setEditOpen(false)} />}
       <div
         className="glass-artwork relative w-14 h-14 rounded-[18px] shrink-0 cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
         style={{
@@ -1088,7 +1128,10 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
         ) : (
           <div className="w-full h-full bg-white/[0.04]" />
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover/art:bg-black/40 group-hover/art:opacity-100 transition-all duration-200" style={{ zIndex: 4 }}>
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover/art:bg-black/40 group-hover/art:opacity-100 transition-all duration-200"
+          style={{ zIndex: 4 }}
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-white">
             <path
               d="M3 7V3h4M11 3h4v4M15 11v4h-4M7 15H3v-4"
@@ -1108,6 +1151,11 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
           >
             {displayTitle}
           </p>
+          {track.publisher_metadata?.explicit && (
+            <span className="shrink-0 inline-flex items-center text-[8px] font-bold px-1 py-0.5 rounded bg-white/[0.08] text-white/35 border border-white/[0.08] tracking-widest uppercase leading-none">
+              E
+            </span>
+          )}
           {/* Pencil — visible when downloaded (storage) or has override */}
           {(playbackSource === 'storage' || override) && (
             <button
@@ -1115,7 +1163,9 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
               onClick={() => setEditOpen((v) => !v)}
               title="Редактировать название / исполнителя"
               className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-md transition-all duration-200 cursor-pointer opacity-0 group-hover/title:opacity-100 ${
-                editOpen ? 'opacity-100 text-accent bg-white/[0.08]' : 'text-white/30 hover:text-white/70 hover:bg-white/[0.06]'
+                editOpen
+                  ? 'opacity-100 text-accent bg-white/[0.08]'
+                  : 'text-white/30 hover:text-white/70 hover:bg-white/[0.06]'
               } ${override ? '!opacity-70' : ''}`}
             >
               <Pencil size={11} />

@@ -1,8 +1,14 @@
 import type { Track } from '../stores/player';
 import { resolveTrackMeta } from '../stores/track-overrides';
 import { lrclibGet, lrclibSearch } from './lrclib';
-import { getLyricsByTrack, type LyricsResult, searchLyricsManual, splitArtistTitle } from './lyrics';
+import {
+  getLyricsByTrack,
+  type LyricsResult,
+  searchLyricsManual,
+  splitArtistTitle,
+} from './lyrics';
 import { getOfflineLyrics, rememberLyrics } from './offline-index';
+import { getArtistDisplay } from './track-display';
 
 /** Returns the first promise that resolves with synced lyrics, or null if none do. */
 export function firstSynced(
@@ -36,7 +42,7 @@ export async function fetchLyricsForTrack(track: Track): Promise<LyricsResult | 
   if (cached?.synced?.length || cached?.plain) return cached;
 
   // Use saved override (user-edited title/artist) if available
-  const resolved = resolveTrackMeta(track.urn, track.title, track.user.username);
+  const resolved = resolveTrackMeta(track.urn, track.title, getArtistDisplay(track).primary);
   const parsed = splitArtistTitle(resolved.title);
   const searchArtist = parsed?.[0] ?? resolved.artist;
   const searchTitle = parsed?.[1] ?? resolved.title;
