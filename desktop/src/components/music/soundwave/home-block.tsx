@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useLiquidLight } from '../../../lib/useLiquidLight';
+
 import { useTranslation } from 'react-i18next';
+import { useLikedTracks, useRecommendedTracks, useRelatedPool } from '../../../lib/hooks';
 import {
   AudioLines,
   Compass,
@@ -12,9 +13,7 @@ import {
   Star,
 } from '../../../lib/icons';
 import { isUrnLiked } from '../../../lib/likes';
-import { fetchWaveTailFromSeed, hydrateByIds } from '../../../lib/soundwave';
-import { useLikedTracks, useRecommendedTracks, useRelatedPool } from '../../../lib/hooks';
-import { getArtistDisplay } from '../../../lib/track-display';
+import { useLiquidLight } from '../../../lib/useLiquidLight';
 import { useAuthStore } from '../../../stores/auth';
 import type { Track } from '../../../stores/player';
 import { usePlayerStore } from '../../../stores/player';
@@ -44,6 +43,7 @@ const CLUSTER_ORDER: ClusterId[] = [
 ];
 
 const CLUSTER_ICON: Partial<Record<ClusterId, React.ReactNode>> = {
+  wave: <AudioLines size={14} />,
   for_you: <Sparkles size={14} />,
   top_artists: <Headphones size={14} />,
   adjacent: <Compass size={14} />,
@@ -88,7 +88,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
     staleMs: refreshSeed === 0 ? 30_000 : 0,
   });
 
-const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
+  const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
   const rawAllTracks = useMemo(() => data?.allTracks ?? [], [data]);
 
   // ── Fallback: SC native recommendations via liked tracks ──────
@@ -107,17 +107,19 @@ const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
     return localRecs;
   }, [backendWorking, rawAllTracks, localRecs]);
 
+  const hideLikedFilter = useCallback((tr: Track) => !tr.user_favorite && !isUrnLiked(tr.urn), []);
+
   const filteredAllTracks = useMemo(() => {
     if (!hideLiked) return immediateBase;
-    return immediateBase.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn));
-  }, [immediateBase, hideLiked]);
+    return immediateBase.filter(hideLikedFilter);
+  }, [immediateBase, hideLiked, hideLikedFilter]);
 
   const filteredClusters = useMemo(() => {
     if (!hideLiked) return rawClusters;
     return rawClusters
       .map((c) => ({
         ...c,
-        tracks: c.tracks.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn)),
+        tracks: c.tracks.filter(hideLikedFilter),
         neighbors: c.neighbors?.filter((n) => {
           const matchTrack = c.tracks.find((tr) => tr.urn.endsWith(`:${n.track_id}`));
           if (!matchTrack) return true;
@@ -125,28 +127,31 @@ const rawClusters = useMemo(() => data?.clusters ?? [], [data]);
         }),
       }))
       .filter((c) => c.tracks.length > 0) as ClusterHydrated[];
-  }, [rawClusters, hideLiked]);
+  }, [rawClusters, hideLiked, hideLikedFilter]);
 
   const orderedClusters = useMemo(() => {
     const byId = new Map(filteredClusters.map((c) => [c.id, c]));
     return CLUSTER_ORDER.map((id) => byId.get(id)).filter((c): c is NonNullable<typeof c> => !!c);
   }, [filteredClusters]);
 
-const waveTrack = currentTrack ?? filteredAllTracks[0] ?? null;
-  const isCurrent = !!currentTrack && waveTrack?.urn === currentTrack.urn;
-
-  const fetchMore = useCallback(
-    async () => fetchTail(stableLanguages, hideLiked),
-    [stableLanguages, hideLiked],
+  const waveCluster = useMemo(
+    () => orderedClusters.find((c) => c.id === 'wave') ?? null,
+    [orderedClusters],
   );
+
+  const waveTrack = currentTrack ?? filteredAllTracks[0] ?? null;
+  const isCurrent = !!currentTrack && waveTrack?.urn === currentTrack.urn;
 
   useInfiniteWave({
     enabled: isAuthenticated,
-    tracks: filteredAllTracks,
-    fetchMore,
+    seedKind: 'user',
+    initialTracks: waveCluster?.tracks ?? [],
+    initialCursor: null,
+    languages: stableLanguages,
+    filterTrack: hideLiked ? hideLikedFilter : undefined,
   });
 
-if (!isAuthenticated) return null;
+  if (!isAuthenticated) return null;
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -274,16 +279,21 @@ if (!isAuthenticated) return null;
                 className="flex items-center justify-center w-20 h-20 rounded-full transition-all duration-300 ease-[var(--ease-apple)] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.93] hover:scale-[1.08]"
                 style={{
                   background: 'var(--color-accent)',
-                  boxShadow: '0 8px 32px var(--color-accent-glow), 0 0 60px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.30)',
+                  boxShadow:
+                    '0 8px 32px var(--color-accent-glow), 0 0 60px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.30)',
                 }}
               >
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
-                  <path d="M8 5v14l11-7z"/>
+                  <path d="M8 5v14l11-7z" />
                 </svg>
               </button>
               <div className="text-center">
-                <p className="text-[14px] font-semibold text-white/70">{t('soundwave.coldTitle', 'Начать слушать')}</p>
-                <p className="text-[12px] text-white/35 mt-1">{t('soundwave.coldDesc', 'Лайкни пару треков — настроим волну')}</p>
+                <p className="text-[14px] font-semibold text-white/70">
+                  {t('soundwave.coldTitle', 'Начать слушать')}
+                </p>
+                <p className="text-[12px] text-white/35 mt-1">
+                  {t('soundwave.coldDesc', 'Лайкни пару треков — настроим волну')}
+                </p>
               </div>
             </div>
           ) : (
@@ -291,8 +301,20 @@ if (!isAuthenticated) return null;
               {filteredAllTracks.length > 0 && (
                 <ClusterRow
                   clusterId="wave"
-                  title={backendWorking ? t('soundwave.home.waveTitle') : localRecs.length > 0 ? t('home.recommended', 'Рекомендуем') : t('library.likedTracks', 'Понравившиеся')}
-                  description={backendWorking ? t('soundwave.home.waveDesc') : localRecs.length > 0 ? t('discover.subtitle', 'Подобрано по твоим лайкам') : t('soundwave.idleSub', 'Ставь лайки — SoundWave настроит волну')}
+                  title={
+                    backendWorking
+                      ? t('soundwave.home.waveTitle')
+                      : localRecs.length > 0
+                        ? t('home.recommended', 'Рекомендуем')
+                        : t('library.likedTracks', 'Понравившиеся')
+                  }
+                  description={
+                    backendWorking
+                      ? t('soundwave.home.waveDesc')
+                      : localRecs.length > 0
+                        ? t('discover.subtitle', 'Подобрано по твоим лайкам')
+                        : t('soundwave.idleSub', 'Ставь лайки — SoundWave настроит волну')
+                  }
                   icon={backendWorking ? WAVE_ICON : <Sparkles size={14} />}
                   index={0}
                   tracks={filteredAllTracks}
@@ -330,47 +352,3 @@ if (!isAuthenticated) return null;
     </section>
   );
 });
-
-
-// Alternate between 'similar' and 'diverse' on every tail fetch so the queue
-// doesn't spiral into a single-artist rabbit hole.
-let _tailFetchCount = 0;
-
-async function fetchTail(languages: string[], hideLiked: boolean): Promise<Track[]> {
-  const q = usePlayerStore.getState().queue;
-  const last = q.length > 0 ? q[q.length - 1] : null;
-  if (!last) return [];
-  const trackId = String(last.urn.split(':').pop() ?? '');
-  if (!trackId) return [];
-
-  const mode = _tailFetchCount % 2 === 0 ? 'similar' : 'diverse';
-  _tailFetchCount++;
-
-  const recs = await fetchWaveTailFromSeed(trackId, { languages, mode });
-  if (!recs.length) return [];
-  let tracks = await hydrateByIds(recs);
-
-  // Artist-diversity cap: max 2 tracks per artist in each tail batch
-  const artistCount = new Map<string, number>();
-  tracks = tracks.filter((tr) => {
-    const key = getArtistDisplay(tr).primary || tr.user?.urn || '';
-    if (!key) return true;
-    const n = artistCount.get(key) ?? 0;
-    if (n >= 2) return false;
-    artistCount.set(key, n + 1);
-    return true;
-  });
-
-  // Also skip tracks by artists already heavy in the current queue (>= 3 appearances)
-  const queueArtistCount = new Map<string, number>();
-  for (const t of q) {
-    const key = getArtistDisplay(t).primary || t.user?.urn || '';
-    if (key) queueArtistCount.set(key, (queueArtistCount.get(key) ?? 0) + 1);
-  }
-  tracks = tracks.filter((tr) => {
-    const key = getArtistDisplay(tr).primary || tr.user?.urn || '';
-    return !key || (queueArtistCount.get(key) ?? 0) < 3;
-  });
-
-  return hideLiked ? tracks.filter((tr) => !tr.user_favorite && !isUrnLiked(tr.urn)) : tracks;
-}

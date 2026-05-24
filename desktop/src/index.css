@@ -2,8 +2,8 @@
 
 /* ── Manrope Variable Font ─────────────────────────────────── */
 @font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/Manrope-Variable.ttf') format('truetype');
+  font-family: "Manrope";
+  src: url("/fonts/Manrope-Variable.ttf") format("truetype");
   font-weight: 200 800;
   font-style: normal;
   font-display: swap;
@@ -32,7 +32,8 @@
   --color-ui-accent-dim: rgba(99, 102, 241, 0.18);
   --color-ui-accent-glow: rgba(99, 102, 241, 0.35);
 
-  --font-sans: "Manrope", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans:
+    "Manrope", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   /* ── Easing ──────────────────────────────────────────────── */
   --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
@@ -48,24 +49,24 @@
   --liquid-brightness: 95%;
 
   /* ── Border-radius scale ───────────────────────────────── */
-  --radius-panel: 40px;   /* major panels, dialogs                 */
-  --radius-card: 40px;    /* content cards                         */
+  --radius-panel: 40px; /* major panels, dialogs                 */
+  --radius-card: 40px; /* content cards                         */
   --radius-artwork: 32px; /* track/album artwork                   */
-  --radius-row: 20px;     /* list rows                             */
-  --radius-chip: 9999px;  /* pills, badges, small interactive items */
+  --radius-row: 20px; /* list rows                             */
+  --radius-chip: 9999px; /* pills, badges, small interactive items */
 
   /* Differential lighting (inset box-shadow layers):
      Light source: upper-left. Bright top/left edge, dark bottom/right edge. */
-  --liquid-hi: rgba(255, 255, 255, 0.28);      /* top glint — stronger specularity */
+  --liquid-hi: rgba(255, 255, 255, 0.28); /* top glint — stronger specularity */
   --liquid-hi-side: rgba(255, 255, 255, 0.16); /* left glint */
-  --liquid-lo: rgba(0, 0, 0, 0.45);            /* bottom shadow */
-  --liquid-lo-side: rgba(0, 0, 0, 0.24);       /* right shadow */
+  --liquid-lo: rgba(0, 0, 0, 0.45); /* bottom shadow */
+  --liquid-lo-side: rgba(0, 0, 0, 0.24); /* right shadow */
 
   /* ── Shadow stack tokens (soft floating layers) ─────────── */
   /* near-occlusion → mid-volume → far-float → ambient glow    */
-  --shadow-near:    0 2px 6px rgba(0, 0, 0, 0.08);
-  --shadow-mid:     0 10px 24px rgba(0, 0, 0, 0.14);
-  --shadow-far:     0 28px 56px rgba(0, 0, 0, 0.20);
+  --shadow-near: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-mid: 0 10px 24px rgba(0, 0, 0, 0.14);
+  --shadow-far: 0 28px 56px rgba(0, 0, 0, 0.2);
   --shadow-ambient: 0 0 80px rgba(255, 255, 255, 0.012);
 }
 
@@ -87,12 +88,14 @@ img {
    Large headings: tight tracking → feels premium, dense.
    Small labels/captions: airy tracking → easier to read at 10-12px. */
 
-h1, h2 {
+h1,
+h2 {
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
-h3, h4 {
+h3,
+h4 {
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -164,7 +167,7 @@ body.mini #root::after {
  * pointer-events: none — не перехватывает клики.
  */
 #root::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   z-index: 99998;
@@ -215,8 +218,12 @@ body.mini #root::after {
 
 /* ── Shimmer ───────────────────────────────────────────────── */
 @keyframes skeleton-sweep {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 .skeleton-shimmer {
@@ -378,16 +385,16 @@ body.mini #root::after {
     0 3px 8px -2px rgba(255, 255, 255, 0.05) inset,
     1px 0 0 0 rgba(255, 255, 255, 0.12) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.38) inset,
-    -1px 0 0 0 rgba(0, 0, 0, 0.20) inset,
+    -1px 0 0 0 rgba(0, 0, 0, 0.2) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.08),
-    0 24px 70px rgba(0, 0, 0, 0.50),
-    0 6px 24px rgba(0, 0, 0, 0.30);
+    0 24px 70px rgba(0, 0, 0, 0.5),
+    0 6px 24px rgba(0, 0, 0, 0.3);
   /* 120fps: only background transitions */
   transition: background 0.38s var(--ease-spring);
 }
 
 .glass-featured::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -401,7 +408,7 @@ body.mini #root::after {
 
 /* Dynamic cursor spotlight for glass-featured panels (same as .liquid-panel::after) */
 .glass-featured::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -440,13 +447,13 @@ body.mini #root::after {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-radius: var(--radius-card, 40px);
+  /* Differential inset — top/left bright, bottom/right dark (thickness illusion) */
   box-shadow:
-    /* Differential inset — top/left bright, bottom/right dark (thickness illusion) */
     0 1px 0 0 rgba(255, 255, 255, 0.22) inset,
     0 3px 8px -2px rgba(255, 255, 255, 0.06) inset,
     1px 0 0 0 rgba(255, 255, 255, 0.12) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.42) inset,
-    -1px 0 0 0 rgba(0, 0, 0, 0.20) inset,
+    -1px 0 0 0 rgba(0, 0, 0, 0.2) inset,
     /* Frosted halo — dissolves harsh outline into background */
     0 0 0 0.5px rgba(255, 255, 255, 0.07),
     /* 3-layer soft floating shadow stack */
@@ -460,12 +467,13 @@ body.mini #root::after {
 
 /* Top glass shine on cards */
 .glass-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     rgba(255, 255, 255, 0.065) 0%,
     rgba(255, 255, 255, 0.018) 28%,
     transparent 55%
@@ -476,14 +484,14 @@ body.mini #root::after {
 .glass-card:hover {
   background: rgba(255, 255, 255, 0.042);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.30) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.3) inset,
     0 3px 8px -2px rgba(255, 255, 255, 0.08) inset,
     1px 0 0 0 rgba(255, 255, 255, 0.16) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.46) inset,
     -1px 0 0 0 rgba(0, 0, 0, 0.22) inset,
-    0 0 0 0.5px rgba(255, 255, 255, 0.10),
-    0 2px 6px rgba(0, 0, 0, 0.10),
-    0 14px 32px rgba(0, 0, 0, 0.20),
+    0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    0 14px 32px rgba(0, 0, 0, 0.2),
     0 36px 72px rgba(0, 0, 0, 0.26),
     var(--shadow-ambient);
 }
@@ -503,11 +511,14 @@ body.mini #root::after {
 
 /* Top specular highlight (light hitting the top glass surface) */
 .glass-artwork::before {
-  content: '';
+  content: "";
   position: absolute;
-  left: 0; right: 0; top: 0;
+  left: 0;
+  right: 0;
+  top: 0;
   height: 42%;
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     rgba(255, 255, 255, 0.14) 0%,
     rgba(255, 255, 255, 0.04) 55%,
     transparent 100%
@@ -519,13 +530,16 @@ body.mini #root::after {
 
 /* Bottom depth shadow (light lost at the bottom of the lens) */
 .glass-artwork::after {
-  content: '';
+  content: "";
   position: absolute;
-  left: 0; right: 0; bottom: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 45%;
-  background: linear-gradient(0deg,
+  background: linear-gradient(
+    0deg,
     rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.20) 50%,
+    rgba(0, 0, 0, 0.2) 50%,
     transparent 100%
   );
   pointer-events: none;
@@ -539,21 +553,23 @@ body.mini #root::after {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
+  /* White inset glint: top-left light source */
   box-shadow:
-    /* White inset glint: top-left light source */
-    0 1px 0 0 rgba(255, 255, 255, 0.30) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.3) inset,
     1px 0 0 0 rgba(255, 255, 255, 0.16) inset,
-    0 -1px 0 0 rgba(0, 0, 0, 0.30) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.3) inset,
     /* Frosted halo */
-    0 0 0 0.5px rgba(255, 255, 255, 0.10),
+    0 0 0 0.5px rgba(255, 255, 255, 0.1),
     /* Depth */
     0 4px 16px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   /* Only transform animates — 120fps safe */
-  transition: transform 0.18s var(--ease-spring), background 0.18s var(--ease-spring);
+  transition:
+    transform 0.18s var(--ease-spring),
+    background 0.18s var(--ease-spring);
   color: rgba(255, 255, 255, 0.75);
 }
 
@@ -591,9 +607,9 @@ body.mini #root::after {
   /* 40px blur + heavy saturate — background "soaks" into the glass and becomes rich */
   backdrop-filter: blur(40px) saturate(185%);
   -webkit-backdrop-filter: blur(40px) saturate(185%);
+  /* ── Inset differential borders (glass thickness illusion) ─── */
+  /* top: яркий глянцевый блик — primary specular hit */
   box-shadow:
-    /* ── Inset differential borders (glass thickness illusion) ─── */
-    /* top: яркий глянцевый блик — primary specular hit */
     0 1px 0 0 var(--liquid-hi) inset,
     /* top: secondary soft glow band */
     0 3px 10px -2px rgba(255, 255, 255, 0.07) inset,
@@ -618,7 +634,7 @@ body.mini #root::after {
 
 /* Grain texture layer — органический шум поверхности стекла */
 .liquid-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -645,21 +661,21 @@ body.mini #root::after {
   /* Heavy chrome (sidebar, player bar): dense blur + rich saturation */
   backdrop-filter: blur(44px) saturate(190%);
   -webkit-backdrop-filter: blur(44px) saturate(190%);
+  /* Differential inset — same physics as .liquid-panel, stronger contrast */
   box-shadow:
-    /* Differential inset — same physics as .liquid-panel, stronger contrast */
     0 1px 0 0 rgba(255, 255, 255, 0.26) inset,
     0 4px 10px -2px rgba(255, 255, 255, 0.05) inset,
     1px 0 0 0 rgba(255, 255, 255, 0.11) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.68) inset,
-    -1px 0 0 0 rgba(0, 0, 0, 0.30) inset,
+    -1px 0 0 0 rgba(0, 0, 0, 0.3) inset,
     /* Outer: subtle ambient rim diffusion */
     0 0 0 0.5px rgba(255, 255, 255, 0.06),
-    0 0 60px rgba(255, 255, 255, 0.010);
+    0 0 60px rgba(255, 255, 255, 0.01);
 }
 
 /* Grain texture для heavy panels */
 .liquid-panel-heavy::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -687,15 +703,15 @@ body.mini #root::after {
 
 .liquid-interactive:hover {
   background: rgba(255, 255, 255, 0.048);
+  /* Amplified specular on hover — glass catches more light */
   box-shadow:
-    /* Amplified specular on hover — glass catches more light */
     0 1px 0 0 rgba(255, 255, 255, 0.34) inset,
     0 3px 10px -2px rgba(255, 255, 255, 0.08) inset,
     1px 0 0 0 rgba(255, 255, 255, 0.18) inset,
     0 -1px 0 0 rgba(0, 0, 0, 0.48) inset,
     -1px 0 0 0 rgba(0, 0, 0, 0.26) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.13),
-    0 4px 6px rgba(0, 0, 0, 0.10),
+    0 4px 6px rgba(0, 0, 0, 0.1),
     0 14px 32px rgba(0, 0, 0, 0.22),
     0 36px 72px rgba(0, 0, 0, 0.28),
     0 0 90px rgba(255, 255, 255, 0.016);
@@ -705,12 +721,12 @@ body.mini #root::after {
   background: rgba(255, 255, 255, 0.038);
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.18) inset,
-    1px 0 0 0 rgba(255, 255, 255, 0.10) inset,
-    0 -1px 0 0 rgba(0, 0, 0, 0.50) inset,
-    -1px 0 0 0 rgba(0, 0, 0, 0.20) inset,
+    1px 0 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.5) inset,
+    -1px 0 0 0 rgba(0, 0, 0, 0.2) inset,
     0 0 0 0.5px rgba(255, 255, 255, 0.05),
     0 8px 24px rgba(0, 0, 0, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.20);
+    0 2px 8px rgba(0, 0, 0, 0.2);
   transform: scale(0.982);
 }
 
@@ -734,6 +750,8 @@ body.mini #root::after {
     filter 0.45s var(--ease-apple);
   -webkit-font-smoothing: antialiased;
   filter: drop-shadow(0 0 0 transparent);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .lyric-line[data-state="active"] {
@@ -1043,7 +1061,8 @@ body.mini #root::after {
 .sw-bars {
   --sw-progress: 0%;
   /* Ambient glow around the whole waveform — makes bars "float" */
-  filter: drop-shadow(0 0 18px rgba(99, 102, 241, 0.32)) drop-shadow(0 0 6px rgba(34, 211, 238, 0.18));
+  filter: drop-shadow(0 0 18px rgba(99, 102, 241, 0.32))
+    drop-shadow(0 0 6px rgba(34, 211, 238, 0.18));
 }
 
 .sw-bar {
@@ -1068,11 +1087,7 @@ body.mini #root::after {
 
 .sw-layer-accent .sw-bar {
   /* Indigo → cyan gradient — noble UI palette, matches the active nav accent */
-  background: linear-gradient(
-    to bottom,
-    rgba(129, 140, 248, 1) 0%,
-    rgba(34, 211, 238, 0.88) 100%
-  );
+  background: linear-gradient(to bottom, rgba(129, 140, 248, 1) 0%, rgba(34, 211, 238, 0.88) 100%);
   box-shadow:
     0 0 8px rgba(99, 102, 241, 0.42),
     0 0 3px rgba(34, 211, 238, 0.22);
@@ -1102,7 +1117,7 @@ body.mini #root::after {
   width: 100%;
   height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   outline: none;
   /* Recessed groove: deep inset shadow + thin top highlight */
@@ -1119,18 +1134,18 @@ body.mini #root::after {
   border-radius: 9999px;
   /* Critical vertical centring fix — without this the thumb floats above the track */
   margin-top: -6px;
-  background: linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(215,215,238,0.94) 100%);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98) 0%, rgba(215, 215, 238, 0.94) 100%);
+  /* Differential frosted metal border */
   box-shadow:
-    /* Differential frosted metal border */
-    0 1px 0 0 rgba(255,255,255,1.0) inset,
-    0 -1px 0 0 rgba(0,0,0,0.20) inset,
-    1px 0 0 0 rgba(255,255,255,0.70) inset,
-    -1px 0 0 0 rgba(0,0,0,0.08) inset,
+    0 1px 0 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.2) inset,
+    1px 0 0 0 rgba(255, 255, 255, 0.7) inset,
+    -1px 0 0 0 rgba(0, 0, 0, 0.08) inset,
     /* Depth drop */
-    0 3px 8px rgba(0,0,0,0.42),
-    0 1px 3px rgba(0,0,0,0.24),
+    0 3px 8px rgba(0, 0, 0, 0.42),
+    0 1px 3px rgba(0, 0, 0, 0.24),
     /* Frosted halo */
-    0 0 0 0.5px rgba(255,255,255,0.55);
+    0 0 0 0.5px rgba(255, 255, 255, 0.55);
   cursor: grab;
   transition:
     transform 0.14s var(--ease-bounce),
@@ -1141,15 +1156,15 @@ body.mini #root::after {
   cursor: grabbing;
   transform: scale(1.22);
   box-shadow:
-    0 1px 0 0 rgba(255,255,255,1.0) inset,
-    0 -1px 0 0 rgba(0,0,0,0.24) inset,
-    1px 0 0 0 rgba(255,255,255,0.70) inset,
-    -1px 0 0 0 rgba(0,0,0,0.10) inset,
-    0 4px 12px rgba(0,0,0,0.50),
-    0 2px 4px rgba(0,0,0,0.28),
-    0 0 0 0.5px rgba(255,255,255,0.55),
+    0 1px 0 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.24) inset,
+    1px 0 0 0 rgba(255, 255, 255, 0.7) inset,
+    -1px 0 0 0 rgba(0, 0, 0, 0.1) inset,
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.28),
+    0 0 0 0.5px rgba(255, 255, 255, 0.55),
     /* Indigo halo on press — subtle link to UI accent */
-    0 0 16px rgba(99,102,241,0.28);
+    0 0 16px rgba(99, 102, 241, 0.28);
 }
 
 /* Firefox */
@@ -1158,18 +1173,18 @@ body.mini #root::after {
   width: 16px;
   height: 16px;
   border-radius: 9999px;
-  background: linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(215,215,238,0.94) 100%);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98) 0%, rgba(215, 215, 238, 0.94) 100%);
   box-shadow:
-    0 3px 8px rgba(0,0,0,0.42),
-    0 0 0 0.5px rgba(255,255,255,0.55);
+    0 3px 8px rgba(0, 0, 0, 0.42),
+    0 0 0 0.5px rgba(255, 255, 255, 0.55);
   cursor: grab;
 }
 
 .liquid-slider::-moz-range-track {
   height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.10);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.45);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Dynamic cursor spotlight ────────────────────────────────
@@ -1178,7 +1193,7 @@ body.mini #root::after {
    follows the cursor — simulates angled reflection on curved glass.
    opacity: 0 at rest → 1 on hover, CSS transition handles the fade. */
 .liquid-panel::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -1199,7 +1214,9 @@ body.mini #root::after {
 
 /* ── Text readability utility for glass surfaces ────────────── */
 .text-glass {
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45), 0 0.5px 2px rgba(0, 0, 0, 0.28);
+  text-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.45),
+    0 0.5px 2px rgba(0, 0, 0, 0.28);
 }
 
 /* ── Liquid Reveal — global card/list entry animation ────────
@@ -1248,8 +1265,8 @@ body.mini #root::after {
   background: rgba(255, 255, 255, 0.045);
   transform: translate3d(4px, 0, 0);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
-    0 -1px 0 0 rgba(0, 0, 0, 0.20) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.2) inset,
     0 4px 16px rgba(0, 0, 0, 0.14);
 }
 
@@ -1258,41 +1275,85 @@ body.mini #root::after {
    Each blob has a unique trajectory so they never perfectly align.        */
 
 @keyframes mesh-drift-a {
-  0%   { transform: translate(0,    0)    scale(1.00); }
-  25%  { transform: translate(6%,   8%)   scale(1.08); }
-  50%  { transform: translate(12%,  4%)   scale(0.94); }
-  75%  { transform: translate(4%,  -6%)   scale(1.04); }
-  100% { transform: translate(0,    0)    scale(1.00); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(6%, 8%) scale(1.08);
+  }
+  50% {
+    transform: translate(12%, 4%) scale(0.94);
+  }
+  75% {
+    transform: translate(4%, -6%) scale(1.04);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 @keyframes mesh-drift-b {
-  0%   { transform: translate(0,    0)    scale(1.00); }
-  30%  { transform: translate(-8%,  6%)   scale(1.10); }
-  60%  { transform: translate(-4%, -8%)   scale(0.92); }
-  80%  { transform: translate(5%,  -3%)   scale(1.06); }
-  100% { transform: translate(0,    0)    scale(1.00); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  30% {
+    transform: translate(-8%, 6%) scale(1.1);
+  }
+  60% {
+    transform: translate(-4%, -8%) scale(0.92);
+  }
+  80% {
+    transform: translate(5%, -3%) scale(1.06);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 @keyframes mesh-drift-c {
-  0%   { transform: translate(0,    0)    scale(1.00); }
-  20%  { transform: translate(10%,  -5%)  scale(0.96); }
-  50%  { transform: translate(6%,    8%)  scale(1.12); }
-  70%  { transform: translate(-4%,   4%)  scale(0.98); }
-  100% { transform: translate(0,    0)    scale(1.00); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  20% {
+    transform: translate(10%, -5%) scale(0.96);
+  }
+  50% {
+    transform: translate(6%, 8%) scale(1.12);
+  }
+  70% {
+    transform: translate(-4%, 4%) scale(0.98);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 @keyframes mesh-drift-d {
-  0%   { transform: translate(0,    0)    scale(1.00); }
-  35%  { transform: translate(-6%,  -8%)  scale(1.06); }
-  65%  { transform: translate(8%,   -4%)  scale(0.95); }
-  85%  { transform: translate(3%,    6%)  scale(1.08); }
-  100% { transform: translate(0,    0)    scale(1.00); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  35% {
+    transform: translate(-6%, -8%) scale(1.06);
+  }
+  65% {
+    transform: translate(8%, -4%) scale(0.95);
+  }
+  85% {
+    transform: translate(3%, 6%) scale(1.08);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 /* ── Mini-player marquee ─────────────────────────────────────── */
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .animate-marquee {
@@ -1304,9 +1365,21 @@ body.mini #root::after {
 /* ── Global typography system ────────────────────────────────────
    Unified font-weight scale so nothing looks randomly bold/thin.
    h1-h2: semibold. h3-h4: medium. body/p: regular (400).          */
-h1, h2 { font-weight: 600; letter-spacing: -0.02em; }
-h3, h4 { font-weight: 500; letter-spacing: -0.01em; }
-p, span, li { font-weight: 400; }
+h1,
+h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+h3,
+h4 {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+p,
+span,
+li {
+  font-weight: 400;
+}
 
 /* Section titles: semibold (15px) */
 .section-title {
@@ -1321,14 +1394,14 @@ p, span, li { font-weight: 400; }
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.90);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Artist name / secondary text: regular (11px) */
 .track-artist {
   font-size: 11px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.40);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* ── Liquid MiniPlayer — floating pill ───────────────────────────
@@ -1349,4 +1422,6 @@ p, span, li { font-weight: 400; }
 }
 
 /* ── Waveform seek cursor ─────────────────────────────────────── */
-.cursor-col-resize { cursor: col-resize; }
+.cursor-col-resize {
+  cursor: col-resize;
+}

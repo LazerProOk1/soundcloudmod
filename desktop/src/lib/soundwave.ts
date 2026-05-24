@@ -68,10 +68,9 @@ export async function hydrateByIds(recs: RecommendResult[]): Promise<Track[]> {
     async function worker() {
       while (index < urns.length) {
         const i = index++;
-        results[i] = await api<Track>(
-          `/tracks/${encodeURIComponent(urns[i])}`,
-          { silent: true },
-        ).catch(() => null);
+        results[i] = await api<Track>(`/tracks/${encodeURIComponent(urns[i])}`, {
+          silent: true,
+        }).catch(() => null);
       }
     }
 
@@ -90,7 +89,120 @@ export async function hydrateByIds(recs: RecommendResult[]): Promise<Track[]> {
   return ids.map((id) => byId.get(id)).filter((t): t is Track => t != null);
 }
 
-export type SoundWaveMode = 'similar' | 'diverse';
+export type SmartWaveSeedKind = 'user' | 'track' | 'artist';
+
+export interface SmartWaveBatch {
+  tracks: Track[];
+  cursor: string;
+}
+
+interface SmartWavePayload {
+  tracks: RecommendResult[];
+  cursor: string;
+}
+
+function smartWaveUrl(
+  seedKind: SmartWaveSeedKind,
+  seedId: string | undefined,
+  qs: URLSearchParams,
+): string {
+  const q = qs.toString() ? `?${qs}` : '';
+  switch (seedKind) {
+    case 'user':
+      return `/recommendations/wave${q}`;
+    case 'track':
+      return `/recommendations/wave/from-track/${encodeURIComponent(seedId!)}${q}`;
+    case 'artist':
+      return `/recommendations/wave/from-artist/${encodeURIComponent(seedId!)}${q}`;
+  }
+}
+
+/**
+ * Fetch a batch from the infinite SmartWave. The server holds state via cursor
+ * (Redis, TTL 30 min) — pass the cursor back and get fresh tracks without repeats.
+ * If cursor is absent or expired, the server starts a new session (transparent to UX).
+ */
+export async function fetchSmartWave(opts: {
+  seedKind: SmartWaveSeedKind;
+  seedId?: string;
+  cursor?: string;
+  limit?: number;
+  languages?: string[];
+}): Promise<SmartWaveBatch> {
+  const qs = new URLSearchParams();
+  qs.set('limit', String(opts.limit ?? 20));
+  if (opts.cursor) qs.set('cursor', opts.cursor);
+  const languages = normLanguages(opts.languages);
+  if (languages) qs.set('languages', languages);
+
+  const payload = await api<SmartWavePayload>(smartWaveUrl(opts.seedKind, opts.seedId, qs)).catch(
+    () => ({ tracks: [], cursor: '' }) as SmartWavePayload,
+  );
+
+  if (!payload.tracks.length) return { tracks: [], cursor: payload.cursor };
+  const tracks = await hydrateByIds(payload.tracks);
+  return { tracks, cursor: payload.cursor };
+}
+
+/**
+ * Report dis/pos outcomes from the recent wave window.
+ * The server updates arm weights so the next fetchSmartWave returns better results.
+ */
+export async function sendWaveFeedback(opts: {
+  cursor: string;
+  negatives: number;
+  positives: number;
+}): Promise<string | null> {
+  if (!opts.cursor) return null;
+  try {
+    const res = await api<{ ok: boolean; cursor?: string | null }>(
+      '/recommendations/wave/feedback',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      },
+    );
+    return res?.cursor ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * React-Query wrapper for the first SmartWave batch.
+ * Continued by `useInfiniteWave` which calls `fetchSmartWave({ cursor })` internally.
+ */
+export function useSmartWave(opts: {
+  seedKind: SmartWaveSeedKind;
+  seedId?: string;
+  languages?: string[];
+  enabled?: boolean;
+  limit?: number;
+}) {
+  const enabled = opts.enabled !== false && (opts.seedKind === 'user' || !!opts.seedId);
+  const languages = normLanguages(opts.languages);
+
+  return useQuery<SmartWaveBatch>({
+    queryKey: [
+      'smartwave',
+      opts.seedKind,
+      opts.seedId ?? 'self',
+      languages ?? 'all',
+      opts.limit ?? 20,
+    ],
+    enabled,
+    staleTime: SW_STALE_MS,
+    gcTime: SW_GC_MS,
+    queryFn: () =>
+      fetchSmartWave({
+        seedKind: opts.seedKind,
+        seedId: opts.seedId,
+        languages: opts.languages,
+        limit: opts.limit,
+      }),
+  });
+}
 
 /**
  * Free-form vibe search. Returns hydrated tracks in Qdrant score order.
@@ -122,25 +234,6 @@ export function useSoundWaveSearch(opts: { q: string; languages?: string[]; limi
       return { tracks, recs };
     },
   });
-}
-
-/**
- * Continuation tail seeded by the last queued track. Used by the infinite scroll
- * extension of the home wave's deep_cuts cluster.
- */
-export async function fetchWaveTailFromSeed(
-  seedTrackId: string,
-  opts: { languages?: string[]; mode: SoundWaveMode; limit?: number },
-): Promise<RecommendResult[]> {
-  const qs = new URLSearchParams({
-    limit: String(opts.limit ?? 20),
-    mode: opts.mode,
-  });
-  const languages = normLanguages(opts.languages);
-  if (languages) qs.set('languages', languages);
-  return api<RecommendResult[]>(
-    `/recommendations/tail/${encodeURIComponent(seedTrackId)}?${qs}`,
-  ).catch(() => [] as RecommendResult[]);
 }
 
 /** Optional lightweight poll of indexing stats. Fails silently if endpoint absent. */
