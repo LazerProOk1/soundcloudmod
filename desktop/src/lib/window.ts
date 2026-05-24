@@ -1,6 +1,6 @@
+import { invoke } from '@tauri-apps/api/core';
 import { LogicalSize } from '@tauri-apps/api/dpi';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { invoke } from '@tauri-apps/api/core';
 
 export async function toggleWindowFullscreen() {
   const currentWindow = getCurrentWindow();
@@ -10,8 +10,8 @@ export async function toggleWindowFullscreen() {
 
 // ── Mini-player ───────────────────────────────────────────────
 
-const MINI_W = 420;
-const MINI_H = 120;
+const MINI_W = 380;
+const MINI_H = 66;
 const FULL_MIN_W = 800;
 const FULL_MIN_H = 470;
 

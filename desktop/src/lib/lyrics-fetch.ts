@@ -10,6 +10,16 @@ import {
 import { getOfflineLyrics, rememberLyrics } from './offline-index';
 import { getArtistDisplay } from './track-display';
 
+/**
+ * Normalises a SoundCloud username that may be CamelCase into a spaced name.
+ * "KatyPerry" → "Katy Perry", "TheWeeknd" → "The Weeknd".
+ * All-lowercase names ("twentyonepilots") are returned unchanged.
+ */
+function normalizeArtistName(name: string): string {
+  const spaced = name.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
+  return spaced !== name ? spaced : name;
+}
+
 /** Returns the first promise that resolves with synced lyrics, or null if none do. */
 export function firstSynced(
   promises: Promise<LyricsResult | null>[],
@@ -44,7 +54,8 @@ export async function fetchLyricsForTrack(track: Track): Promise<LyricsResult | 
   // Use saved override (user-edited title/artist) if available
   const resolved = resolveTrackMeta(track.urn, track.title, getArtistDisplay(track).primary);
   const parsed = splitArtistTitle(resolved.title);
-  const searchArtist = parsed?.[0] ?? resolved.artist;
+  const rawArtist = parsed?.[0] ?? resolved.artist;
+  const searchArtist = normalizeArtistName(rawArtist);
   const searchTitle = parsed?.[1] ?? resolved.title;
   const durationSec = track.duration > 0 ? track.duration / 1000 : undefined;
 
@@ -57,23 +68,26 @@ export async function fetchLyricsForTrack(track: Track): Promise<LyricsResult | 
     return synced1;
   }
 
-  // 3. Round 2: backend fuzzy search + lrclib fuzzy — return on first synced hit
+  // 3. Round 2: backend fuzzy + lrclib fuzzy (also try title-only on lrclib as fallback)
   const backendP = searchLyricsManual(searchArtist, searchTitle, track.duration);
   const fuzzyP = lrclibSearch(searchArtist, searchTitle);
-  const synced2 = await firstSynced([backendP, fuzzyP]);
+  // Title-only search catches tracks where artist name is still wrong/unknown
+  const titleOnlyP = lrclibSearch('', searchTitle);
+  const synced2 = await firstSynced([backendP, fuzzyP, titleOnlyP]);
   if (synced2) {
     void rememberLyrics(track.urn, synced2);
     return synced2;
   }
 
   // 4. Collect everything and return best plain-text fallback
-  const [urn, lrc, bs, lf] = await Promise.all([
+  const [urn, lrc, bs, lf, lto] = await Promise.all([
     urnP.catch(() => null),
     lrcP.catch(() => null),
     backendP.catch(() => null),
     fuzzyP.catch(() => null),
+    titleOnlyP.catch(() => null),
   ]);
-  const fallback = lf?.plain ? lf : bs?.plain ? bs : lrc?.plain ? lrc : urn;
+  const fallback = lf?.plain ? lf : lto?.plain ? lto : bs?.plain ? bs : lrc?.plain ? lrc : urn;
   if (fallback) void rememberLyrics(track.urn, fallback);
   return fallback ?? null;
 }
