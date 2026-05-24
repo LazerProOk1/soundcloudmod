@@ -356,15 +356,22 @@ export function useLocalLikes(limit = 50) {
  * SoundCloud feed/stream endpoints often return partial track objects that lack
  * publisher_metadata.artist (and therefore show the uploader channel name instead
  * of the real artist). Fetching /tracks?ids=... returns full objects with all fields.
+ *
+ * Note: feed returns publisher_metadata: null (not undefined) for tracks without it,
+ * so we check !publisher_metadata?.artist rather than === undefined.
  */
+
+/** Module-level set: URNs already submitted for hydration. Prevents re-hydration loops. */
+const _hydratedUrns = new Set<string>();
+
 export function useBatchTrackHydration(tracks: Track[]) {
   const qc = useQueryClient();
-  // Build a stable key from the URNs that actually need hydration
   const needsHydration = useMemo(
     () =>
       tracks.filter(
         (t) =>
-          t.publisher_metadata === undefined &&
+          !_hydratedUrns.has(t.urn) &&
+          !t.publisher_metadata?.artist &&
           !t.enrichment?.primary_artist?.name,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -381,6 +388,8 @@ export function useBatchTrackHydration(tracks: Track[]) {
       for (let i = 0; i < needsHydration.length; i += BATCH) {
         if (cancelled) break;
         const batch = needsHydration.slice(i, i + BATCH);
+        // Mark immediately — prevents parallel duplicate requests
+        for (const t of batch) _hydratedUrns.add(t.urn);
         const ids = batch.map((t) => t.urn).join(',');
         try {
           const fresh = await api<Track[]>(`/tracks?ids=${encodeURIComponent(ids)}`, {
@@ -430,13 +439,16 @@ export function useBatchTrackHydration(tracks: Track[]) {
             },
           );
         } catch {
-          // Fire-and-forget — failure is acceptable
+          // On failure, remove from set so these tracks can be retried later
+          for (const t of batch) _hydratedUrns.delete(t.urn);
         }
       }
     };
 
     void run();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [needsHydration, qc]);
 }
 
