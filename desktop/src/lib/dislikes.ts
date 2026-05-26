@@ -1,9 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore } from 'react';
 import type { Track } from '../stores/player';
+import { useSettingsStore } from '../stores/settings';
 import { api } from './api';
 import { recordEvent } from './events';
-import { useSettingsStore } from '../stores/settings';
 
 function isDirectMode(): boolean {
   const { apiMode, directOAuthToken } = useSettingsStore.getState();
@@ -84,7 +84,10 @@ export function useDislikeStatus(urn: string | undefined): boolean {
 let _bulkLoaded = false;
 export async function loadAllDislikedIds(): Promise<void> {
   if (_bulkLoaded) return;
-  if (isDirectMode()) { _bulkLoaded = true; return; } // not available in direct mode
+  if (isDirectMode()) {
+    _bulkLoaded = true;
+    return;
+  } // not available in direct mode
   try {
     const r = await api<{ ids: string[] }>('/dislikes/ids');
     for (const id of r.ids) {

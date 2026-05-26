@@ -51,7 +51,11 @@ export const tauriStorage: StateStorage = {
     const fileValue = await readFileBackup(name);
     if (fileValue !== null) {
       // Migrate to localStorage for next time
-      try { localStorage.setItem(LS_PREFIX + name, fileValue); } catch { /* ok */ }
+      try {
+        localStorage.setItem(LS_PREFIX + name, fileValue);
+      } catch {
+        /* ok */
+      }
     }
     return fileValue;
   },
@@ -70,10 +74,16 @@ export const tauriStorage: StateStorage = {
 
   /** Remove from both locations. */
   removeItem: async (name: string): Promise<void> => {
-    try { localStorage.removeItem(LS_PREFIX + name); } catch { /* ok */ }
+    try {
+      localStorage.removeItem(LS_PREFIX + name);
+    } catch {
+      /* ok */
+    }
     try {
       const { remove, BaseDirectory } = await import('@tauri-apps/plugin-fs');
       await remove(`${name}.json`, { baseDir: BaseDirectory.AppData });
-    } catch { /* ok if file doesn't exist */ }
+    } catch {
+      /* ok if file doesn't exist */
+    }
   },
 };

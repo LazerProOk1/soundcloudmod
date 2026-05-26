@@ -18,9 +18,11 @@ interface LoginStatusResponse {
 }
 
 export type OAuthStep = 'waiting' | 'token' | 'profile' | 'session';
-export type OAuthFlowError = { kind: 'failed' | 'expired'; message: string };
+export type OAuthFlowError = { kind: 'failed' | 'expired' | 'unreachable'; message: string };
 
 const POLL_INTERVAL_MS = 700;
+/** If the backend hasn't responded at all after this time, surface an 'unreachable' error. */
+const UNREACHABLE_AFTER_MS = 15_000;
 
 export function useOAuthFlow(
   onSuccess: (sessionId: string) => void,
@@ -62,7 +64,9 @@ export function useOAuthFlow(
       url = resp.url;
     } catch (err) {
       console.error('[Auth] /auth/login FAILED', err);
-      throw err;
+      cancel();
+      onFailureRef.current?.({ kind: 'unreachable', message: String(err) });
+      return;
     }
 
     setAuthUrl(url);
@@ -103,6 +107,13 @@ export function useOAuthFlow(
       }
 
       if (!data) {
+        // Backend hasn't responded at all — check if we've been waiting too long
+        if (performance.now() - t0 > UNREACHABLE_AFTER_MS) {
+          console.error('[Auth] Backend unreachable after', UNREACHABLE_AFTER_MS, 'ms');
+          cancel();
+          onFailureRef.current?.({ kind: 'unreachable', message: 'Backend not responding' });
+          return;
+        }
         pollRef.current = setTimeout(pollOnce, POLL_INTERVAL_MS);
         return;
       }

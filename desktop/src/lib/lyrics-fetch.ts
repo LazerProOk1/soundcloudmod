@@ -20,6 +20,30 @@ function normalizeArtistName(name: string): string {
   return spaced !== name ? spaced : name;
 }
 
+/**
+ * Strips trailing upload-time annotations that are NOT part of the real song title
+ * and would break exact-match lookups on LRCLib/backends.
+ *
+ * Examples:
+ *   "звезда по имени солнце (2000 лет война)"  → "звезда по имени солнце"
+ *   "Blinding Lights [Radio Edit]"              → "Blinding Lights"
+ *   "Come As You Are (Remastered 2021)"         → "Come As You Are"
+ *   "Lose Yourself (From 8 Mile Soundtrack)"    → "Lose Yourself"
+ *
+ * Leading parens like "(Keep Feeling) Fascination" are left untouched.
+ * Multiple trailing groups are stripped iteratively.
+ */
+function cleanSearchTitle(title: string): string {
+  let t = title.trim();
+  // Iteratively remove trailing (…) / […] / （…） / 【…】 groups
+  for (let i = 0; i < 3; i++) {
+    const stripped = t.replace(/\s*[([（【][^)\]）】]{0,60}[)\]）】]\s*$/, '').trim();
+    if (stripped === t || stripped.length === 0) break;
+    t = stripped;
+  }
+  return t;
+}
+
 /** Returns the first promise that resolves with synced lyrics, or null if none do. */
 export function firstSynced(
   promises: Promise<LyricsResult | null>[],
@@ -59,35 +83,60 @@ export async function fetchLyricsForTrack(track: Track): Promise<LyricsResult | 
   const searchTitle = parsed?.[1] ?? resolved.title;
   const durationSec = track.duration > 0 ? track.duration / 1000 : undefined;
 
-  // 2. Round 1: backend by URN + lrclib exact-match — return on first synced hit
+  // Clean title: strip trailing parenthetical/bracket annotations added by uploaders.
+  // "звезда по имени солнце (2000 лет война)" → "звезда по имени солнце"
+  const cleanTitle = cleanSearchTitle(searchTitle);
+  const titleCleaned = cleanTitle !== searchTitle; // did stripping change anything?
+
+  // 2. Round 1: backend by URN + lrclib exact-match (full title + cleaned title in parallel)
   const urnP = getLyricsByTrack(track.urn);
   const lrcP = lrclibGet(searchArtist, searchTitle, durationSec);
-  const synced1 = await firstSynced([urnP, lrcP]);
+  const lrcCleanP = titleCleaned
+    ? lrclibGet(searchArtist, cleanTitle, durationSec)
+    : Promise.resolve(null);
+  const synced1 = await firstSynced([urnP, lrcP, lrcCleanP]);
   if (synced1) {
     void rememberLyrics(track.urn, synced1);
     return synced1;
   }
 
-  // 3. Round 2: backend fuzzy + lrclib fuzzy (also try title-only on lrclib as fallback)
+  // 3. Round 2: backend fuzzy + lrclib fuzzy — full title + cleaned title + title-only
   const backendP = searchLyricsManual(searchArtist, searchTitle, track.duration);
-  const fuzzyP = lrclibSearch(searchArtist, searchTitle);
-  // Title-only search catches tracks where artist name is still wrong/unknown
-  const titleOnlyP = lrclibSearch('', searchTitle);
-  const synced2 = await firstSynced([backendP, fuzzyP, titleOnlyP]);
+  const fuzzyP = lrclibSearch(searchArtist, searchTitle, durationSec);
+  const fuzzyCleanP = titleCleaned
+    ? lrclibSearch(searchArtist, cleanTitle, durationSec)
+    : Promise.resolve(null);
+  // Title-only catches tracks where artist name is still wrong/unknown
+  const titleOnlyP = lrclibSearch('', cleanTitle, durationSec);
+  const synced2 = await firstSynced([backendP, fuzzyP, fuzzyCleanP, titleOnlyP]);
   if (synced2) {
     void rememberLyrics(track.urn, synced2);
     return synced2;
   }
 
   // 4. Collect everything and return best plain-text fallback
-  const [urn, lrc, bs, lf, lto] = await Promise.all([
+  const [urn, lrc, lrcClean, bs, lf, lfc, lto] = await Promise.all([
     urnP.catch(() => null),
     lrcP.catch(() => null),
+    lrcCleanP.catch(() => null),
     backendP.catch(() => null),
     fuzzyP.catch(() => null),
+    fuzzyCleanP.catch(() => null),
     titleOnlyP.catch(() => null),
   ]);
-  const fallback = lf?.plain ? lf : lto?.plain ? lto : bs?.plain ? bs : lrc?.plain ? lrc : urn;
+  const fallback = lf?.plain
+    ? lf
+    : lfc?.plain
+      ? lfc
+      : lto?.plain
+        ? lto
+        : bs?.plain
+          ? bs
+          : lrc?.plain
+            ? lrc
+            : lrcClean?.plain
+              ? lrcClean
+              : urn;
   if (fallback) void rememberLyrics(track.urn, fallback);
   return fallback ?? null;
 }

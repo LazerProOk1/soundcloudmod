@@ -10,7 +10,12 @@ import { api } from '../../lib/api';
 import { getCurrentTime, handlePrev, seek } from '../../lib/audio';
 import { toggleDislike, useDislikeStatus } from '../../lib/dislikes';
 import { ago, art, durLong } from '../../lib/formatters';
-import { type Comment, invalidateAllLikesCache, useTrackComments } from '../../lib/hooks';
+import {
+  type Comment,
+  invalidateAllLikesCache,
+  useCurrentTrackHydration,
+  useTrackComments,
+} from '../../lib/hooks';
 import {
   ExternalLink,
   Eye,
@@ -19,8 +24,8 @@ import {
   Loader2,
   MessageCircle,
   MicVocal,
-  pauseBlack18,
   Pencil,
+  pauseBlack18,
   playBlack18,
   repeat1Icon16,
   repeatIcon16,
@@ -40,7 +45,7 @@ import {
   splitArtistTitle,
 } from '../../lib/lyrics';
 import { fetchLyricsForTrack, firstSynced, lyricsQueryKey } from '../../lib/lyrics-fetch';
-import { rememberLyrics } from '../../lib/offline-index';
+import { forgetLyrics, rememberLyrics } from '../../lib/offline-index';
 import { getArtistDisplay, useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
 import {
   clampLyricsSplit,
@@ -526,7 +531,11 @@ const LyricsSourceBadge = React.memo(
     source,
     hasSynced,
     onSearch,
-  }: { source: LyricsSource; hasSynced: boolean; onSearch: () => void }) => {
+  }: {
+    source: LyricsSource;
+    hasSynced: boolean;
+    onSearch: () => void;
+  }) => {
     const { t } = useTranslation();
     const label = source === 'self_gen' ? t('track.selfGenerated') : SOURCE_LABELS[source];
     return (
@@ -665,7 +674,6 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
           chars[c].style.setProperty('--char-progress', eased.toFixed(4));
         }
       }
-
     };
 
     const setLineState = (i: number, state: string) => {
@@ -689,7 +697,17 @@ const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
 
       const prev = activeRef.current;
       activeRef.current = idx;
-      lineProgressRef.current = 0;
+
+      // Initialize progress from real playback position so the highlight
+      // doesn't snap back to 0 and catch up (visible jitter on line change).
+      if (idx >= 0 && idx < linesRef.current.length) {
+        const cur = linesRef.current[idx];
+        const nextLine = linesRef.current[idx + 1];
+        const dur = Math.max(0.4, (nextLine?.time ?? cur.time + 2.6) - cur.time);
+        lineProgressRef.current = clamp01((getCurrentTime() - cur.time) / dur);
+      } else {
+        lineProgressRef.current = 0;
+      }
 
       for (let i = 0; i < lineEls.length; i++) {
         let state: string;
@@ -1255,12 +1273,25 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
         const lrcP = lrclibGet(manualQuery.artist, manualQuery.title, durationSec);
         const backendP = searchLyricsManual(manualQuery.artist, manualQuery.title, track.duration);
         const synced = await firstSynced([lrcP, backendP]);
-        if (synced) { void rememberLyrics(track.urn, synced); return synced; }
-        const [lrc, backend] = await Promise.all([lrcP.catch(() => null), backendP.catch(() => null)]);
+        if (synced) {
+          void rememberLyrics(track.urn, synced);
+          return synced;
+        }
+        const [lrc, backend] = await Promise.all([
+          lrcP.catch(() => null),
+          backendP.catch(() => null),
+        ]);
         const result = lrc?.plain ? lrc : backend?.plain ? backend : null;
-        if (result) { void rememberLyrics(track.urn, result); return result; }
+        if (result) {
+          void rememberLyrics(track.urn, result);
+          return result;
+        }
         const parsed = splitArtistTitle(track.title);
-        const fuzzy = await lrclibSearch(parsed?.[0] ?? manualQuery.artist, parsed?.[1] ?? manualQuery.title);
+        const fuzzy = await lrclibSearch(
+          parsed?.[0] ?? manualQuery.artist,
+          parsed?.[1] ?? manualQuery.title,
+          track.duration > 0 ? track.duration / 1000 : undefined,
+        );
         if (fuzzy) void rememberLyrics(track.urn, fuzzy);
         return fuzzy;
       }
@@ -1278,7 +1309,10 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
     if (!manualQuery) {
       setManualQuery(
         (prev) =>
-          prev ?? { artist: parsed?.[0] || getArtistDisplay(track).primary, title: parsed?.[1] || track.title },
+          prev ?? {
+            artist: parsed?.[0] || getArtistDisplay(track).primary,
+            title: parsed?.[1] || track.title,
+          },
       );
     }
   };
@@ -1293,6 +1327,8 @@ const LyricsPane = React.memo(({ track }: { track: Track }) => {
         initialTitle={initialTitle}
         onCancel={() => setIsEditing(false)}
         onSubmit={(artist, title) => {
+          // Clear the disk cache so manual search doesn't return stale wrong lyrics
+          void forgetLyrics(track.urn);
           setManualQuery({ artist, title });
           setIsEditing(false);
         }}
@@ -1610,6 +1646,8 @@ const FullscreenVisualizer = React.memo(() => {
 /* ── Lyrics Panel (fullscreen) ────────────────────────────── */
 
 export const LyricsPanel = React.memo(() => {
+  // Hydrate currentTrack artist metadata if missing (catches tracks from any source)
+  useCurrentTrackHydration();
   const open = useLyricsStore((s) => s.open);
   const close = useLyricsStore((s) => s.close);
   const tab = useLyricsStore((s) => s.tab);

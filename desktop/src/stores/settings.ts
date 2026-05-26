@@ -88,6 +88,8 @@ export interface SettingsState {
   apiMode: ApiMode;
   /** Raw SoundCloud OAuth token used in direct mode */
   directOAuthToken: string;
+  /** Liquid Glass (frosted-glass / backdrop-filter) UI effects */
+  liquidGlass: boolean;
   setAccentColor: (color: string) => void;
   setBgPrimary: (bg: string) => void;
   setThemePreset: (id: ThemePreset) => void;
@@ -121,6 +123,7 @@ export interface SettingsState {
   setArtistWaveCollapsed: (v: boolean) => void;
   setApiMode: (mode: ApiMode) => void;
   setDirectOAuthToken: (token: string) => void;
+  setLiquidGlass: (v: boolean) => void;
   resetTheme: () => void;
 }
 
@@ -158,6 +161,7 @@ const DEFAULTS = {
   artistWaveCollapsed: false,
   apiMode: 'original' as ApiMode,
   directOAuthToken: '',
+  liquidGlass: true,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -218,6 +222,7 @@ export const useSettingsStore = create<SettingsState>()(
       setArtistWaveCollapsed: (artistWaveCollapsed) => set({ artistWaveCollapsed }),
       setApiMode: (apiMode) => set({ apiMode }),
       setDirectOAuthToken: (directOAuthToken) => set({ directOAuthToken }),
+      setLiquidGlass: (liquidGlass) => set({ liquidGlass }),
       resetTheme: () =>
         set({
           accentColor: DEFAULTS.accentColor,
@@ -232,7 +237,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'sc-settings',
       storage: createJSONStorage(() => tauriStorage),
-      version: 16,
+      version: 17,
       migrate: (persistedState) => {
         const prev = (persistedState ?? {}) as Partial<SettingsState> & {
           soundwaveDiversity?: number;
@@ -281,6 +286,7 @@ export const useSettingsStore = create<SettingsState>()(
         artistWaveCollapsed: s.artistWaveCollapsed,
         apiMode: s.apiMode,
         directOAuthToken: s.directOAuthToken,
+        liquidGlass: s.liquidGlass,
       }),
     },
   ),

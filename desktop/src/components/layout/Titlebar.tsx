@@ -2,9 +2,17 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Fullscreen, Minus, PictureInPicture2, Square, X } from '../../lib/icons';
-import { useMiniPlayerStore } from '../../stores/mini-player';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Fullscreen,
+  Minus,
+  PictureInPicture2,
+  Square,
+  X,
+} from '../../lib/icons';
 import { toggleWindowFullscreen } from '../../lib/window';
+import { useMiniPlayerStore } from '../../stores/mini-player';
 
 const NavButtons = React.memo(() => {
   const navigate = useNavigate();
@@ -54,7 +62,8 @@ export const Titlebar = React.memo(() => {
       <div
         className="absolute bottom-0 left-0 right-0 h-px pointer-events-none"
         style={{
-          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent 100%)',
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent 100%)',
         }}
       />
       <div className="flex items-center" data-tauri-drag-region>

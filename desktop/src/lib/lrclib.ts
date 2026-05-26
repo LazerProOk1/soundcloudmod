@@ -49,13 +49,16 @@ export async function lrclibGet(
   }
 }
 
-/** Fuzzy search — returns best hit (synced preferred) or null. */
+/** Fuzzy search — returns best hit (synced preferred) or null.
+ *  When durationSec is provided, candidates outside ±20 s are deprioritised
+ *  so we don't match a cover/karaoke version with wrong lyrics. */
 export async function lrclibSearch(
   artist: string,
   title: string,
+  durationSec?: number,
 ): Promise<LyricsResult | null> {
   try {
-    const q = `${artist} ${title}`;
+    const q = `${artist} ${title}`.trim();
     const res = await fetch(`${BASE}/search?q=${encodeURIComponent(q)}`, {
       method: 'GET',
       headers: { 'Lrclib-Client': 'SoundCloud-Desktop/1.0' },
@@ -64,9 +67,17 @@ export async function lrclibSearch(
     if (!res.ok) return null;
     const list = (await res.json()) as LrclibTrack[];
     if (!list.length) return null;
-    // Prefer any result with synced lyrics
-    const synced = list.find((t) => t.syncedLyrics);
-    return toResult(synced ?? list[0]);
+
+    // If we know the track duration, filter to candidates within ±20 s.
+    // This prevents matching a cover/karaoke with a completely different runtime.
+    const candidates =
+      durationSec != null && durationSec > 0
+        ? list.filter((t) => t.duration > 0 && Math.abs(t.duration - durationSec) <= 20)
+        : list;
+
+    const pool = candidates.length > 0 ? candidates : list; // fall back if no duration match
+    const synced = pool.find((t) => t.syncedLyrics);
+    return toResult(synced ?? pool[0]);
   } catch {
     return null;
   }

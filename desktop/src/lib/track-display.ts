@@ -22,7 +22,9 @@ export type UploadKind = 'original' | 'demo' | 'alt' | 'reupload' | 'unknown';
 
 const TITLE_SEPARATORS = [' - ', ' — ', ' – ', ' -- '] as const;
 
-export function getArtistDisplay(track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>): ArtistDisplay {
+export function getArtistDisplay(
+  track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>,
+): ArtistDisplay {
   const enrichment = track.enrichment;
   const real = enrichment?.primary_artist;
   const uploader = track.user?.username ?? '';
@@ -76,12 +78,13 @@ export function getArtistDisplay(track: Pick<Track, 'user' | 'enrichment' | 'pub
   };
 }
 
-export function getDisplayTitle(track: Pick<Track, 'title' | 'enrichment' | 'publisher_metadata'>): string {
+export function getDisplayTitle(
+  track: Pick<Track, 'title' | 'enrichment' | 'publisher_metadata'>,
+): string {
   const real = track.enrichment?.primary_artist;
   // Use enrichment name (verified preferred) or publisher_metadata as fallback for title stripping
-  const artistName = (real?.verified && real.name)
-    ? real.name.trim()
-    : publisherArtist(track) ?? '';
+  const artistName =
+    real?.verified && real.name ? real.name.trim() : (publisherArtist(track) ?? '');
 
   if (!artistName) return track.title;
 
@@ -103,7 +106,9 @@ export function getDisplayTitle(track: Pick<Track, 'title' | 'enrichment' | 'pub
   return track.title;
 }
 
-export function useArtistDisplay(track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>): ArtistDisplay {
+export function useArtistDisplay(
+  track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>,
+): ArtistDisplay {
   return useMemo(
     () => getArtistDisplay(track),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,7 +124,9 @@ export function useArtistDisplay(track: Pick<Track, 'user' | 'enrichment' | 'pub
   );
 }
 
-export function getArtistTarget(track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>): string | null {
+export function getArtistTarget(
+  track: Pick<Track, 'user' | 'enrichment' | 'publisher_metadata'>,
+): string | null {
   const real = track.enrichment?.primary_artist;
   // Prefer verified enrichment artist; fall back to unverified if it has an id
   if (real?.id) {
@@ -133,7 +140,9 @@ export function getArtistTarget(track: Pick<Track, 'user' | 'enrichment' | 'publ
   return null;
 }
 
-export function useDisplayTitle(track: Pick<Track, 'title' | 'enrichment' | 'publisher_metadata'>): string {
+export function useDisplayTitle(
+  track: Pick<Track, 'title' | 'enrichment' | 'publisher_metadata'>,
+): string {
   return useMemo(
     () => getDisplayTitle(track),
     // eslint-disable-next-line react-hooks/exhaustive-deps

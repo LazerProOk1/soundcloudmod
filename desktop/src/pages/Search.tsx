@@ -312,7 +312,9 @@ const SearchTracksTab = React.memo(function SearchTracksTab({ query }: { query: 
           <Loader2 size={32} className="animate-spin text-white/20" />
         </div>
       ) : tracksQuery.isError ? (
-        <div className="py-20 text-center text-red-400/60 text-sm">{t('search.error', 'Search failed. Try again.')}</div>
+        <div className="py-20 text-center text-red-400/60 text-sm">
+          {t('search.error', 'Search failed. Try again.')}
+        </div>
       ) : tracksQuery.tracks.length === 0 ? (
         <div className="py-20 text-center text-white/30">{t('search.noResults')}</div>
       ) : (
@@ -352,7 +354,9 @@ const SearchPlaylistsTab = React.memo(function SearchPlaylistsTab({ query }: { q
         </div>
       ) : playlistsQuery.isError ? (
         <div className="py-20 flex flex-col items-center gap-4">
-          <div className="text-white/25 text-sm">{t('search.playlistsUnavailable', 'Поиск по плейлистам временно недоступен')}</div>
+          <div className="text-white/25 text-sm">
+            {t('search.playlistsUnavailable', 'Поиск по плейлистам временно недоступен')}
+          </div>
           <button
             type="button"
             onClick={() => playlistsQuery.refetch()}
@@ -395,7 +399,9 @@ const SearchUsersTab = React.memo(function SearchUsersTab({ query }: { query: st
           <Loader2 size={32} className="animate-spin text-white/20" />
         </div>
       ) : usersQuery.isError ? (
-        <div className="py-20 text-center text-red-400/60 text-sm">{t('search.error', 'Search failed. Try again.')}</div>
+        <div className="py-20 text-center text-red-400/60 text-sm">
+          {t('search.error', 'Search failed. Try again.')}
+        </div>
       ) : usersQuery.users.length === 0 ? (
         <div className="py-20 text-center text-white/30">{t('search.noResults')}</div>
       ) : (
@@ -505,23 +511,24 @@ export const Search = React.memo(() => {
             isUrl ? '' : ''
           }`}
           style={{
-            border: isUrl
-              ? '1px solid var(--color-accent)'
-              : '1px solid rgba(255,255,255,0.07)',
+            border: isUrl ? '1px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.07)',
             boxShadow: isUrl
               ? `0 0 0 3px var(--color-accent-glow, rgba(255,85,0,0.12)), 0 1px 0 0 rgba(255,255,255,0.12) inset, 0 8px 24px rgba(0,0,0,0.22)`
               : '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(0,0,0,0.20)',
           }}
-          onFocus={e => {
+          onFocus={(e) => {
             if (!isUrl) {
               (e.currentTarget as HTMLInputElement).style.border = '1px solid var(--color-accent)';
-              (e.currentTarget as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--color-accent-glow, rgba(255,85,0,0.12)), 0 1px 0 0 rgba(255,255,255,0.12) inset, 0 8px 24px rgba(0,0,0,0.22)';
+              (e.currentTarget as HTMLInputElement).style.boxShadow =
+                '0 0 0 3px var(--color-accent-glow, rgba(255,85,0,0.12)), 0 1px 0 0 rgba(255,255,255,0.12) inset, 0 8px 24px rgba(0,0,0,0.22)';
             }
           }}
-          onBlur={e => {
+          onBlur={(e) => {
             if (!isUrl) {
-              (e.currentTarget as HTMLInputElement).style.border = '1px solid rgba(255,255,255,0.07)';
-              (e.currentTarget as HTMLInputElement).style.boxShadow = '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(0,0,0,0.20)';
+              (e.currentTarget as HTMLInputElement).style.border =
+                '1px solid rgba(255,255,255,0.07)';
+              (e.currentTarget as HTMLInputElement).style.boxShadow =
+                '0 1px 0 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(0,0,0,0.20)';
             }
           }}
           autoFocus

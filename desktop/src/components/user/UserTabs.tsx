@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import type { Aura } from '../../lib/aura';
 import { fc } from '../../lib/formatters';
 import {
   useInfiniteScroll,
@@ -16,7 +17,6 @@ import { PlaylistCard } from '../music/PlaylistCard';
 import { Avatar } from '../ui/Avatar';
 import { VirtualGrid } from '../ui/VirtualGrid';
 import { VirtualList } from '../ui/VirtualList';
-import type { Aura } from '../../lib/aura';
 import { ThemedTrackRow } from './ThemedTrackRow';
 
 interface TabWrapperProps {

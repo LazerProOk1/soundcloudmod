@@ -14,21 +14,21 @@
  *   completeReauth(sessionId) — finalise OAuth re-login
  */
 
-import { queryClient } from './query-client';
 import { useAuthStore } from '../stores/auth';
 import { useAuthRecoveryStore } from '../stores/auth-recovery';
+import { queryClient } from './query-client';
 
 // ─── Rate-limit accumulator ──────────────────────────────────
 
-const RL_WINDOW_MS   = 15_000; // sliding window
-const RL_THRESHOLD   = 3;      // hits before triggering recovery
+const RL_WINDOW_MS = 15_000; // sliding window
+const RL_THRESHOLD = 3; // hits before triggering recovery
 
 let rlHits: number[] = [];
 
 // ─── Single-flight guard ─────────────────────────────────────
 
 let inFlight = false;
-let gen = 0;           // incremented on each new recovery attempt
+let gen = 0; // incremented on each new recovery attempt
 let cancelledGen = -1; // generation we decided to cancel
 const COOLDOWN_MS = 5_000;
 

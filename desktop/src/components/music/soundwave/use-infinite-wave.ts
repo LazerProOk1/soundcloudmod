@@ -25,6 +25,8 @@ export function useInfiniteWave(opts: {
   filterTrack?: (t: Track) => boolean;
   minTail?: number;
   batchLimit?: number;
+  /** Called whenever new tracks are appended to the queue (refill batches). */
+  onTracksAdded?: (tracks: Track[]) => void;
 }) {
   const {
     enabled,
@@ -36,7 +38,10 @@ export function useInfiniteWave(opts: {
     filterTrack,
     minTail = 5,
     batchLimit = 20,
+    onTracksAdded,
   } = opts;
+  const onTracksAddedRef = useRef(onTracksAdded);
+  useEffect(() => { onTracksAddedRef.current = onTracksAdded; }, [onTracksAdded]);
 
   const ownedRef = useRef<Set<string>>(new Set());
   const cursorRef = useRef<string>(initialCursor ?? '');
@@ -103,6 +108,7 @@ export function useInfiniteWave(opts: {
           if (fresh.length > 0) {
             usePlayerStore.getState().addToQueue(fresh);
             for (const t of fresh) ownedRef.current.add(t.urn);
+            onTracksAddedRef.current?.(fresh);
           }
         } catch (e) {
           console.debug('[soundwave] infinite refill failed:', e);

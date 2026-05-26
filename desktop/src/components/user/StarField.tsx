@@ -1,6 +1,6 @@
 import React from 'react';
-import { Star } from '../../lib/icons';
 import type { Aura } from '../../lib/aura';
+import { Star } from '../../lib/icons';
 
 export type StarSeed = {
   i: number;

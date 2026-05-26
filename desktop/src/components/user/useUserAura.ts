@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api';
-import { type Aura, auraFromHex, DEFAULT_AURA, DEFAULT_CUSTOM_HEX, resolveAura } from '../../lib/aura';
+import {
+  type Aura,
+  auraFromHex,
+  DEFAULT_AURA,
+  DEFAULT_CUSTOM_HEX,
+  resolveAura,
+} from '../../lib/aura';
 
 type AuraResponse = {
   aura_id: string | null;

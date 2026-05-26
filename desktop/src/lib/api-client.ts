@@ -2,8 +2,8 @@ import { fetch } from '@tauri-apps/plugin-http';
 import { toast } from 'sonner';
 import { useAppStatusStore } from '../stores/app-status';
 import { useSettingsStore } from '../stores/settings';
-import { API_BASE, BYPASS_API_BASE, DIRECT_SC_API_BASE } from './constants';
 import { noteAuthGap, noteRateLimit, noteSuccess } from './auth-recovery';
+import { API_BASE, BYPASS_API_BASE, DIRECT_SC_API_BASE } from './constants';
 import { logHttpError, logHttpFailure, trackAsync } from './diagnostics';
 import { isHealthy, markHealthy, markUnhealthy } from './host-health';
 import { getIsPremium } from './premium-cache';
@@ -53,7 +53,11 @@ function makeSemaphore(maxConcurrent: number, gapMs: number) {
     if (queue.length > 0) {
       const next = queue.shift()!;
       const wait = Math.max(0, lastStartMs + gapMs - Date.now());
-      setTimeout(() => { lastStartMs = Date.now(); active++; next(); }, wait);
+      setTimeout(() => {
+        lastStartMs = Date.now();
+        active++;
+        next();
+      }, wait);
     }
   }
 
@@ -62,7 +66,11 @@ function makeSemaphore(maxConcurrent: number, gapMs: number) {
       const tryAcquire = () => {
         if (active < maxConcurrent) {
           const wait = Math.max(0, lastStartMs + gapMs - Date.now());
-          setTimeout(() => { lastStartMs = Date.now(); active++; resolve(); }, wait);
+          setTimeout(() => {
+            lastStartMs = Date.now();
+            active++;
+            resolve();
+          }, wait);
         } else {
           queue.push(tryAcquire);
         }
@@ -120,7 +128,7 @@ function resolveApiBases(path: string, direct?: boolean): string[] {
 
 // Bypass hosts (white.*) get a shorter probe timeout so a downed bypass
 // host doesn't block the entire app for 15 s before falling back.
-const BYPASS_TIMEOUT_MS  = 4_000;
+const BYPASS_TIMEOUT_MS = 4_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 function isBypassUrl(url: string): boolean {
@@ -133,7 +141,10 @@ function fetchWithTimeout(
   timeoutMs: number = isBypassUrl(url) ? BYPASS_TIMEOUT_MS : DEFAULT_TIMEOUT_MS,
 ): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), timeoutMs);
+  const timer = setTimeout(
+    () => controller.abort(new DOMException('Timeout', 'TimeoutError')),
+    timeoutMs,
+  );
 
   // Forward an external AbortSignal (e.g. TanStack Query's cancellation) to our controller
   // so that navigation away from a page aborts the in-flight request immediately.
@@ -164,7 +175,10 @@ function handleApiError(err: ApiError): void {
   } else if (err.status >= 400 && err.status !== 401) {
     try {
       const parsed = JSON.parse(err.body);
-      toast.error(parsed.message || parsed.error || `Error ${err.status}`);
+      const msg: string = parsed.message || parsed.error || '';
+      // Suppress subscription-gate errors — they're not actionable for the user.
+      if (/star|subscription|premium|boosty/i.test(msg)) return;
+      toast.error(msg || `Error ${err.status}`);
     } catch {
       toast.error(`Error ${err.status}`);
     }
@@ -197,7 +211,12 @@ export async function apiRequest<T = unknown>(
   }
 
   try {
-    return await _apiRequestInner<T>(path, options, timeoutMs, { silent, fetchOptions, headers, direct });
+    return await _apiRequestInner<T>(path, options, timeoutMs, {
+      silent,
+      fetchOptions,
+      headers,
+      direct,
+    });
   } finally {
     releaseSlot?.();
   }
@@ -207,7 +226,12 @@ async function _apiRequestInner<T>(
   path: string,
   _options: ApiOptions,
   timeoutMs: number | undefined,
-  ctx: { silent: boolean | undefined; fetchOptions: Omit<ApiOptions, 'silent'>; headers: Headers; direct: boolean },
+  ctx: {
+    silent: boolean | undefined;
+    fetchOptions: Omit<ApiOptions, 'silent'>;
+    headers: Headers;
+    direct: boolean;
+  },
 ): Promise<T> {
   const { silent, fetchOptions, headers, direct } = ctx;
   if (direct && !isAuthPath(path)) {
@@ -225,7 +249,8 @@ async function _apiRequestInner<T>(
     }
   }
 
-  if (!headers.has('Content-Type') && fetchOptions.body) headers.set('Content-Type', 'application/json');
+  if (!headers.has('Content-Type') && fetchOptions.body)
+    headers.set('Content-Type', 'application/json');
 
   // Pass the already-captured direct flag so resolveApiBases doesn't
   // re-read settings that might have changed while waiting in the semaphore.

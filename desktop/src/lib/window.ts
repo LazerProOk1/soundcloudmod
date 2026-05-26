@@ -10,8 +10,8 @@ export async function toggleWindowFullscreen() {
 
 // ── Mini-player ───────────────────────────────────────────────
 
-const MINI_W = 380;
-const MINI_H = 66;
+const MINI_W = 300;
+const MINI_H = 58;
 const FULL_MIN_W = 800;
 const FULL_MIN_H = 470;
 

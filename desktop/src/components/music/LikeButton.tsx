@@ -9,9 +9,13 @@ import { useSettingsStore } from '../../stores/settings';
 
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace('#', '');
-  const full = h.length === 3
-    ? h.split('').map((c) => c + c).join('')
-    : h;
+  const full =
+    h.length === 3
+      ? h
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : h;
   const r = parseInt(full.slice(0, 2), 16);
   const g = parseInt(full.slice(2, 4), 16);
   const b = parseInt(full.slice(4, 6), 16);
@@ -57,11 +61,11 @@ export const LikeButton = React.memo(function LikeButton({
         className="cursor-pointer absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 translate-y-1 group-hover:translate-y-0"
         style={{
           /* Glass pill — matches top-right buttons in TrackCard */
-          background: liked ? hexToRgba(accentColor, 0.90) : hexToRgba(accentColor, 0.55),
+          background: liked ? hexToRgba(accentColor, 0.9) : hexToRgba(accentColor, 0.55),
           backdropFilter: 'blur(16px) saturate(1.8)',
           boxShadow: liked
-            ? `0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.25) inset, 0 4px 14px ${hexToRgba(accentColor, 0.50)}`
-            : `0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 2px 10px ${hexToRgba(accentColor, 0.30)}`,
+            ? `0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.25) inset, 0 4px 14px ${hexToRgba(accentColor, 0.5)}`
+            : `0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 2px 10px ${hexToRgba(accentColor, 0.3)}`,
           color: 'white',
         }}
       >

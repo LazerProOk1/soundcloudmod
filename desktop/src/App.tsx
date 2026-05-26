@@ -5,17 +5,17 @@ import { Toaster } from 'sonner';
 import { useShallow } from 'zustand/shallow';
 import { AppShell } from './components/layout/AppShell';
 import { MiniPlayer } from './components/layout/MiniPlayer';
-import { LiquidGlassDefs } from './components/ui/LiquidGlassDefs';
 import YMImportFloatingStatus from './components/music/YMImportFloatingStatus';
 import { ReAuthOverlay } from './components/ReAuthOverlay';
 import { ThemeProvider } from './components/ThemeProvider';
+import { LiquidGlassDefs } from './components/ui/LiquidGlassDefs';
 import { ApiError } from './lib/api';
 import { CHECK_UPDATES } from './lib/constants';
-import { checkForAppUpdate, type GithubRelease } from './lib/update-check';
 import { initSleepTimer } from './lib/sleep-timer';
+import { checkForAppUpdate, type GithubRelease } from './lib/update-check';
 import { getAppMode, useAppStatusStore } from './stores/app-status';
-import { useMiniPlayerStore } from './stores/mini-player';
 import { useAuthStore } from './stores/auth';
+import { useMiniPlayerStore } from './stores/mini-player';
 import { useSessionExpiryStore } from './stores/session-expiry';
 import { type StartupPage, useSettingsStore } from './stores/settings';
 import { useYmImportStore } from './stores/ym-import';
@@ -33,13 +33,18 @@ function useStoresHydrated(): boolean {
   useEffect(() => {
     if (hydrated) return;
     let pending = 2;
-    const done = () => { if (--pending === 0) setHydrated(true); };
+    const done = () => {
+      if (--pending === 0) setHydrated(true);
+    };
     const u1 = useAuthStore.persist.onFinishHydration(done);
     const u2 = useSettingsStore.persist.onFinishHydration(done);
     // If already hydrated by the time we subscribe, fire immediately
     if (useAuthStore.persist.hasHydrated()) done();
     if (useSettingsStore.persist.hasHydrated()) done();
-    return () => { u1(); u2(); };
+    return () => {
+      u1();
+      u2();
+    };
   }, [hydrated]);
   return hydrated;
 }
@@ -76,6 +81,9 @@ const AlbumPage = lazy(() =>
 );
 const Discover = lazy(() =>
   import('./pages/Discover').then((module) => ({ default: module.Discover })),
+);
+const SoundWavePage = lazy(() =>
+  import('./pages/SoundWavePage').then((module) => ({ default: module.SoundWavePage })),
 );
 const UpdateChecker = lazy(() =>
   import('./components/UpdateChecker').then((module) => ({ default: module.UpdateChecker })),
@@ -128,12 +136,16 @@ export default function App() {
     (s) => s.apiMode === 'direct' && s.directOAuthToken.trim().length > 0,
   );
   const canUseMainShell = isAuthenticated || hasLocalSession || isDirectMode;
-
   // Toggle body.mini so CSS can make #root transparent (enables real backdrop-filter glass)
   // Also clip <html> to border-radius so WebView corners are truly transparent (not square cutouts)
   useEffect(() => {
     document.body.classList.toggle('mini', isMini);
   }, [isMini]);
+
+  // Liquid Glass is always enabled — ensure no-glass class is never present
+  useEffect(() => {
+    document.documentElement.classList.remove('no-glass');
+  }, []);
 
   useEffect(() => {
     useYmImportStore.getState().initBridge();
@@ -398,6 +410,14 @@ export default function App() {
                   element={
                     <RouteLoader>
                       <Discover />
+                    </RouteLoader>
+                  }
+                />
+                <Route
+                  path="soundwave"
+                  element={
+                    <RouteLoader>
+                      <SoundWavePage />
                     </RouteLoader>
                   }
                 />

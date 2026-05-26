@@ -122,7 +122,7 @@ const EngagementChip = React.memo(function EngagementChip({
       className={`inline-flex items-center gap-1.5 px-3 h-10 rounded-xl text-[12.5px] font-semibold tabular-nums transition-all duration-200 ease-[var(--ease-apple)] cursor-pointer border ${
         active
           ? `${toneBg} ${tone}`
-          : 'bg-white/[0.04] border-white/[0.06] text-white/65 hover:bg-white/[0.07] hover:text-white/90 hover:border-white/[0.1]'
+          : 'glass-flat border-white/[0.06] text-white/65 hover:bg-white/[0.07] hover:text-white/90 hover:border-white/[0.1]'
       }`}
     >
       {icon}
@@ -698,8 +698,19 @@ export const TrackPage = React.memo(() => {
             {/* Album title badge */}
             {track.publisher_metadata?.album_title && (
               <div className="flex items-center gap-1.5 mb-4 text-[11.5px] text-white/35">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="3" />
                 </svg>
                 <span>{track.publisher_metadata.album_title}</span>
               </div>

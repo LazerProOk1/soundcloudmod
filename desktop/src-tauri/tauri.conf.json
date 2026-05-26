@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "soundcloud-desktop",
+  "productName": "SoundCloud Desktop",
   "version": "1.2.0",
   "identifier": "com.soundcloud.desktop",
   "build": {
@@ -27,8 +27,19 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "nsis",
+    "publisher": "SoundCloud Desktop",
+    "copyright": "© 2026 SoundCloud Desktop",
     "windows": {
+      "nsis": {
+        "languages": ["Russian"],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser",
+        "compression": "lzma",
+        "headerImage": "nsis/header.bmp",
+        "sidebarImage": "nsis/sidebar.bmp",
+        "installerIcon": "icons/icon.ico"
+      },
       "webviewInstallMode": {
         "type": "offlineInstaller",
         "silent": true

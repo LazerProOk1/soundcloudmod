@@ -8,7 +8,8 @@
     "following": "Подписки",
     "settings": "Настройки",
     "collapse": "Свернуть",
-    "expand": "Развернуть"
+    "expand": "Развернуть",
+    "soundwave": "SoundWave"
   },
   "sidebar": {
     "quickAccess": "Быстрый доступ",
@@ -224,6 +225,8 @@
   },
   "soundwave": {
     "tagline": "Твоя личная волна — подобрали под тебя",
+    "myWave": "Моя волна",
+    "updateWave": "Обновить волну",
     "playAll": "Слушать всё",
     "refresh": "Обновить",
     "languages": "Языки",

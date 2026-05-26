@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { preloadTrack } from '../../lib/audio';
 import { art, dur, fc } from '../../lib/formatters';
+import { useLiquidGlass } from '../../lib/hooks';
 import { ListMusic, ListPlus, playIcon32 } from '../../lib/icons';
 import { recordClusterFeedback, setUrnCluster, useClusterFeedback } from '../../lib/recsFeedback';
 import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
@@ -37,6 +38,7 @@ export const TrackCard = React.memo(
     const artistDisplay = useArtistDisplay(track);
     const displayTitle = useDisplayTitle(track);
     const isWanted = artistDisplay.availability !== 'indexed';
+    const glass = useLiquidGlass();
 
     const artistTarget =
       track.enrichment?.primary_artist?.id && artistDisplay.verified
@@ -55,7 +57,7 @@ export const TrackCard = React.memo(
       const el = cardRef.current;
       if (!el) return;
       const { left, top, width, height } = el.getBoundingClientRect();
-      const x = ((e.clientX - left) / width - 0.5) * 14;   // ±7°
+      const x = ((e.clientX - left) / width - 0.5) * 14; // ±7°
       const y = ((e.clientY - top) / height - 0.5) * -14;
       el.style.transform = `perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateY(-4px) scale(1.02)`;
     };
@@ -90,8 +92,8 @@ export const TrackCard = React.memo(
         <div
           className="glass-artwork relative aspect-square rounded-[32px] cursor-pointer"
           style={{
-            /* Differential border: bright top-left, dark bottom-right — glass thickness */
-            boxShadow: `
+            boxShadow: glass
+              ? `
               0 1px 0 0 rgba(255,255,255,0.22) inset,
               0 3px 8px -2px rgba(255,255,255,0.06) inset,
               1px 0 0 0 rgba(255,255,255,0.12) inset,
@@ -102,8 +104,13 @@ export const TrackCard = React.memo(
               0 10px 24px rgba(0,0,0,0.20),
               0 24px 52px rgba(0,0,0,0.28),
               0 0 80px rgba(255,255,255,0.012)
-            `,
-            background: 'rgba(255,255,255,0.035)',
+              `
+              : `
+              0 0 0 1px rgba(255,255,255,0.07),
+              0 2px 6px rgba(0,0,0,0.14),
+              0 10px 24px rgba(0,0,0,0.22)
+              `,
+            background: glass ? 'rgba(255,255,255,0.035)' : 'rgba(18,18,22,0.95)',
             /* --artwork-radius drives clip-path in .glass-artwork CSS class */
             ['--artwork-radius' as string]: '32px',
             transform: 'translateZ(0)',
@@ -131,7 +138,8 @@ export const TrackCard = React.memo(
             aria-hidden
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.30) 100%)',
+              background:
+                'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.30) 100%)',
               zIndex: 2,
             }}
           />
@@ -142,7 +150,8 @@ export const TrackCard = React.memo(
               isThisPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
             }`}
             style={{
-              background: 'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.50) 100%)',
+              background:
+                'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.50) 100%)',
             }}
           >
             {/* Play/pause — true Liquid Glass: semi-transparent frosted sphere */}
@@ -154,33 +163,68 @@ export const TrackCard = React.memo(
                 width: 54,
                 height: 54,
                 borderRadius: '50%',
-                /* Semi-transparent glass — backdrop bleeds through, giving depth */
-                background: 'rgba(255,255,255,0.18)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                boxShadow: `
-                  /* Differential frosted border — top/left bright, bottom dark */
+                background: glass ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.92)',
+                ...(glass
+                  ? {
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    }
+                  : {}),
+                boxShadow: glass
+                  ? `
                   0 1px 0 0 rgba(255,255,255,0.70) inset,
                   0 3px 8px -1px rgba(255,255,255,0.22) inset,
                   0 -1px 0 0 rgba(0,0,0,0.30) inset,
                   1px 0 0 0 rgba(255,255,255,0.45) inset,
                   -1px 0 0 0 rgba(0,0,0,0.12) inset,
-                  /* Outer frosted halo */
                   0 0 0 1px rgba(255,255,255,0.22),
-                  /* Soft ambient ring */
                   0 0 0 6px rgba(255,255,255,0.06),
-                  /* Depth drop shadows */
                   0 8px 28px rgba(0,0,0,0.50),
                   0 2px 8px rgba(0,0,0,0.30)
-                `,
-                color: 'white',
+                  `
+                  : `
+                  0 4px 16px rgba(0,0,0,0.40),
+                  0 1px 4px rgba(0,0,0,0.24)
+                  `,
+                color: glass ? 'white' : 'rgba(20,20,24,1)',
               }}
             >
-              {/* White SVG icons — visible on dark AND light album art */}
-              {isThisPlaying
-                ? <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style={{pointerEvents:'none'}}><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                : <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style={{pointerEvents:'none', marginLeft: 2}}><path d="M8 5v14l11-7z"/></svg>
-              }
+              {/* Playing: 3 animated equaliser bars  |  Paused: play arrow */}
+              {isThisPlaying ? (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    gap: 3,
+                    height: 18,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <div
+                    className="eq-bar"
+                    style={{ width: 4, height: '100%', borderRadius: 2, background: 'white' }}
+                  />
+                  <div
+                    className="eq-bar"
+                    style={{ width: 4, height: '100%', borderRadius: 2, background: 'white' }}
+                  />
+                  <div
+                    className="eq-bar"
+                    style={{ width: 4, height: '100%', borderRadius: 2, background: 'white' }}
+                  />
+                </div>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  style={{ pointerEvents: 'none', marginLeft: 2 }}
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
             </div>
           </div>
 
@@ -189,9 +233,11 @@ export const TrackCard = React.memo(
             <div
               className="absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-0.5"
               style={{
-                background: 'rgba(0,0,0,0.5)',
-                backdropFilter: 'blur(12px) saturate(1.8)',
-                boxShadow: '0 1px 0 0 rgba(255,255,255,0.12) inset',
+                background: glass ? 'rgba(0,0,0,0.5)' : 'rgba(20,20,24,0.88)',
+                ...(glass ? { backdropFilter: 'blur(12px) saturate(1.8)' } : {}),
+                boxShadow: glass
+                  ? '0 1px 0 0 rgba(255,255,255,0.12) inset'
+                  : '0 0 0 1px rgba(255,255,255,0.10)',
               }}
             >
               <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wide">
@@ -205,9 +251,11 @@ export const TrackCard = React.memo(
             <div
               className="text-[10px] font-medium text-white/85 px-2 py-0.5 rounded-full"
               style={{
-                background: 'rgba(0,0,0,0.45)',
-                backdropFilter: 'blur(12px)',
-                boxShadow: '0 1px 0 0 rgba(255,255,255,0.10) inset',
+                background: glass ? 'rgba(0,0,0,0.45)' : 'rgba(18,18,22,0.85)',
+                ...(glass ? { backdropFilter: 'blur(12px)' } : {}),
+                boxShadow: glass
+                  ? '0 1px 0 0 rgba(255,255,255,0.10) inset'
+                  : '0 0 0 1px rgba(255,255,255,0.08)',
               }}
             >
               {dur(track.duration)}
@@ -226,10 +274,11 @@ export const TrackCard = React.memo(
                 className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 active:scale-95"
                 title={t('playlist.addToPlaylist')}
                 style={{
-                  background: 'rgba(255,255,255,0.16)',
-                  backdropFilter: 'blur(16px) saturate(1.8)',
-                  boxShadow:
-                    '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)',
+                  background: glass ? 'rgba(255,255,255,0.16)' : 'rgba(30,30,36,0.92)',
+                  ...(glass ? { backdropFilter: 'blur(16px) saturate(1.8)' } : {}),
+                  boxShadow: glass
+                    ? '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)'
+                    : '0 0 0 1px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.28)',
                 }}
               >
                 <ListPlus size={14} />
@@ -241,10 +290,11 @@ export const TrackCard = React.memo(
               className="cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 active:scale-95"
               title={t('player.addToQueue')}
               style={{
-                background: 'rgba(255,255,255,0.16)',
-                backdropFilter: 'blur(16px) saturate(1.8)',
-                boxShadow:
-                  '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)',
+                background: glass ? 'rgba(255,255,255,0.16)' : 'rgba(30,30,36,0.92)',
+                ...(glass ? { backdropFilter: 'blur(16px) saturate(1.8)' } : {}),
+                boxShadow: glass
+                  ? '0 1px 0 0 rgba(255,255,255,0.35) inset, 0 -1px 0 0 rgba(0,0,0,0.22) inset, 0 2px 10px rgba(0,0,0,0.32)'
+                  : '0 0 0 1px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.28)',
               }}
             >
               <ListMusic size={14} />
@@ -269,23 +319,17 @@ export const TrackCard = React.memo(
         <div className="mt-3 min-w-0">
           <p
             className={`text-[13px] font-medium truncate leading-snug transition-colors duration-150 ${
-              isWanted
-                ? 'text-white/45'
-                : 'text-white/90 cursor-pointer hover:text-white'
+              isWanted ? 'text-white/45' : 'text-white/90 cursor-pointer hover:text-white'
             }`}
             onClick={
-              isWanted
-                ? undefined
-                : () => navigate(`/track/${encodeURIComponent(track.urn)}`)
+              isWanted ? undefined : () => navigate(`/track/${encodeURIComponent(track.urn)}`)
             }
           >
             {displayTitle}
           </p>
           <p
             className={`text-[11px] truncate mt-0.5 flex items-center gap-1 transition-colors duration-150 ${
-              isWanted
-                ? 'text-white/25'
-                : 'text-white/40 cursor-pointer hover:text-white/60'
+              isWanted ? 'text-white/25' : 'text-white/40 cursor-pointer hover:text-white/60'
             }`}
             onClick={artistTarget && !isWanted ? () => navigate(artistTarget) : undefined}
           >
@@ -310,8 +354,7 @@ export const TrackCard = React.memo(
   (prev, next) =>
     prev.track.urn === next.track.urn &&
     prev.track.user_favorite === next.track.user_favorite &&
-    prev.track.enrichment?.primary_artist?.name ===
-      next.track.enrichment?.primary_artist?.name &&
+    prev.track.enrichment?.primary_artist?.name === next.track.enrichment?.primary_artist?.name &&
     prev.track.enrichment?.upload_kind === next.track.enrichment?.upload_kind &&
     prev.track.enrichment?.availability === next.track.enrichment?.availability,
 );

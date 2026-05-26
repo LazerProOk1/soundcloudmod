@@ -20,7 +20,7 @@ function GlassHeroPanelImpl({ hasStar, aura, className, children }: GlassHeroPan
         backdropFilter: 'blur(56px) saturate(190%)',
         WebkitBackdropFilter: 'blur(56px) saturate(190%)',
         boxShadow: hasStar
-          ? `0 30px 80px rgba(0,0,0,0.42), 0 0 80px ${auraRgba(aura, 0.20)}, inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.5), inset 0 0 0 1px ${auraRgba(aura, 0.25)}`
+          ? `0 30px 80px rgba(0,0,0,0.42), 0 0 80px ${auraRgba(aura, 0.2)}, inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.5), inset 0 0 0 1px ${auraRgba(aura, 0.25)}`
           : 'inset 0 1px 0 rgba(255,255,255,0.18), inset 1px 0 0 rgba(255,255,255,0.09), inset 0 -1px 0 rgba(0,0,0,0.52), 0 30px 80px rgba(0,0,0,0.38)',
         animation: 'hub-rise 700ms cubic-bezier(0.2,0.8,0.2,1) both',
         isolation: 'isolate',

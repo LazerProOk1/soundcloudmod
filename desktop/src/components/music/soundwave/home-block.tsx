@@ -95,7 +95,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   // Used when the custom backend is unreachable (clusters stay empty).
   const likedQuery = useLikedTracks(60);
   const likedTracks = useMemo(() => likedQuery.tracks, [likedQuery.tracks]);
-  const { data: relatedPool } = useRelatedPool(likedTracks);
+  const { data: relatedPool, isLoading: poolLoading } = useRelatedPool(likedTracks);
   const localRecs = useRecommendedTracks(relatedPool, 40);
 
   const backendWorking = rawClusters.length > 0 || rawAllTracks.length > 0;
@@ -165,8 +165,10 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
   };
 
   const spinning = isRefreshing || isFetching;
-  // Show cold state only if truly nothing available (backend down + no liked tracks cached)
-  const showCold = !isLoading && orderedClusters.length === 0 && immediateBase.length === 0;
+  // Show cold state only if truly nothing available (backend down + no liked tracks cached).
+  // Also wait for the related-pool query to finish — it loads slightly after the cluster wave.
+  const anyLoading = isLoading || (poolLoading && likedTracks.length > 0);
+  const showCold = !anyLoading && orderedClusters.length === 0 && immediateBase.length === 0;
   const playableTracks = filteredAllTracks;
 
   return (
@@ -268,7 +270,7 @@ export const SoundWaveBlock = React.memo(function SoundWaveBlock() {
         </div>
 
         <div className="min-h-[280px]">
-          {isLoading ? (
+          {anyLoading ? (
             <ClusterSkeletonState rows={3} itemsPerRow={6} />
           ) : showCold ? (
             <div className="flex flex-col items-center justify-center py-10 gap-5">

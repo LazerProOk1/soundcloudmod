@@ -1,4 +1,6 @@
 // Re-export shim — keeps existing imports working
+
+export type { ApiOptions } from './api-client';
 export {
   ApiError,
   apiRequest as api,
@@ -6,6 +8,5 @@ export {
   getSessionId,
   setSessionId,
 } from './api-client';
-export type { ApiOptions } from './api-client';
 export type { ResolvedStreamingTrack } from './streaming';
 export { buildStorageUrls, resolveTrackFromStreaming, streamFallbackUrls } from './streaming';

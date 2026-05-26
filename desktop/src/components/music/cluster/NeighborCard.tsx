@@ -125,7 +125,9 @@ export const NeighborCard = React.memo(function NeighborCard({ neighbor, track, 
 
       <div className="px-3 py-2.5">
         <p className="text-[12.5px] font-semibold text-white/95 truncate">{track.title}</p>
-        <p className="text-[10.5px] text-white/40 truncate mt-0.5">{getArtistDisplay(track).primary}</p>
+        <p className="text-[10.5px] text-white/40 truncate mt-0.5">
+          {getArtistDisplay(track).primary}
+        </p>
       </div>
     </button>
   );

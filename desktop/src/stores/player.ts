@@ -432,9 +432,7 @@ export const usePlayerStore = create<PlayerState>()(
           return {
             currentTrack: currentMatches ? { ...s.currentTrack!, ...track } : s.currentTrack,
             queue: queueHasTrack ? s.queue.map(mergeTrack) : s.queue,
-            originalQueue: origHasTrack
-              ? s.originalQueue!.map(mergeTrack)
-              : s.originalQueue,
+            originalQueue: origHasTrack ? s.originalQueue!.map(mergeTrack) : s.originalQueue,
           };
         }),
 

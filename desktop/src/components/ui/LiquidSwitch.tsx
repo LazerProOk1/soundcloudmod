@@ -45,9 +45,7 @@ export const LiquidSwitch = React.memo(function LiquidSwitch({
           inset: 0,
           borderRadius: 9999,
           transition: 'background 0.28s var(--ease-apple), box-shadow 0.28s var(--ease-apple)',
-          background: checked
-            ? 'var(--color-accent)'
-            : 'rgba(255,255,255,0.07)',
+          background: checked ? 'var(--color-accent)' : 'rgba(255,255,255,0.07)',
           boxShadow: checked
             ? '0 1px 0 0 rgba(255,255,255,0.22) inset, 0 -1px 0 0 rgba(0,0,0,0.35) inset, 0 0 0 0.5px var(--color-accent-glow), 0 2px 10px var(--color-accent-glow)'
             : '0 1px 3px rgba(0,0,0,0.55) inset, 0 0.5px 0 rgba(255,255,255,0.10) inset, 0 0 0 0.5px rgba(255,255,255,0.05)',

@@ -29,7 +29,7 @@ const NowPlayingItem = React.memo(() => {
 
   return (
     <div
-      className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-white/[0.08] ring-1 ring-white/[0.08] cursor-pointer"
+      className="glass-flat flex items-center gap-3 px-3 py-2.5 rounded-2xl ring-1 ring-white/[0.08] cursor-pointer"
       onClick={handleClick}
     >
       <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative bg-white/[0.04]">
@@ -54,7 +54,9 @@ const NowPlayingItem = React.memo(() => {
         <p className="text-[12px] text-accent font-medium truncate leading-snug">
           {currentTrack.title}
         </p>
-        <p className="text-[10px] text-white/30 truncate mt-0.5">{getArtistDisplay(currentTrack).primary}</p>
+        <p className="text-[10px] text-white/30 truncate mt-0.5">
+          {getArtistDisplay(currentTrack).primary}
+        </p>
       </div>
       <span className="text-[10px] text-white/20 tabular-nums shrink-0">
         {dur(currentTrack.duration)}
@@ -95,12 +97,12 @@ const QueueRow = React.memo(function QueueRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-center gap-3 px-3 py-2 rounded-xl group transition-all duration-150 select-none ${
+      className={`flex items-center gap-3 px-3 py-2 group select-none ${
         isDragging
-          ? 'opacity-40 scale-[0.97]'
+          ? 'opacity-40 scale-[0.97] rounded-xl transition-all duration-150'
           : isCurrent
-            ? 'bg-white/[0.08] ring-1 ring-white/[0.08]'
-            : 'hover:bg-white/[0.04]'
+            ? 'rounded-xl bg-white/[0.08] ring-1 ring-white/[0.08] transition-all duration-150'
+            : 'liquid-row-hover'
       }`}
     >
       <div

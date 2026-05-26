@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sparkles } from '../../lib/icons';
 import { AURAS, type Aura } from '../../lib/aura';
+import { Sparkles } from '../../lib/icons';
 
 interface AuraPickerProps {
   aura: Aura;

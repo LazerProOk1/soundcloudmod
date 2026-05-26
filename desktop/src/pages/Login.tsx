@@ -10,10 +10,11 @@ import {
   Disc3,
   Download,
   Globe,
+  RefreshCw,
   Smartphone,
 } from '../lib/icons';
-import type { OAuthFlowError } from '../lib/use-oauth-flow';
 import { queryClient } from '../lib/query-client';
+import type { OAuthFlowError } from '../lib/use-oauth-flow';
 import { useOAuthFlow } from '../lib/use-oauth-flow';
 import { useAppStatusStore } from '../stores/app-status';
 import { useAuthStore } from '../stores/auth';
@@ -86,21 +87,53 @@ export function Login() {
         </div>
 
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight">SoundCloud Desktop</h1>
+          <h1
+            className="text-2xl"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              letterSpacing: '-0.04em',
+              WebkitFontSmoothing: 'antialiased',
+              textRendering: 'optimizeLegibility',
+              fontSynthesis: 'none',
+            }}
+          >
+            SoundCloud Desktop
+          </h1>
           <p className="text-[13px] text-white/35 mt-2">
             {isPolling ? t('auth.signingIn') : t('auth.tagline')}
           </p>
         </div>
 
         {flowError && (
-          <div className="w-full flex items-start gap-2.5 rounded-xl bg-red-500/10 border border-red-500/20 px-3.5 py-3">
-            <AlertCircle size={15} className="shrink-0 text-red-400 mt-0.5" />
-            <div className="min-w-0">
-              <p className="text-[12.5px] font-medium text-red-300">
-                {flowError.kind === 'expired' ? t('auth.errorExpiredTitle') : t('auth.errorFailedTitle')}
-              </p>
-              <p className="text-[11px] text-red-400/70 mt-0.5 break-words">{flowError.message}</p>
+          <div className="w-full rounded-xl bg-red-500/10 border border-red-500/20 px-3.5 py-3">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle size={15} className="shrink-0 text-red-400 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12.5px] font-medium text-red-300">
+                  {flowError.kind === 'expired'
+                    ? t('auth.errorExpiredTitle')
+                    : flowError.kind === 'unreachable'
+                      ? t('auth.errorServerTitle')
+                      : t('auth.errorFailedTitle')}
+                </p>
+                {flowError.kind === 'unreachable' ? (
+                  <p className="text-[11px] text-red-400/70 mt-0.5">{t('auth.errorServerDesc')}</p>
+                ) : (
+                  <p className="text-[11px] text-red-400/70 mt-0.5 break-words">
+                    {flowError.message}
+                  </p>
+                )}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/[0.12] hover:bg-red-500/[0.20] border border-red-500/20 text-[11.5px] font-medium text-red-300 transition-colors cursor-pointer"
+            >
+              <RefreshCw size={12} />
+              {t('auth.retry')}
+            </button>
           </div>
         )}
 

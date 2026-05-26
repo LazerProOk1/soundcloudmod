@@ -41,14 +41,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-3">
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{
-            background: 'rgba(255,255,255,0.045)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
-          }}
-        >
+        <div className="glass-flat w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
           {icon}
         </div>
         <h2 className="text-[15px] font-semibold tracking-tight text-white/88">{title}</h2>
@@ -141,7 +134,7 @@ const GenreDiscover = React.memo(function GenreDiscover({ likedTracks }: { liked
     <section>
       <SectionHeader
         title={t('home.discover', 'Discover by Genre')}
-        icon={<Compass size={15} className="text-cyan-400/70" />}
+        icon={<Compass size={15} className="text-accent/80" />}
       />
 
       {/* Genre pills */}
@@ -155,10 +148,10 @@ const GenreDiscover = React.memo(function GenreDiscover({ likedTracks }: { liked
                 key={g}
                 type="button"
                 onClick={() => setActiveGenre(g)}
-                className={`px-4 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 cursor-pointer capitalize ${
+                className={`glass-pill px-4 py-1.5 text-[12px] font-medium capitalize ${
                   selectedGenre === g
-                    ? 'bg-white/[0.12] text-white border border-white/[0.10]'
-                    : 'bg-white/[0.03] text-white/40 border border-white/[0.04] hover:bg-white/[0.07] hover:text-white/60'
+                    ? 'text-white/92'
+                    : 'text-white/45 !bg-white/[0.04]'
                 }`}
               >
                 {g}
@@ -300,17 +293,15 @@ function DiscoverHero() {
         <div
           className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
           style={{
-            background: 'linear-gradient(135deg, rgba(34,211,238,0.25), rgba(99,102,241,0.20))',
+            background: 'linear-gradient(135deg, var(--color-accent-glow), rgba(99,102,241,0.15))',
             border: '1px solid rgba(255,255,255,0.07)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 16px rgba(0,0,0,0.25)',
           }}
         >
-          <Compass size={22} style={{ color: 'rgba(34,211,238,0.85)' }} />
+          <Compass size={22} style={{ color: 'var(--color-accent)' }} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white/92 leading-tight">
-            {t('nav.discover')}
-          </h1>
+          <h1 className="syne text-2xl text-white/92 leading-tight">{t('nav.discover')}</h1>
           <p className="text-[12px] text-white/35 mt-0.5">
             {t('discover.subtitle', 'Explore music tailored to your taste')}
           </p>

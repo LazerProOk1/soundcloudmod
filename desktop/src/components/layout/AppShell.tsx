@@ -1,17 +1,18 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/shallow';
 import { getCurrentTime, getDuration, handlePrev, seek } from '../../lib/audio';
 import { getWallpaperUrl } from '../../lib/cache';
-import { useLyricsPrefetch } from '../../lib/useLyricsPrefetch';
 import { art } from '../../lib/formatters';
 import { isMac } from '../../lib/platform';
+import { useLyricsPrefetch } from '../../lib/useLyricsPrefetch';
 import { toggleWindowFullscreen } from '../../lib/window';
 import { useLyricsStore } from '../../stores/lyrics';
 import { usePlayerStore } from '../../stores/player';
 import { useSettingsStore } from '../../stores/settings';
+import { DynamicBackgroundConnected } from '../DynamicBackground/DynamicBackground';
 import { AmbientMeshBackground } from '../ui/AmbientMeshBackground';
 import { NowPlayingBar } from './NowPlayingBar';
 import { Sidebar } from './Sidebar';
@@ -244,6 +245,9 @@ const isInputEl = (el: EventTarget | null) =>
 export const AppShell = React.memo(() => {
   useLyricsPrefetch();
 
+  const location = useLocation();
+  const isOnSoundwave = location.pathname.startsWith('/soundwave');
+
   const [queueOpen, setQueueOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
   const lyricsOpen = useLyricsStore((s) => s.open);
@@ -382,8 +386,8 @@ export const AppShell = React.memo(() => {
       window.removeEventListener('keydown', handler);
       window.removeEventListener('keyup', resetVolumeHold);
     };
-  // Intentionally empty deps — handler reads all state via refs, registered exactly once.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Intentionally empty deps — handler reads all state via refs, registered exactly once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -392,15 +396,22 @@ export const AppShell = React.memo(() => {
           Glass panels refract this light; without it they look like dark slabs. */}
       <AmbientMeshBackground />
       <CustomBackground />
+      {/* DynamicBackground: artwork colour blobs — sits above wallpaper, below content */}
+      <DynamicBackgroundConnected />
       <AmbientGlow />
       <Titlebar />
       <div className="flex flex-1 min-h-0 relative z-10" style={{ isolation: 'isolate' }}>
         <Sidebar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
           <StableOutlet />
         </main>
       </div>
-      <NowPlayingBar onQueueToggle={onQueueToggle} queueOpen={queueOpen} />
+      {!isOnSoundwave && (
+        <NowPlayingBar
+          onQueueToggle={onQueueToggle}
+          queueOpen={queueOpen}
+        />
+      )}
       {queueOpen && (
         <Suspense fallback={null}>
           <QueuePanel open={queueOpen} onClose={onQueueClose} />

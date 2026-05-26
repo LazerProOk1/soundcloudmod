@@ -2,9 +2,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
+import { type Aura, auraRgba } from '../../lib/aura';
 import { Loader2 } from '../../lib/icons';
 import { useAuthStore } from '../../stores/auth';
-import { type Aura, auraRgba } from '../../lib/aura';
 
 interface FollowBtnProps {
   userUrn: string;

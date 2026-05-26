@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import type { Track } from '../stores/player';
+import { usePlayerStore } from '../stores/player';
 import { useSettingsStore } from '../stores/settings';
 import { api } from './api';
 import { initLikedUrns } from './likes';
@@ -438,6 +439,12 @@ export function useBatchTrackHydration(tracks: Track[]) {
               };
             },
           );
+          // Also update the player store — currentTrack and queue are separate
+          // from React Query and won't reflect the patched metadata otherwise.
+          const playerStore = usePlayerStore.getState();
+          for (const freshTrack of fresh) {
+            playerStore.replaceTrackMetadata(freshTrack);
+          }
         } catch {
           // On failure, remove from set so these tracks can be retried later
           for (const t of batch) _hydratedUrns.delete(t.urn);
@@ -450,6 +457,33 @@ export function useBatchTrackHydration(tracks: Track[]) {
       cancelled = true;
     };
   }, [needsHydration, qc]);
+}
+
+/**
+ * Hydrates the currently-playing track in the player store if it lacks
+ * publisher_metadata.artist. Runs a single /tracks?ids= request and calls
+ * replaceTrackMetadata so the artist name updates everywhere instantly.
+ *
+ * This covers tracks played from pages that don't call useBatchTrackHydration
+ * (SoundWave, playlist pages, album pages, queue, etc.).
+ */
+export function useCurrentTrackHydration() {
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  useEffect(() => {
+    if (!currentTrack) return;
+    if (currentTrack.publisher_metadata?.artist || currentTrack.enrichment?.primary_artist?.name)
+      return;
+    if (_hydratedUrns.has(currentTrack.urn)) return;
+
+    _hydratedUrns.add(currentTrack.urn);
+    api<Track[]>(`/tracks?ids=${encodeURIComponent(currentTrack.urn)}`, { silent: true })
+      .then((fresh) => {
+        if (fresh?.[0]) usePlayerStore.getState().replaceTrackMetadata(fresh[0]);
+      })
+      .catch(() => {
+        _hydratedUrns.delete(currentTrack.urn);
+      });
+  }, [currentTrack?.urn]);
 }
 
 /* ── Feed ──────────────────────────────────────────────────────── */
@@ -795,15 +829,9 @@ export function useUserWebProfiles(userUrn: string | undefined) {
   });
 }
 
-export function useUserSubscription(userUrn: string | undefined) {
-  return useQuery({
-    queryKey: ['user', userUrn, 'subscription'],
-    queryFn: () => api<{ premium: boolean }>(`/users/${encodeURIComponent(userUrn!)}/subscription`),
-    enabled: !!userUrn,
-    staleTime: MEDIUM_CACHE_MS,
-    gcTime: INFINITE_GC_MS,
-    select: (d) => d.premium,
-  });
+export function useUserSubscription(_userUrn: string | undefined) {
+  // Star subscription UI removed — always report no badge.
+  return { data: false } as const;
 }
 
 /* ── My Library ────────────────────────────────────────────────── */
@@ -1009,14 +1037,17 @@ export function useRelatedPool(likedTracks: Track[]) {
       // All requests fire in parallel — latency = 1 round-trip instead of 3 sequential batches.
       // silent: true suppresses 429 toasts — this is a fallback pool, missing it is fine.
       const results = await Promise.all(
-        seedUrns.map((urn) =>
-          api<TrackPage>(`/tracks/${encodeURIComponent(urn)}/related?limit=20&page=0`, {
+        seedUrns.map((urn) => {
+          // SoundCloud API v2 (Direct Mode) expects a numeric track ID, not a full URN.
+          // URN format: "soundcloud:tracks:123456789" → extract "123456789"
+          const trackId = urn.includes(':') ? (urn.split(':').pop() ?? urn) : urn;
+          return api<TrackPage>(`/tracks/${encodeURIComponent(trackId)}/related?limit=20&page=0`, {
             silent: true,
           }).catch(
             () =>
               ({ collection: [] as Track[], page: 0, page_size: 20, has_more: false }) as TrackPage,
-          ),
-        ),
+          );
+        }),
       );
 
       const freq: RelatedPool = new Map();
@@ -1097,6 +1128,11 @@ export function useDiscoverData(pool: RelatedPool | undefined, likedTracks: Trac
 }
 
 /* ── Infinite scroll ───────────────────────────────────────────── */
+
+/** Always returns true — liquid glass toggle has been removed from Settings */
+export function useLiquidGlass() {
+  return true;
+}
 
 export function useInfiniteScroll(
   hasNextPage: boolean,

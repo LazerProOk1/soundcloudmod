@@ -1,6 +1,6 @@
 import { BaseDirectory, exists, mkdir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import type { LyricLine, LyricsResult, LyricsSource } from './lyrics';
 import type { Track } from '../stores/player';
+import type { LyricLine, LyricsResult, LyricsSource } from './lyrics';
 
 const BASE_DIR = BaseDirectory.AppData;
 const INDEX_PATH = 'offline-index.json';
@@ -214,6 +214,16 @@ export async function rememberLyrics(trackUrn: string, result: LyricsResult): Pr
     for (const [urn] of toDelete) delete index.lyricsByUrn[urn];
   }
   schedulePersist();
+}
+
+/** Remove cached lyrics for a track URN (e.g. when user triggers manual search). */
+export async function forgetLyrics(trackUrn: string): Promise<void> {
+  if (!trackUrn) return;
+  const index = await loadIndex();
+  if (index.lyricsByUrn[trackUrn]) {
+    delete index.lyricsByUrn[trackUrn];
+    schedulePersist();
+  }
 }
 
 /** Get cached lyrics for a track URN, or null if not cached. */

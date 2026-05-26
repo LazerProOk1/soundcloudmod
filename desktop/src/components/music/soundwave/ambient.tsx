@@ -42,8 +42,7 @@ export const AmbientLayer = React.memo(function AmbientLayer({
       <div
         className="absolute -top-1/3 -left-1/4 w-[55%] h-[170%] rounded-full"
         style={{
-          background:
-            'radial-gradient(closest-side, var(--color-accent-glow), transparent 70%)',
+          background: 'radial-gradient(closest-side, var(--color-accent-glow), transparent 70%)',
           filter: `blur(${blur}px)`,
           opacity: intensity,
           animation: 'sw-aurora 32s linear infinite',
@@ -54,10 +53,9 @@ export const AmbientLayer = React.memo(function AmbientLayer({
       <div
         className="absolute -bottom-1/2 right-[-12%] w-[50%] h-[160%] rounded-full"
         style={{
-          background:
-            'radial-gradient(closest-side, rgba(255,255,255,0.07), transparent 70%)',
+          background: 'radial-gradient(closest-side, rgba(255,255,255,0.07), transparent 70%)',
           filter: `blur(${blur + 8}px)`,
-          opacity: intensity * 0.80,
+          opacity: intensity * 0.8,
           animation: 'sw-aurora 44s linear reverse infinite',
           willChange: 'transform',
         }}
@@ -66,10 +64,9 @@ export const AmbientLayer = React.memo(function AmbientLayer({
       <div
         className="absolute top-[10%] right-[-8%] w-[40%] h-[130%] rounded-full"
         style={{
-          background:
-            'radial-gradient(closest-side, rgba(99,102,241,0.14), transparent 70%)',
+          background: 'radial-gradient(closest-side, rgba(99,102,241,0.14), transparent 70%)',
           filter: `blur(${blur + 14}px)`,
-          opacity: intensity * 0.60,
+          opacity: intensity * 0.6,
           animation: 'sw-aurora 58s linear infinite',
           animationDelay: '-18s',
           willChange: 'transform',

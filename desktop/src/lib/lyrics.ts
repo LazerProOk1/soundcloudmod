@@ -80,10 +80,8 @@ export async function searchLyricsManual(
   if (durationMs && Number.isFinite(durationMs) && durationMs > 0) {
     params.set('duration', String(Math.round(durationMs)));
   }
-  const data = await api<BackendLyricsResponse>(
-    `/lyrics/search?${params}`,
-    undefined,
-    7_000,
-  ).catch(() => null);
+  const data = await api<BackendLyricsResponse>(`/lyrics/search?${params}`, undefined, 7_000).catch(
+    () => null,
+  );
   return toResult(data);
 }

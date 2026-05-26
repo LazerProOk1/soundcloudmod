@@ -21,7 +21,6 @@ import {
   useMyLikedPlaylists,
   useMyPlaylists,
 } from '../lib/hooks';
-import { getOfflineLikedTracks } from '../lib/offline-index';
 import {
   Heart,
   headphones11,
@@ -38,6 +37,7 @@ import {
   Users,
   X,
 } from '../lib/icons';
+import { getOfflineLikedTracks } from '../lib/offline-index';
 import { useTrackPlay } from '../lib/useTrackPlay';
 import { useAuthStore } from '../stores/auth';
 import type { Track } from '../stores/player';
@@ -287,9 +287,12 @@ const LibraryHero = React.memo(function LibraryHero({
 
   /* Liquid-glass icon pill */
   const iconPillStyle: React.CSSProperties = {
-    width: 48, height: 48,
+    width: 48,
+    height: 48,
     borderRadius: 18,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
     background: 'linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%)',
     boxShadow: `
@@ -305,35 +308,56 @@ const LibraryHero = React.memo(function LibraryHero({
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* ── Liked Tracks Card ───────────────────────────────── */}
-      <div style={cardStyle} onClick={onTabLikes}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.01)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; }}
+      <div
+        style={cardStyle}
+        onClick={onTabLikes}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.01)';
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLDivElement).style.transform = '';
+        }}
       >
         {/* Accent radial glow — top-left */}
-        <div aria-hidden style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 70% 60% at 10% 10%, var(--color-accent-glow, rgba(255,85,0,0.18)) 0%, transparent 70%)',
-        }} />
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background:
+              'radial-gradient(ellipse 70% 60% at 10% 10%, var(--color-accent-glow, rgba(255,85,0,0.18)) 0%, transparent 70%)',
+          }}
+        />
         {/* Top glass shine */}
-        <div aria-hidden style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 80, pointerEvents: 'none',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)',
-          borderRadius: '32px 32px 0 0',
-        }} />
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            pointerEvents: 'none',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)',
+            borderRadius: '32px 32px 0 0',
+          }}
+        />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={iconPillStyle}>
             <Heart size={22} fill="var(--color-accent)" stroke="none" />
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">
-            {t('library.likedTracks')}
-          </h2>
+          <h2 className="syne text-3xl text-white">{t('library.likedTracks')}</h2>
           <p className="text-white/50 font-medium mt-1">
             {fc(user.public_favorites_count)} {t('search.tracks').toLowerCase()}
           </p>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1 }} className="flex items-center justify-between mt-auto">
+        <div
+          style={{ position: 'relative', zIndex: 1 }}
+          className="flex items-center justify-between mt-auto"
+        >
           <div className="flex -space-x-3">
             {likedTracks.slice(0, 4).map((track) => (
               <div
@@ -341,7 +365,11 @@ const LibraryHero = React.memo(function LibraryHero({
                 className="w-10 h-10 rounded-full bg-neutral-800 overflow-hidden"
                 style={{ boxShadow: '0 0 0 2px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.40)' }}
               >
-                <img src={art(track.artwork_url, 'small') || ''} className="w-full h-full object-cover" alt="" />
+                <img
+                  src={art(track.artwork_url, 'small') || ''}
+                  className="w-full h-full object-cover"
+                  alt=""
+                />
               </div>
             ))}
           </div>
@@ -350,7 +378,8 @@ const LibraryHero = React.memo(function LibraryHero({
             disabled={shuffleLoading}
             className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform disabled:opacity-60 cursor-pointer"
             style={{
-              background: 'linear-gradient(160deg, rgba(255,255,255,0.97) 0%, rgba(210,210,235,0.92) 100%)',
+              background:
+                'linear-gradient(160deg, rgba(255,255,255,0.97) 0%, rgba(210,210,235,0.92) 100%)',
               boxShadow: `
                 0 1px 0 0 rgba(255,255,255,1) inset,
                 0 -1px 0 0 rgba(0,0,0,0.20) inset,
@@ -367,26 +396,46 @@ const LibraryHero = React.memo(function LibraryHero({
       </div>
 
       {/* ── Following Card ──────────────────────────────────── */}
-      <div style={cardStyle} onClick={onTabFollowing}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.01)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; }}
+      <div
+        style={cardStyle}
+        onClick={onTabFollowing}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.01)';
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLDivElement).style.transform = '';
+        }}
       >
         {/* Accent radial glow — top-left */}
-        <div aria-hidden style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 70% 60% at 10% 10%, var(--color-accent-glow, rgba(255,85,0,0.12)) 0%, transparent 70%)',
-        }} />
-        <div aria-hidden style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 80, pointerEvents: 'none',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)',
-          borderRadius: '32px 32px 0 0',
-        }} />
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background:
+              'radial-gradient(ellipse 70% 60% at 10% 10%, var(--color-accent-glow, rgba(255,85,0,0.12)) 0%, transparent 70%)',
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            pointerEvents: 'none',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)',
+            borderRadius: '32px 32px 0 0',
+          }}
+        />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={iconPillStyle}>
             <Users size={22} style={{ color: 'var(--color-accent)' }} />
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">{t('nav.following')}</h2>
+          <h2 className="syne text-3xl text-white">{t('nav.following')}</h2>
           <p className="text-white/50 font-medium mt-1">
             {fc(user.followings_count)} {t('search.users').toLowerCase()}
           </p>
@@ -400,7 +449,11 @@ const LibraryHero = React.memo(function LibraryHero({
                 className="w-14 h-14 rounded-full bg-neutral-800 overflow-hidden shadow-lg"
                 style={{ boxShadow: '0 0 0 3px rgba(0,0,0,0.55), 0 3px 10px rgba(0,0,0,0.40)' }}
               >
-                <img src={art(u.avatar_url, 'small') || ''} className="w-full h-full object-cover" alt="" />
+                <img
+                  src={art(u.avatar_url, 'small') || ''}
+                  className="w-full h-full object-cover"
+                  alt=""
+                />
               </div>
             ))}
           </div>
@@ -421,7 +474,9 @@ const LikesTab = React.memo(function LikesTab({ filter }: { filter: string }) {
   const [offlineTracks, setOfflineTracks] = useState<Track[]>([]);
 
   useEffect(() => {
-    getOfflineLikedTracks().then(setOfflineTracks).catch(() => {});
+    getOfflineLikedTracks()
+      .then(setOfflineTracks)
+      .catch(() => {});
   }, []);
 
   // Show fresh data if available; offline data as placeholder while initial load
@@ -874,18 +929,24 @@ export const Library = React.memo(() => {
                   setFilter('');
                 }}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300 ease-[var(--ease-apple)] ${
-                  isActive ? 'text-white/92' : 'text-white/40 hover:text-white/75 hover:bg-white/[0.04] border border-transparent'
+                  isActive
+                    ? 'text-white/92'
+                    : 'text-white/40 hover:text-white/75 hover:bg-white/[0.04] border border-transparent'
                 }`}
-                style={isActive ? {
-                  background: 'rgba(255,255,255,0.09)',
-                  border: '1px solid var(--color-accent)',
-                  boxShadow: `
+                style={
+                  isActive
+                    ? {
+                        background: 'rgba(255,255,255,0.09)',
+                        border: '1px solid var(--color-accent)',
+                        boxShadow: `
                     0 1px 0 0 rgba(255,255,255,0.18) inset,
                     0 -1px 0 0 rgba(0,0,0,0.18) inset,
                     0 0 10px var(--color-accent-glow, rgba(255,85,0,0.12)),
                     0 2px 8px rgba(0,0,0,0.15)
                   `,
-                } : undefined}
+                      }
+                    : undefined
+                }
               >
                 {tab.label}
               </button>
@@ -904,8 +965,15 @@ export const Library = React.memo(() => {
             placeholder={t('library.filter')}
             className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.07] text-white/80 placeholder:text-white/25 text-[13px] py-2.5 pl-9 pr-8 rounded-xl outline-none transition-all duration-200"
             style={{ border: '1px solid rgba(255,255,255,0.07)' }}
-            onFocus={e => { e.currentTarget.style.border = '1px solid var(--color-accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-accent-glow,rgba(255,85,0,0.10))'; }}
-            onBlur={e =>  { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = ''; }}
+            onFocus={(e) => {
+              e.currentTarget.style.border = '1px solid var(--color-accent)';
+              e.currentTarget.style.boxShadow =
+                '0 0 0 3px var(--color-accent-glow,rgba(255,85,0,0.10))';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.border = '1px solid rgba(255,255,255,0.07)';
+              e.currentTarget.style.boxShadow = '';
+            }}
           />
           {filter && (
             <button

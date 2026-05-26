@@ -1,5 +1,6 @@
 import React from 'react';
 import { preloadTrack } from '../../lib/audio';
+import { type Aura, auraRgb, auraRgba, isLight } from '../../lib/aura';
 import { art, dur, fc } from '../../lib/formatters';
 import {
   headphones11,
@@ -16,7 +17,6 @@ import type { Track } from '../../stores/player';
 import { AddToPlaylistDialog } from '../music/AddToPlaylistDialog';
 import { LikeButton } from '../music/LikeButton';
 import { TrackTitleArtist } from '../music/TrackTitleArtist';
-import { type Aura, auraRgb, auraRgba, isLight } from '../../lib/aura';
 
 interface ThemedTrackRowProps {
   track: Track;

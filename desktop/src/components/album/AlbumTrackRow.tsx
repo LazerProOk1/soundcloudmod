@@ -38,7 +38,8 @@ function AlbumTrackRowImpl({ track, position, queue, aura }: AlbumTrackRowProps)
           ? `linear-gradient(90deg, ${auraRgba(aura, 0.16)}, ${auraRgba(aura, 0.04)} 70%, transparent)`
           : undefined,
         boxShadow: isThis ? `inset 0 0 0 1px ${auraRgba(aura, 0.35)}` : undefined,
-        transition: 'background 0.22s var(--ease-apple), transform 0.22s var(--ease-apple), box-shadow 0.22s var(--ease-apple)',
+        transition:
+          'background 0.22s var(--ease-apple), transform 0.22s var(--ease-apple), box-shadow 0.22s var(--ease-apple)',
       }}
       onMouseEnter={(e) => {
         preloadTrack(track.urn);

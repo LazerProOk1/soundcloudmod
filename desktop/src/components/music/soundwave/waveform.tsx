@@ -29,8 +29,8 @@ function downsample(samples: number[], height: number, count: number): number[] 
   return raw.map((v) => {
     const norm = span > 0.02 ? (v - lo) / span : v;
     // Power curve: lifts quiet bars, keeps loud bars tall
-    const curved = Math.pow(norm, 0.65);
-    return 0.10 + curved * 0.88;
+    const curved = norm ** 0.65;
+    return 0.1 + curved * 0.88;
   });
 }
 

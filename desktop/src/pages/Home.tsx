@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/shallow';
 import { LikeButton } from '../components/music/LikeButton';
-import { SoundWaveBlock } from '../components/music/soundwave';
 import { TrackCard } from '../components/music/TrackCard';
 import { TrackTitleArtist } from '../components/music/TrackTitleArtist';
 import { UploadKindDot } from '../components/music/UploadKindDot';
@@ -81,12 +80,7 @@ function SectionHeader({
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-3">
         <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{
-            background: 'rgba(255,255,255,0.045)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
-          }}
+          className="glass-flat w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
         >
           {icon}
         </div>
@@ -773,10 +767,8 @@ const DiscoverSection = React.memo(function DiscoverSection({
                 key={g}
                 type="button"
                 onClick={() => setActiveGenre(g)}
-                className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 cursor-pointer capitalize ${
-                  selectedGenre === g
-                    ? 'bg-white/[0.12] text-white border border-white/[0.08]'
-                    : 'bg-white/[0.03] text-white/40 border border-white/[0.04] hover:bg-white/[0.06] hover:text-white/60'
+                className={`glass-pill px-3.5 py-1.5 text-[12px] font-medium capitalize ${
+                  selectedGenre === g ? 'text-white/92' : 'text-white/45 !bg-white/[0.04]'
                 }`}
               >
                 {g}
@@ -919,17 +911,12 @@ export function Home() {
     <div className="p-6 pb-4 space-y-8">
       {/* Hero Greeting — no data hooks, won't re-render */}
       <section className="pt-1 animate-fade-in-scale">
-        <h1 className="hero-greeting text-3xl font-bold tracking-tight leading-tight pb-1">
+        <h1 className="hero-greeting syne text-3xl leading-tight pb-1">
           {t(greetingKey())}
           {user?.username ? `, ${user.username}` : ''}
         </h1>
         <div className="mt-3 h-px bg-gradient-to-r from-white/[0.07] via-white/[0.03] to-transparent" />
       </section>
-
-      {/* SoundWave — AI-powered recommendations */}
-      <div className="animate-fade-in-scale" style={{ animationDelay: '60ms' }}>
-        <SoundWaveBlock />
-      </div>
 
       {/* Each section is isolated — own hooks, own re-render boundary */}
       <FeaturedHero

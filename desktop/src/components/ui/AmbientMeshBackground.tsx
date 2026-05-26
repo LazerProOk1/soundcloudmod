@@ -110,13 +110,33 @@ export const AmbientMeshBackground = React.memo(function AmbientMeshBackground()
         }}
       />
 
-      {/* Dark overlay — keeps overall app dark enough for text readability.
-          Without this the mesh is too bright for a music player aesthetic. */}
+      {/*
+       * Blob 5 — Mid-screen left anchor
+       * Fills the centre gap so the sidebar glass effect is visible top-to-bottom.
+       */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '30%',
+          left: '-10%',
+          width: '45%',
+          height: '55%',
+          borderRadius: '50%',
+          background:
+            'radial-gradient(ellipse at center, rgba(120,80,220,0.30) 0%, rgba(80,60,180,0.14) 50%, transparent 70%)',
+          filter: 'blur(140px)',
+          animation: 'mesh-drift-b 52s ease-in-out infinite reverse',
+          willChange: 'transform',
+        }}
+      />
+
+      {/* Dark overlay — opacity 0.60 (was 0.70): lets enough ambient colour bleed
+          through so Liquid Glass panels refract visibly across the full height. */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(6, 6, 9, 0.70)',
+          background: 'rgba(6, 6, 9, 0.60)',
           pointerEvents: 'none',
         }}
       />

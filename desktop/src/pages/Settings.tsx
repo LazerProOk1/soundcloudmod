@@ -90,15 +90,20 @@ const LanguageSection = React.memo(function LanguageSection() {
             className={`flex items-center gap-2 px-4 py-2.5 rounded-[14px] text-[13px] font-semibold transition-all duration-200 cursor-pointer ${
               i18n.language === lang.code ? 'text-white/92' : 'text-white/45 hover:text-white/70'
             }`}
-            style={i18n.language === lang.code ? {
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid var(--color-accent)',
-              boxShadow: '0 1px 0 0 rgba(255,255,255,0.20) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 0 10px var(--color-accent-glow, rgba(255,85,0,0.12))',
-            } : {
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              boxShadow: '0 1px 0 0 rgba(255,255,255,0.08) inset',
-            }}
+            style={
+              i18n.language === lang.code
+                ? {
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid var(--color-accent)',
+                    boxShadow:
+                      '0 1px 0 0 rgba(255,255,255,0.20) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 0 10px var(--color-accent-glow, rgba(255,85,0,0.12))',
+                  }
+                : {
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    boxShadow: '0 1px 0 0 rgba(255,255,255,0.08) inset',
+                  }
+            }
           >
             <Globe size={14} strokeWidth={1.8} />
             {lang.label}
@@ -144,7 +149,7 @@ function CacheRow({
       <button
         onClick={onClear}
         disabled={clearing || size === 0}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/10 hover:border-red-500/20 transition-all duration-300 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold bg-accent/[0.10] text-accent hover:bg-accent/[0.18] border border-accent/[0.12] hover:border-accent/[0.22] transition-all duration-300 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
       >
         {clearing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
         {t('settings.clearCache')}
@@ -170,10 +175,7 @@ function CacheListenedToggle() {
           )}
         </p>
       </div>
-      <LiquidSwitch
-        checked={cacheListenedTracks}
-        onChange={setCacheListenedTracks}
-      />
+      <LiquidSwitch checked={cacheListenedTracks} onChange={setCacheListenedTracks} />
     </div>
   );
 }
@@ -295,8 +297,15 @@ const CacheSection = React.memo(function CacheSection() {
   const handleCacheLikes = useCallback(async () => {
     setCachingLikes(true);
     try {
-      const [{ fetchAllLikedTracks }, { buildStorageUrls, streamFallbackUrls, getSessionId }, { cacheLyricsForTracks }] =
-        await Promise.all([import('../lib/hooks'), import('../lib/api'), import('../lib/lyrics-fetch')]);
+      const [
+        { fetchAllLikedTracks },
+        { buildStorageUrls, streamFallbackUrls, getSessionId },
+        { cacheLyricsForTracks },
+      ] = await Promise.all([
+        import('../lib/hooks'),
+        import('../lib/api'),
+        import('../lib/lyrics-fetch'),
+      ]);
       const hq = useSettingsStore.getState().highQualityStreaming;
       const sessionId = getSessionId();
       const tracks = await fetchAllLikedTracks(200);
@@ -666,15 +675,21 @@ function AccentFromWallpaperBtn({
           canvas.width = SIZE;
           canvas.height = SIZE;
           const ctx = canvas.getContext('2d');
-          if (!ctx) { reject(new Error('no ctx')); return; }
+          if (!ctx) {
+            reject(new Error('no ctx'));
+            return;
+          }
           ctx.drawImage(img, 0, 0, SIZE, SIZE);
           const { data } = ctx.getImageData(0, 0, SIZE, SIZE);
 
           // Collect saturated pixels with decent brightness
           const colors: [number, number, number][] = [];
           for (let i = 0; i < data.length; i += 4) {
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const r = data[i],
+              g = data[i + 1],
+              b = data[i + 2];
+            const max = Math.max(r, g, b),
+              min = Math.min(r, g, b);
             const lightness = (max + min) / 510; // 0..1
             const saturation = max === 0 ? 0 : (max - min) / max;
             // Skip near-white, near-black, near-grey
@@ -685,14 +700,24 @@ function AccentFromWallpaperBtn({
 
           if (colors.length === 0) {
             // Fallback: just take the average of all pixels
-            let sr = 0, sg = 0, sb = 0;
+            let sr = 0,
+              sg = 0,
+              sb = 0;
             const total = data.length / 4;
             for (let i = 0; i < data.length; i += 4) {
-              sr += data[i]; sg += data[i + 1]; sb += data[i + 2];
+              sr += data[i];
+              sg += data[i + 1];
+              sb += data[i + 2];
             }
-            const hex = '#' + [sr, sg, sb]
-              .map((c) => Math.round(c / total).toString(16).padStart(2, '0'))
-              .join('');
+            const hex =
+              '#' +
+              [sr, sg, sb]
+                .map((c) =>
+                  Math.round(c / total)
+                    .toString(16)
+                    .padStart(2, '0'),
+                )
+                .join('');
             onColor(hex);
             resolve();
             return;
@@ -702,11 +727,15 @@ function AccentFromWallpaperBtn({
           let best: [number, number, number] = colors[0];
           let bestScore = 0;
           for (const [r, g, b] of colors) {
-            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const max = Math.max(r, g, b),
+              min = Math.min(r, g, b);
             const sat = max === 0 ? 0 : (max - min) / max;
             const bright = max / 255;
             const score = sat * bright;
-            if (score > bestScore) { bestScore = score; best = [r, g, b]; }
+            if (score > bestScore) {
+              bestScore = score;
+              best = [r, g, b];
+            }
           }
 
           const hex = '#' + best.map((c) => c.toString(16).padStart(2, '0')).join('');
@@ -888,7 +917,8 @@ const ThemeSection = React.memo(function ThemeSection() {
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 100%)',
+                background:
+                  'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 100%)',
                 border: '1px solid rgba(255,255,255,0.18)',
                 color: 'rgba(255,255,255,0.65)',
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 8px rgba(0,0,0,0.22)',
@@ -955,6 +985,7 @@ const ThemeSection = React.memo(function ThemeSection() {
           />
         </div>
       )}
+
     </section>
   );
 });
@@ -1013,25 +1044,28 @@ const AudioDeviceSection = React.memo(function AudioDeviceSection() {
             onClick={() => handleSwitch(sink.name)}
             disabled={switching}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-[16px] text-[13px] font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 ${
-              sink.is_default
-                ? 'text-white/92'
-                : 'text-white/45 hover:text-white/70'
+              sink.is_default ? 'text-white/92' : 'text-white/45 hover:text-white/70'
             }`}
-            style={sink.is_default ? {
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid var(--color-accent)',
-              boxShadow: `
+            style={
+              sink.is_default
+                ? {
+                    background: 'rgba(255,255,255,0.08)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid var(--color-accent)',
+                    boxShadow: `
                 0 1px 0 0 rgba(255,255,255,0.22) inset,
                 0 -1px 0 0 rgba(0,0,0,0.22) inset,
                 0 0 12px var(--color-accent-glow, rgba(255,85,0,0.15)),
                 0 4px 12px rgba(0,0,0,0.18)
               `,
-            } : {
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              boxShadow: '0 1px 0 0 rgba(255,255,255,0.09) inset, 0 -1px 0 0 rgba(0,0,0,0.16) inset',
-            }}
+                  }
+                : {
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    boxShadow:
+                      '0 1px 0 0 rgba(255,255,255,0.09) inset, 0 -1px 0 0 rgba(0,0,0,0.16) inset',
+                  }
+            }
           >
             {sink.description}
           </button>
@@ -1110,10 +1144,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.floatingComments')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.floatingCommentsDesc')}</p>
         </div>
-        <LiquidSwitch
-          checked={floatingComments}
-          onChange={setFloatingComments}
-        />
+        <LiquidSwitch checked={floatingComments} onChange={setFloatingComments} />
       </div>
 
       {/* Lyrics visualizer */}
@@ -1122,10 +1153,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.lyricsVisualizer')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.lyricsVisualizerDesc')}</p>
         </div>
-        <LiquidSwitch
-          checked={lyricsVisualizer}
-          onChange={setLyricsVisualizer}
-        />
+        <LiquidSwitch checked={lyricsVisualizer} onChange={setLyricsVisualizer} />
       </div>
 
       <div className="flex items-center justify-between">
@@ -1133,10 +1161,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.normalizeVolume')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.normalizeVolumeDesc')}</p>
         </div>
-        <LiquidSwitch
-          checked={normalizeVolume}
-          onChange={setNormalizeVolume}
-        />
+        <LiquidSwitch checked={normalizeVolume} onChange={setNormalizeVolume} />
       </div>
 
       <div className="flex items-center justify-between">
@@ -1148,10 +1173,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
             {t('settings.highQualityStreamingDesc')}
           </p>
         </div>
-        <LiquidSwitch
-          checked={highQualityStreaming}
-          onChange={setHighQualityStreaming}
-        />
+        <LiquidSwitch checked={highQualityStreaming} onChange={setHighQualityStreaming} />
       </div>
 
       {/* Bypass Whitelists */}
@@ -1160,10 +1182,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
           <p className="text-[13px] text-white/70 font-medium">{t('settings.bypassWhitelist')}</p>
           <p className="text-[11px] text-white/30 mt-0.5">{t('settings.bypassWhitelistDesc')}</p>
         </div>
-        <LiquidSwitch
-          checked={bypassWhitelist}
-          onChange={setBypassWhitelist}
-        />
+        <LiquidSwitch checked={bypassWhitelist} onChange={setBypassWhitelist} />
       </div>
 
       {/* Crossfade */}
@@ -1207,10 +1226,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
             <p className="text-[13px] text-white/70 font-medium">{t('settings.discordRpc')}</p>
             <p className="text-[11px] text-white/30 mt-0.5">{t('settings.discordRpcDesc')}</p>
           </div>
-          <LiquidSwitch
-            checked={discordRpcEnabled}
-            onChange={setDiscordRpcEnabled}
-          />
+          <LiquidSwitch checked={discordRpcEnabled} onChange={setDiscordRpcEnabled} />
         </div>
 
         {discordRpcEnabled && (
@@ -1248,10 +1264,7 @@ const PlaybackSection = React.memo(function PlaybackSection() {
                   {t('settings.discordRpcButtonDesc')}
                 </p>
               </div>
-              <LiquidSwitch
-                checked={discordRpcShowButton}
-                onChange={setDiscordRpcShowButton}
-              />
+              <LiquidSwitch checked={discordRpcShowButton} onChange={setDiscordRpcShowButton} />
             </div>
           </>
         )}
@@ -1286,8 +1299,12 @@ const ImportSection = React.memo(function ImportSection() {
             0 4px 16px rgba(0,0,0,0.18)
           `,
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'; }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)';
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)';
+        }}
       >
         {t('settings.importYandex')}
       </button>
@@ -1335,10 +1352,10 @@ const AccountSection = React.memo(function AccountSection() {
               0 4px 16px rgba(0,0,0,0.18)
             `,
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)';
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)';
           }}
         >
@@ -1360,10 +1377,10 @@ const AccountSection = React.memo(function AccountSection() {
               0 4px 16px rgba(0,0,0,0.16)
             `,
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.14)';
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)';
           }}
         >
@@ -1504,7 +1521,9 @@ const ApiSourceSection = React.memo(function ApiSourceSection() {
                   background: saved
                     ? 'rgba(34,197,94,0.15)'
                     : 'color-mix(in srgb, var(--color-accent) 14%, transparent)',
-                  border: saved ? '1px solid rgba(34,197,94,0.35)' : '1px solid var(--color-accent)',
+                  border: saved
+                    ? '1px solid rgba(34,197,94,0.35)'
+                    : '1px solid var(--color-accent)',
                   color: saved ? 'rgb(134,239,172)' : 'var(--color-accent)',
                   boxShadow: '0 1px 0 0 rgba(255,255,255,0.10) inset',
                 }}
@@ -1532,7 +1551,7 @@ export function Settings() {
 
   return (
     <div className="p-6 pb-4 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-extrabold text-white tracking-tight">{t('settings.title')}</h1>
+      <h1 className="syne text-3xl text-white">{t('settings.title')}</h1>
       <LanguageSection />
       <CacheSection />
       <ThemeSection />

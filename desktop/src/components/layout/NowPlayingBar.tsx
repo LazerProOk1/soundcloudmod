@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/shallow';
+import { rgbToCss, useArtworkColor } from '../../hooks/useArtworkColor';
 import { api } from '../../lib/api';
 import {
   getAudioSecond,
@@ -16,7 +17,7 @@ import {
 } from '../../lib/audio';
 import { toggleDislike, useDislikeStatus } from '../../lib/dislikes';
 import { art, formatTime } from '../../lib/formatters';
-import { invalidateAllLikesCache } from '../../lib/hooks';
+import { invalidateAllLikesCache, useCurrentTrackHydration, useLiquidGlass } from '../../lib/hooks';
 import {
   audioLines16,
   Heart,
@@ -56,6 +57,7 @@ import {
 import { useSettingsStore } from '../../stores/settings';
 import { useTrackOverridesStore } from '../../stores/track-overrides';
 import { EqualizerPanel } from '../music/EqualizerPanel';
+import { FullscreenPlayer } from '../music/FullscreenPlayer';
 import { UploadKindDot } from '../music/UploadKindDot';
 
 /* ── Download Progress Panel ────────────────────────────────── */
@@ -241,7 +243,6 @@ export const VolumeSlider = React.memo(({ className = '' }: { className?: string
   const { volume, setVolume } = usePlayerStore(
     useShallow((s) => ({ volume: s.volume, setVolume: s.setVolume })),
   );
-  const isOver100 = volume > 100;
 
   return (
     <div className={`relative ${className}`}>
@@ -269,11 +270,11 @@ export const VolumeSlider = React.memo(({ className = '' }: { className?: string
       >
         <Slider.Track className="relative h-[3px] grow rounded-full bg-white/[0.08] group-hover:h-[4px] transition-all duration-150">
           <Slider.Range
-            className={`absolute h-full rounded-full ${isOver100 ? 'bg-amber-400/80' : 'bg-white/60'}`}
+            className="absolute h-full rounded-full bg-accent"
           />
         </Slider.Track>
         <Slider.Thumb
-          className={`block w-2.5 h-2.5 rounded-full transition-all duration-150 outline-none scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100 ${isOver100 ? 'bg-amber-400' : 'bg-white'}`}
+          className="block w-2.5 h-2.5 rounded-full bg-accent transition-all duration-150 outline-none scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100"
         />
       </Slider.Root>
       {/* 100% tick mark (visual only, outside Slider tree) */}
@@ -495,29 +496,30 @@ const btnClass = (active: boolean, size: 'default' | 'sm') =>
 const PlayPauseBtn = React.memo(() => {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const togglePlay = usePlayerStore((s) => s.togglePlay);
+  const glass = useLiquidGlass();
   return (
     <button
       type="button"
       onClick={togglePlay}
       className="relative w-12 h-12 rounded-full flex items-center justify-center text-black hover:scale-[1.07] active:scale-[0.94] transition-all duration-300 ease-[var(--ease-spring)] cursor-pointer mx-1.5"
       style={{
-        /* Frosted metal: warm white with subtle gradient sheen */
         background:
           'linear-gradient(165deg, rgba(255,255,255,0.98) 0%, rgba(230,230,236,0.93) 100%)',
-        boxShadow: `
-          /* Differential glass border */
+        boxShadow: glass
+          ? `
           0 1px 0 0 rgba(255,255,255,1.0) inset,
           0 -1px 0 0 rgba(0,0,0,0.22) inset,
           1px 0 0 0 rgba(255,255,255,0.85) inset,
           -1px 0 0 0 rgba(0,0,0,0.10) inset,
-          /* Outer ring — frosted halo */
           0 0 0 1px rgba(255,255,255,0.18),
-          /* Ambient glow ring */
           0 0 0 5px rgba(255,255,255,0.06),
-          /* Depth shadows */
           0 6px 24px rgba(0,0,0,0.42),
           0 2px 8px rgba(0,0,0,0.28)
-        `,
+          `
+          : `
+          0 4px 16px rgba(0,0,0,0.36),
+          0 1px 4px rgba(0,0,0,0.22)
+          `,
       }}
     >
       {isPlaying ? pauseBlack20 : playBlack20}
@@ -954,6 +956,7 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const glass = useLiquidGlass();
   const { getOverride, setOverride, clearOverride } = useTrackOverridesStore();
   const qc = useQueryClient();
   const existing = getOverride(track.urn);
@@ -983,11 +986,13 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
     <div
       className="absolute bottom-full left-0 mb-2 z-50 w-[280px] animate-fade-in-scale"
       style={{
-        background: 'rgba(12,12,16,0.96)',
-        backdropFilter: 'blur(24px) saturate(180%)',
+        background: glass ? 'rgba(12,12,16,0.96)' : 'rgba(14,14,18,0.99)',
+        ...(glass ? { backdropFilter: 'blur(24px) saturate(180%)' } : {}),
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: 16,
-        boxShadow: '0 1px 0 rgba(255,255,255,0.10) inset, 0 12px 48px rgba(0,0,0,0.70)',
+        boxShadow: glass
+          ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 12px 48px rgba(0,0,0,0.70)'
+          : '0 8px 32px rgba(0,0,0,0.60)',
         padding: '14px 16px',
       }}
     >
@@ -1064,7 +1069,7 @@ const EditTrackInfoDialog = React.memo(function EditTrackInfoDialog({
 
 /* ── Track Info (left section) ───────────────────────────────── */
 
-const TrackInfo = React.memo(() => {
+const TrackInfo = React.memo(({ onArtworkClick }: { onArtworkClick?: () => void }) => {
   const navigate = useNavigate();
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const artworkSmall = art(currentTrack?.artwork_url, 't200x200');
@@ -1078,19 +1083,30 @@ const TrackInfo = React.memo(() => {
     );
   }
 
-  return <TrackInfoBody track={currentTrack} artworkSmall={artworkSmall} navigate={navigate} />;
+  return (
+    <TrackInfoBody
+      track={currentTrack}
+      artworkSmall={artworkSmall}
+      navigate={navigate}
+      onArtworkClick={onArtworkClick}
+    />
+  );
 });
 
 const TrackInfoBody = React.memo(function TrackInfoBody({
   track,
   artworkSmall,
   navigate,
+  onArtworkClick,
 }: {
   track: Track;
   artworkSmall: string | null;
   navigate: ReturnType<typeof useNavigate>;
+  onArtworkClick?: () => void;
 }) {
+  const glass = useLiquidGlass();
   const openLyricsPanel = useLyricsStore((s) => s.openPanel);
+  const handleArtworkClick = onArtworkClick ?? (() => openLyricsPanel({ rightPanelOpen: false }));
   const artistDisplay = useArtistDisplay(track);
   const displayTitle = useDisplayTitle(track);
   const playbackSource = usePlayerStore((s) => s.playbackSource);
@@ -1109,7 +1125,8 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
         className="glass-artwork relative w-14 h-14 rounded-[18px] shrink-0 cursor-pointer transition-all duration-300 ease-[var(--ease-spring)] group/art"
         style={{
           ['--artwork-radius' as string]: '18px',
-          boxShadow: `
+          boxShadow: glass
+            ? `
             0 1px 0 0 rgba(255,255,255,0.24) inset,
             0 3px 6px -1px rgba(255,255,255,0.07) inset,
             1px 0 0 0 rgba(255,255,255,0.13) inset,
@@ -1119,9 +1136,13 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
             0 3px 10px rgba(0,0,0,0.28),
             0 10px 28px rgba(0,0,0,0.30),
             0 0 40px rgba(255,255,255,0.010)
-          `,
+            `
+            : `
+            0 0 0 1px rgba(255,255,255,0.08),
+            0 3px 10px rgba(0,0,0,0.28)
+            `,
         }}
-        onClick={() => openLyricsPanel({ rightPanelOpen: false })}
+        onClick={handleArtworkClick}
       >
         {artworkSmall ? (
           <img src={artworkSmall} alt="" className="w-full h-full object-cover" />
@@ -1192,70 +1213,106 @@ const TrackInfoBody = React.memo(function TrackInfoBody({
 const BackgroundGlow = React.memo(() => {
   const artworkUrl = usePlayerStore((s) => s.currentTrack?.artwork_url);
   const artwork = art(artworkUrl, 't200x200');
+  const colors = useArtworkColor(artwork);
 
   if (!artwork) return null;
   return (
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        backgroundImage: `url(${artwork})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        opacity: 0.08,
-        filter: 'blur(60px)',
-        contain: 'strict',
-        transform: 'translateZ(0)',
-      }}
-    />
+    <>
+      {/* Base blurred artwork */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `url(${artwork})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.07,
+          filter: 'blur(60px)',
+          contain: 'strict',
+          transform: 'translateZ(0)',
+          transition: 'background-image 1.2s ease-out',
+        }}
+      />
+      {/* Dominant colour left-bleed — tints the player area around the artwork */}
+      {colors && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `linear-gradient(90deg,
+              ${rgbToCss(colors.dominant, 0.22)} 0%,
+              ${rgbToCss(colors.dominant, 0.08)} 30%,
+              transparent 60%)`,
+            contain: 'strict',
+            transform: 'translateZ(0)',
+            transition: 'background 1.2s ease-out',
+          }}
+        />
+      )}
+    </>
   );
 });
 
 /* ── NowPlayingBar ───────────────────────────────────────────── */
 
 export const NowPlayingBar = React.memo(
-  ({ onQueueToggle, queueOpen }: { onQueueToggle: () => void; queueOpen: boolean }) => {
+  ({
+    onQueueToggle,
+    queueOpen,
+  }: {
+    onQueueToggle: () => void;
+    queueOpen: boolean;
+  }) => {
+    // Hydrate currentTrack if it lacks publisher_metadata.artist (e.g. from SoundWave / playlists)
+    useCurrentTrackHydration();
+    const [fsOpen, setFsOpen] = useState(false);
+    const openFs = useCallback(() => setFsOpen(true), []);
+    const closeFs = useCallback(() => setFsOpen(false), []);
+
     return (
-      <div
-        className="liquid-panel-heavy shrink-0 relative z-[50]"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
-      >
-        <BackgroundGlow />
-        {/* Isolated layer — repaints here won't cascade to blur background */}
-        <div className="relative" style={{ isolation: 'isolate' }}>
-          <DownloadProgressPanel />
-          <ProgressSlider />
+      <>
+        <div
+          className="liquid-panel-heavy shrink-0 relative z-[50]"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <BackgroundGlow />
+          {/* Isolated layer — repaints here won't cascade to blur background */}
+          <div className="relative" style={{ isolation: 'isolate' }}>
+            <DownloadProgressPanel />
+            <ProgressSlider />
 
-          <div className="h-[76px] flex items-center px-5 gap-3 relative">
-            {/* Left: track info */}
-            <TrackInfo />
+            <div className="h-[76px] flex items-center px-5 gap-3 relative">
+              {/* Left: track info */}
+              <TrackInfo onArtworkClick={openFs} />
 
-            {/* Center: controls */}
-            <div className="flex-1 flex flex-col items-center gap-0.5">
-              <div className="flex items-center gap-0.5">
-                <ShuffleBtn />
-                <PrevBtn />
-                <PlayPauseBtn />
-                <NextBtn />
-                <RepeatBtn />
+              {/* Center: controls */}
+              <div className="flex-1 flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-0.5">
+                  <ShuffleBtn />
+                  <PrevBtn />
+                  <PlayPauseBtn />
+                  <NextBtn />
+                  <RepeatBtn />
+                </div>
+                <ProgressTime />
               </div>
-              <ProgressTime />
-            </div>
 
-            {/* Right: volume + queue */}
-            <div className="flex items-center gap-0.5 w-[280px] justify-end">
-              <SleepTimerBtn />
-              <TuningBtn />
-              <EqBtn />
-              <LyricsBtn />
-              <QueueBtn onClick={onQueueToggle} active={queueOpen} />
-              <ControlVolumeBtn size="sm" />
-              <VolumeSlider className="w-[100px]" />
-              <VolumeLabel />
+              {/* Right: volume + queue */}
+              <div className="flex items-center gap-0.5 w-[280px] justify-end">
+                <SleepTimerBtn />
+                <TuningBtn />
+                <EqBtn />
+                <LyricsBtn />
+                <QueueBtn onClick={onQueueToggle} active={queueOpen} />
+                <ControlVolumeBtn size="sm" />
+                <VolumeSlider className="w-[100px]" />
+                <VolumeLabel />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        <FullscreenPlayer open={fsOpen} onClose={closeFs} />
+      </>
     );
   },
 );

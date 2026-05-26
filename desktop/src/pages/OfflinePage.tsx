@@ -123,10 +123,11 @@ const StatusBadge = React.memo(function StatusBadge() {
           : 'inset 0 1px 0 rgba(255,255,255,0.12), 0 0 16px color-mix(in srgb, var(--color-accent) 10%, transparent)',
       }}
     >
-      {isOffline
-        ? <Globe size={11} className="text-white/40" />
-        : <Download size={11} style={{ color: 'var(--color-accent)' }} />
-      }
+      {isOffline ? (
+        <Globe size={11} className="text-white/40" />
+      ) : (
+        <Download size={11} style={{ color: 'var(--color-accent)' }} />
+      )}
       <span
         className="text-[11px] font-medium"
         style={{ color: isOffline ? 'rgba(255,255,255,0.45)' : 'var(--color-accent)' }}
@@ -196,7 +197,7 @@ const OfflineTrackRow = React.memo(function OfflineTrackRow({
           ? 'border-white/8 bg-white/[0.035] hover:border-white/14 hover:bg-white/[0.06] hover:shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
           : 'border-white/6 bg-white/[0.02] opacity-60'
       }`}
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '82px' }}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '82px', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)' }}
     >
       <button
         type="button"
@@ -232,7 +233,7 @@ const OfflineTrackRow = React.memo(function OfflineTrackRow({
 
       <div className="hidden shrink-0 items-center gap-2 sm:flex">
         {showCachedBadge ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/16 bg-emerald-400/8 px-2.5 py-1 text-[11px] font-medium text-emerald-100/80">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/[0.10] px-2.5 py-1 text-[11px] font-medium text-accent">
             <Download size={12} />
             {t('offline.cached')}
           </span>
@@ -279,7 +280,8 @@ const OverviewMetric = React.memo(function OverviewMetric({
       <div
         className="flex size-11 items-center justify-center rounded-[18px] text-white/90"
         style={{
-          background: 'linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%)',
+          background:
+            'linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%)',
           boxShadow: `
             0 1px 0 0 rgba(255,255,255,0.30) inset,
             0 -1px 0 0 rgba(0,0,0,0.22) inset,
@@ -337,13 +339,21 @@ const SectionSwitchCard = React.memo(function SectionSwitchCard({
       <div className="flex items-start gap-4">
         <div
           className={`flex size-12 shrink-0 items-center justify-center rounded-[18px] transition-all duration-300 ${
-            active ? styles.activeIcon : 'border border-white/10 bg-white/[0.05] text-white/60 group-hover:text-white/80'
+            active
+              ? styles.activeIcon
+              : 'border border-white/10 bg-white/[0.05] text-white/60 group-hover:text-white/80'
           }`}
-          style={active ? {
-            boxShadow: '0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 14px rgba(0,0,0,0.18)',
-          } : {
-            boxShadow: '0 1px 0 0 rgba(255,255,255,0.10) inset, 0 -1px 0 0 rgba(0,0,0,0.18) inset',
-          }}
+          style={
+            active
+              ? {
+                  boxShadow:
+                    '0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 14px rgba(0,0,0,0.18)',
+                }
+              : {
+                  boxShadow:
+                    '0 1px 0 0 rgba(255,255,255,0.10) inset, 0 -1px 0 0 rgba(0,0,0,0.18) inset',
+                }
+          }
         >
           {icon}
         </div>
@@ -431,7 +441,8 @@ function OfflineSection({
             <div
               className={`flex size-12 shrink-0 items-center justify-center rounded-[18px] border ${styles.icon}`}
               style={{
-                boxShadow: '0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 16px rgba(0,0,0,0.18)',
+                boxShadow:
+                  '0 1px 0 0 rgba(255,255,255,0.28) inset, 0 -1px 0 0 rgba(0,0,0,0.20) inset, 0 4px 16px rgba(0,0,0,0.18)',
               }}
             >
               {icon}
@@ -616,7 +627,10 @@ export const OfflinePage = React.memo(() => {
     if (appMode !== 'online' || isDirect) return;
 
     setSyncing(true);
-    api<{ synced: number; failed: number }>('/pending-actions/sync', { method: 'POST', silent: true })
+    api<{ synced: number; failed: number }>('/pending-actions/sync', {
+      method: 'POST',
+      silent: true,
+    })
       .then(() => {
         api<PendingStats>('/pending-actions/stats', { silent: true })
           .then(setPendingStats)

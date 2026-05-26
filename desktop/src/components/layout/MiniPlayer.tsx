@@ -1,6 +1,6 @@
 /**
- * MiniPlayer — 380×66 px compact floating strip.
- * Layout (single row): [artwork 66×66] [info: title + artist] [controls] [expand]
+ * MiniPlayer — 300×58 px compact floating strip.
+ * Layout (single row): [artwork 58×58] [info: title + artist] [controls] [expand]
  * Progress: 2 px accent strip pinned to bottom, no timestamps, no thumb.
  */
 
@@ -53,7 +53,10 @@ class MiniPlayerBoundary extends React.Component<
 
 /* ── Style atoms ────────────────────────────────────────────── */
 const noSel: React.CSSProperties = { userSelect: 'none', WebkitUserSelect: 'none' };
-const noDrag = { WebkitAppRegion: 'no-drag', appRegion: 'no-drag' } as unknown as React.CSSProperties;
+const noDrag = {
+  WebkitAppRegion: 'no-drag',
+  appRegion: 'no-drag',
+} as unknown as React.CSSProperties;
 const drag = { WebkitAppRegion: 'drag', appRegion: 'drag' } as unknown as React.CSSProperties;
 const np: React.SVGProps<SVGSVGElement> = { style: { pointerEvents: 'none' } };
 
@@ -154,8 +157,8 @@ const PlayBtn = ({ onClick, playing }: { onClick: () => void; playing: boolean }
         alignItems: 'center',
         justifyContent: 'center',
         padding: 0,
-        width: 32,
-        height: 32,
+        width: 28,
+        height: 28,
         borderRadius: '50%',
         flexShrink: 0,
         background: 'linear-gradient(150deg,rgba(255,255,255,0.97) 0%,rgba(215,215,235,0.92) 100%)',
@@ -228,7 +231,10 @@ const GhostBtn = ({
       onClick={onClick}
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}
-      onMouseLeave={() => { setPressed(false); setHovered(false); }}
+      onMouseLeave={() => {
+        setPressed(false);
+        setHovered(false);
+      }}
       onMouseEnter={() => setHovered(true)}
     >
       {children}
@@ -301,8 +307,7 @@ function MiniPlayerInner() {
         display: 'flex',
         position: 'relative',
         overflow: 'hidden',
-        fontFamily:
-          'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',
+        fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',
         WebkitFontSmoothing: 'antialiased',
         cursor: 'grab',
         background: 'rgba(13,13,19,0.96)',
@@ -351,8 +356,8 @@ function MiniPlayerInner() {
       {/* ── Square artwork — left flush, fills full height ──── */}
       <div
         style={{
-          width: 66,
-          height: 66,
+          width: 58,
+          height: 58,
           flexShrink: 0,
           position: 'relative',
           zIndex: 2,
@@ -366,9 +371,7 @@ function MiniPlayerInner() {
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
         ) : (
-          <div
-            style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)' }}
-          />
+          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)' }} />
         )}
         {/* Thin right-edge separator */}
         <div
@@ -394,23 +397,20 @@ function MiniPlayerInner() {
           minWidth: 0,
           display: 'flex',
           alignItems: 'center',
-          padding: '0 0 0 12px',
+          padding: '0 0 0 8px',
           position: 'relative',
           zIndex: 2,
-          gap: 10,
+          gap: 6,
         }}
       >
         {/* Title + artist */}
-        <div
-          data-tauri-drag-region
-          style={{ flex: 1, minWidth: 0 }}
-        >
+        <div data-tauri-drag-region style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 600,
               color: 'rgba(255,255,255,0.94)',
-              letterSpacing: '-0.030em',
+              letterSpacing: '-0.025em',
               lineHeight: 1.22,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -421,12 +421,12 @@ function MiniPlayerInner() {
           </div>
           <div
             style={{
-              fontSize: 10,
+              fontSize: 9.5,
               fontWeight: 400,
               color: 'rgba(255,255,255,0.38)',
-              letterSpacing: '-0.015em',
+              letterSpacing: '-0.010em',
               lineHeight: 1.3,
-              marginTop: 2,
+              marginTop: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -441,19 +441,19 @@ function MiniPlayerInner() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
+            gap: 1,
             flexShrink: 0,
             ...noDrag,
           }}
         >
-          <GhostBtn onClick={() => void toggleLike()} active={isLiked} size={26}>
+          <GhostBtn onClick={() => void toggleLike()} active={isLiked} size={22}>
             <IconHeart filled={isLiked} />
           </GhostBtn>
-          <GhostBtn onClick={handlePrev} size={26}>
+          <GhostBtn onClick={handlePrev} size={22}>
             <IconPrev />
           </GhostBtn>
           <PlayBtn onClick={togglePlay} playing={isPlaying} />
-          <GhostBtn onClick={nextTrack} size={26}>
+          <GhostBtn onClick={nextTrack} size={22}>
             <IconNext />
           </GhostBtn>
         </div>
@@ -469,8 +469,8 @@ function MiniPlayerInner() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 0,
-            width: 28,
-            height: 66,
+            width: 26,
+            height: 58,
             flexShrink: 0,
             color: 'rgba(255,255,255,0.22)',
             background: 'rgba(255,255,255,0.03)',
