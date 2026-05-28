@@ -130,12 +130,7 @@ export default function App() {
 
   const isMini = useMiniPlayerStore((s) => s.isMini);
   const hasLocalSession = Boolean(sessionId);
-  // In direct mode (OAuth token set), allow entering the main shell immediately
-  // without a backend session — fetchUser will populate the user data asynchronously.
-  const isDirectMode = useSettingsStore(
-    (s) => s.apiMode === 'direct' && s.directOAuthToken.trim().length > 0,
-  );
-  const canUseMainShell = isAuthenticated || hasLocalSession || isDirectMode;
+  const canUseMainShell = isAuthenticated || hasLocalSession;
   // Toggle body.mini so CSS can make #root transparent (enables real backdrop-filter glass)
   // Also clip <html> to border-radius so WebView corners are truly transparent (not square cutouts)
   useEffect(() => {
@@ -173,9 +168,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const { apiMode, directOAuthToken } = useSettingsStore.getState();
-    const isDirect = apiMode === 'direct' && directOAuthToken.trim().length > 0;
-    if ((!sessionId && !isDirect) || appMode !== 'online') {
+    if (!sessionId || appMode !== 'online') {
       return;
     }
 
@@ -185,7 +178,7 @@ export default function App() {
       if (cancelled) return;
 
       if (error instanceof ApiError && error.status === 401) {
-        if (!isDirect) useSessionExpiryStore.getState().setSessionExpired(true);
+        useSessionExpiryStore.getState().setSessionExpired(true);
         return;
       }
 

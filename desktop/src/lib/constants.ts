@@ -1,8 +1,5 @@
 export const API_BASE = import.meta.env.VITE_API_BASE || 'https://api.scdinternal.site';
 
-// ── Direct mode: bypass scdinternal.site, talk straight to SoundCloud ─────────
-export const DIRECT_SC_API_BASE = 'https://api-v2.soundcloud.com';
-
 export const STREAMING_BASE =
   import.meta.env.VITE_STREAMING_BASE || 'https://stream.scdinternal.site';
 export const STREAMING_PREMIUM_BASE =

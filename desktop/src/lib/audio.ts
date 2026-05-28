@@ -463,15 +463,7 @@ function afterLoad(track: Track, gen: number) {
       : track;
 
   // Record to listening history (fire-and-forget), skip on repeat-one (same track looping)
-  // Guard: /history is a backend-only endpoint — skip in direct mode (SoundCloud API doesn't have it)
-  const { apiMode, directOAuthToken } = useSettingsStore.getState();
-  const isDirectMode = apiMode === 'direct' && directOAuthToken.trim().length > 0;
-  if (
-    !isDirectMode &&
-    historyTrack?.urn &&
-    historyTrack.title &&
-    usePlayerStore.getState().repeat !== 'one'
-  ) {
+  if (historyTrack?.urn && historyTrack.title && usePlayerStore.getState().repeat !== 'one') {
     api('/history', {
       method: 'POST',
       silent: true,

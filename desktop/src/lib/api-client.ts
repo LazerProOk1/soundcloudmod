@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useAppStatusStore } from '../stores/app-status';
 import { useSettingsStore } from '../stores/settings';
 import { noteAuthGap, noteRateLimit, noteSuccess } from './auth-recovery';
-import { API_BASE, BYPASS_API_BASE, DIRECT_SC_API_BASE } from './constants';
+import { API_BASE, BYPASS_API_BASE } from './constants';
 import { logHttpError, logHttpFailure, trackAsync } from './diagnostics';
 import { isHealthy, markHealthy, markUnhealthy } from './host-health';
 import { getIsPremium } from './premium-cache';
@@ -32,58 +32,6 @@ export class ApiError extends Error {
   }
 }
 
-// ─── Global rate-limit guard for direct mode ────────────────
-//
-// In direct mode every request hits api-v2.soundcloud.com directly.
-// SoundCloud enforces strict per-IP rate limits (~10-20 req/s).
-// We allow at most DIRECT_CONCURRENCY in-flight requests at once and
-// add a small inter-request gap to stay well under the limit.
-//
-// Proxy mode (api.scdinternal.site) does NOT use a semaphore — the backend
-// handles its own concurrency and adding a client-side queue would only
-// slow down critical requests like /me while the queue drains.
-
-function makeSemaphore(maxConcurrent: number, gapMs: number) {
-  let active = 0;
-  let lastStartMs = 0;
-  const queue: Array<() => void> = [];
-
-  function release() {
-    active--;
-    if (queue.length > 0) {
-      const next = queue.shift()!;
-      const wait = Math.max(0, lastStartMs + gapMs - Date.now());
-      setTimeout(() => {
-        lastStartMs = Date.now();
-        active++;
-        next();
-      }, wait);
-    }
-  }
-
-  function acquire(): Promise<void> {
-    return new Promise((resolve) => {
-      const tryAcquire = () => {
-        if (active < maxConcurrent) {
-          const wait = Math.max(0, lastStartMs + gapMs - Date.now());
-          setTimeout(() => {
-            lastStartMs = Date.now();
-            active++;
-            resolve();
-          }, wait);
-        } else {
-          queue.push(tryAcquire);
-        }
-      };
-      tryAcquire();
-    });
-  }
-
-  return { acquire, release };
-}
-
-const _directSem = makeSemaphore(2, 150); // SoundCloud direct API only
-
 // ─── Host resolution ────────────────────────────────────────
 
 const AUTH_PATHS = ['/auth/'];
@@ -92,22 +40,8 @@ function isAuthPath(path: string): boolean {
   return AUTH_PATHS.some((p) => path.startsWith(p));
 }
 
-function isDirectMode(): boolean {
-  const { apiMode, directOAuthToken } = useSettingsStore.getState();
-  return apiMode === 'direct' && directOAuthToken.trim().length > 0;
-}
-
-function resolveApiBases(path: string, direct?: boolean): string[] {
-  // Direct mode: go straight to SoundCloud, no fallback.
-  // Accept the pre-captured `direct` flag to avoid re-reading settings
-  // after they may have changed while waiting in the semaphore queue.
-  const d = direct ?? (isDirectMode() && !isAuthPath(path));
-  if (d && !isAuthPath(path)) {
-    return [DIRECT_SC_API_BASE];
-  }
-
+function resolveApiBases(path: string): string[] {
   // Auth paths: always try primary API first, BYPASS as fallback.
-  // BYPASS host can be independently unavailable and must not block auth.
   if (isAuthPath(path)) {
     return isHealthy(API_BASE) ? [API_BASE, BYPASS_API_BASE] : [BYPASS_API_BASE, API_BASE];
   }
@@ -199,27 +133,7 @@ export async function apiRequest<T = unknown>(
 ): Promise<T> {
   const { silent, ...fetchOptions } = options;
   const headers = new Headers(fetchOptions.headers);
-
-  const direct = isDirectMode();
-
-  // Throttle direct-mode requests through the global semaphore
-  // so we never flood api-v2.soundcloud.com and trigger 429s.
-  let releaseSlot: (() => void) | null = null;
-  if (direct && !isAuthPath(path)) {
-    await _directSem.acquire();
-    releaseSlot = _directSem.release;
-  }
-
-  try {
-    return await _apiRequestInner<T>(path, options, timeoutMs, {
-      silent,
-      fetchOptions,
-      headers,
-      direct,
-    });
-  } finally {
-    releaseSlot?.();
-  }
+  return _apiRequestInner<T>(path, options, timeoutMs, { silent, fetchOptions, headers });
 }
 
 async function _apiRequestInner<T>(
@@ -230,31 +144,18 @@ async function _apiRequestInner<T>(
     silent: boolean | undefined;
     fetchOptions: Omit<ApiOptions, 'silent'>;
     headers: Headers;
-    direct: boolean;
   },
 ): Promise<T> {
-  const { silent, fetchOptions, headers, direct } = ctx;
-  if (direct && !isAuthPath(path)) {
-    // Direct SoundCloud mode: use OAuth token instead of scdinternal session
-    const { directOAuthToken } = useSettingsStore.getState();
-    headers.set('Authorization', `OAuth ${directOAuthToken.trim()}`);
-    headers.set('Accept', 'application/json; charset=utf-8');
-    if (!headers.has('User-Agent')) {
-      headers.set('User-Agent', 'SoundCloud-Android/2024.03.20-release (Android 13)');
-    }
-  } else {
-    // Original mode: Защита от попадания строки "undefined"/"null" в header при апгрейдах формата API.
-    if (sessionId && sessionId !== 'undefined' && sessionId !== 'null') {
-      headers.set('x-session-id', sessionId);
-    }
+  const { silent, fetchOptions, headers } = ctx;
+  // Защита от попадания строки "undefined"/"null" в header при апгрейдах формата API.
+  if (sessionId && sessionId !== 'undefined' && sessionId !== 'null') {
+    headers.set('x-session-id', sessionId);
   }
 
   if (!headers.has('Content-Type') && fetchOptions.body)
     headers.set('Content-Type', 'application/json');
 
-  // Pass the already-captured direct flag so resolveApiBases doesn't
-  // re-read settings that might have changed while waiting in the semaphore.
-  const bases = resolveApiBases(path, direct);
+  const bases = resolveApiBases(path);
   const method = fetchOptions.method ?? 'GET';
   let lastError: unknown = null;
 
@@ -287,16 +188,6 @@ async function _apiRequestInner<T>(
 
         // 401: trigger auth-recovery orchestrator
         if (res.status === 401) {
-          if (direct) {
-            console.error(`[DirectMode] OAuth token rejected by SoundCloud: ${path}`);
-            if (!silent) {
-              toast.error('OAuth токен недействителен — обновите его в настройках', {
-                id: 'sc-oauth-invalid',
-                duration: 8000,
-              });
-            }
-            throw err;
-          }
           noteAuthGap();
           console.error(`HTTP ERROR: url: ${path}, `, err);
           throw err;
@@ -335,10 +226,9 @@ async function _apiRequestInner<T>(
     }
   }
 
-  // Only mark the backend as unreachable for non-auth, non-direct paths.
+  // Only mark the backend as unreachable for non-auth paths.
   // Auth endpoints use a different host (BYPASS) that can be unavailable independently.
-  // Direct mode talks to SoundCloud directly — its unavailability must not kick the app offline.
-  if (!isAuthPath(path) && !direct) {
+  if (!isAuthPath(path)) {
     useAppStatusStore.getState().setBackendReachable(false);
   }
   throw lastError ?? new Error('All API hosts unreachable');

@@ -11,7 +11,6 @@ import {
 import { useEffect, useMemo, useRef } from 'react';
 import type { Track } from '../stores/player';
 import { usePlayerStore } from '../stores/player';
-import { useSettingsStore } from '../stores/settings';
 import { api } from './api';
 import { initLikedUrns } from './likes';
 import { rememberFollowingTracks, rememberLikedTracks, rememberTracks } from './offline-index';
@@ -250,38 +249,13 @@ export interface HistoryEntry {
 }
 
 export function useHistory(limit = 50) {
-  const { apiMode, directOAuthToken } = useSettingsStore();
-  const isDirect = apiMode === 'direct' && directOAuthToken.trim().length > 0;
   const query = useInfiniteQuery({
-    queryKey: ['history', isDirect],
+    queryKey: ['history'],
     queryFn: async ({ pageParam = 0 }) => {
-      // SoundCloud public API uses /me/play-history/tracks; our backend uses /history
-      const path = isDirect
-        ? `/me/play-history/tracks?limit=${limit}&offset=${pageParam}`
-        : `/history?limit=${limit}&offset=${pageParam}`;
-      const raw = await api<{ collection: unknown[]; total?: number; next_href?: string }>(path);
-      // Normalize: direct API returns { collection: [{track, played_at}] }
-      if (isDirect) {
-        return {
-          collection: raw.collection.map((item: unknown): HistoryEntry => {
-            const e = item as Record<string, unknown>;
-            const t = (e.track ?? {}) as Record<string, unknown>;
-            const user = (t.user ?? {}) as Record<string, unknown>;
-            return {
-              id: String(t.urn ?? t.id ?? ''),
-              scTrackId: String(t.urn ?? t.id ?? ''),
-              title: String(t.title ?? ''),
-              artistName: String(user.username ?? ''),
-              artistUrn: (user.urn as string | null) ?? null,
-              artworkUrl: (t.artwork_url as string | null) ?? null,
-              duration: Number(t.duration ?? 0),
-              playedAt: String(e.played_at ?? ''),
-            };
-          }),
-          total: raw.collection.length,
-        };
-      }
-      return raw as { collection: HistoryEntry[]; total: number };
+      const raw = await api<{ collection: HistoryEntry[]; total: number }>(
+        `/history?limit=${limit}&offset=${pageParam}`,
+      );
+      return raw;
     },
     initialPageParam: 0,
     gcTime: INFINITE_GC_MS,
